@@ -71,12 +71,59 @@
                 <td class="py-3 px-3 text-gray-600">
                   {{ formatDate(project.created_at) }}
                 </td>
-                <td class="py-3 px-3">
+                <td class="py-3 px-3 relative">
+                  <!-- action button -->
                   <button
-                    class="hover:text-blue-600 text-gray-600 cursor-pointer"
+                    @click.stop="toggleDropdown(project.id)"
+                    class="hover:text-blue-600 text-gray-600 cursor-pointer p-1 rounded"
+                    aria-haspopup="true"
+                    :aria-expanded="activeDropdown === project.id"
                   >
                     <RiMore2Fill />
                   </button>
+
+                  <!-- dropdown -->
+                  <div
+                    v-if="activeDropdown === project.id"
+                    @click.stop
+                    class="absolute right-0 mt-2 w-40 bg-white border rounded shadow z-20"
+                  >
+                    <ul class="divide-y">
+                      <li>
+                        <button
+                          @click="
+                            openProject(project);
+                            activeDropdown = null;
+                          "
+                          class="w-full text-left px-3 py-2 text-gray-800 hover:bg-gray-100"
+                        >
+                          View
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          @click="
+                            editProject(project);
+                            activeDropdown = null;
+                          "
+                          class="w-full text-left px-3 py-2 text-gray-800 hover:bg-gray-100"
+                        >
+                          Edit
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          @click="
+                            deleteProject(project);
+                            activeDropdown = null;
+                          "
+                          class="w-full text-left px-3 py-2 text-red-600 hover:bg-gray-100"
+                        >
+                          Delete
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
                 </td>
               </tr>
 
@@ -92,6 +139,17 @@
     </div>
 
     <CreateProjectModal v-model="showCreateModal" @created="onProjectCreated" />
+    <EditProjectModal
+      v-model="showEditModal"
+      :project="editingProject"
+      @updated="onProjectUpdated"
+    />
+    <ConfirmModal
+      v-model="showConfirmDelete"
+      title="Delete project"
+      :message="confirmMessage"
+      @confirmed="onConfirmedDelete"
+    />
   </div>
 </template>
 
@@ -101,7 +159,7 @@ definePageMeta({
   middleware: ["auth"],
 });
 
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import axios from "axios";
 import { useRuntimeConfig, navigateTo } from "#imports";
 
@@ -112,6 +170,17 @@ const projects = ref<any[]>([]);
 const loading = ref(true);
 
 const showCreateModal = ref(false);
+
+const activeDropdown = ref<number | string | null>(null);
+
+const showEditModal = ref(false);
+const editingProject = ref<any | null>(null);
+
+const showConfirmDelete = ref(false);
+const projectToDelete = ref<any | null>(null);
+const confirmMessage = ref(
+  "Are you sure you want to delete this project? This cannot be undone."
+);
 
 const fetchProjects = async () => {
   loading.value = true;
@@ -126,8 +195,21 @@ const fetchProjects = async () => {
   }
 };
 
+function toggleDropdown(id: any) {
+  activeDropdown.value = activeDropdown.value === id ? null : id;
+}
+
+function handleOutsideClick() {
+  activeDropdown.value = null;
+}
+
 onMounted(() => {
   fetchProjects();
+  document.addEventListener("click", handleOutsideClick);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener("click", handleOutsideClick);
 });
 
 function formatDate(v: string | null | undefined) {
@@ -169,12 +251,62 @@ function statusClass(status: string | null | undefined) {
 }
 
 function openProject(p: any) {
-  const id = p?.id || p?.project_id;
+  const id = p?.id;
   if (!id) {
     toast.add({ title: "Cannot open project: missing id.", color: "error" });
     return;
   }
   navigateTo(`/project/${id}`);
+}
+
+function editProject(p: any) {
+  const id = p?.id;
+  if (!id) {
+    toast.add({ title: "Cannot edit project: missing id.", color: "error" });
+    return;
+  }
+  // open edit modal (prefer modal over navigation)
+  editingProject.value = p;
+  showEditModal.value = true;
+}
+
+async function deleteProject(p: any) {
+  const id = p?.id;
+  if (!id) {
+    toast.add({ title: "Cannot delete project: missing id.", color: "error" });
+    return;
+  }
+
+  projectToDelete.value = p;
+  confirmMessage.value = `Are you sure you want to delete project "${
+    p?.name || p?.number || id
+  }"? This cannot be undone.`;
+  showConfirmDelete.value = true;
+}
+
+async function onConfirmedDelete() {
+  const p = projectToDelete.value;
+  const id = p?.id;
+  if (!id) return;
+  try {
+    await axios.delete(`${config.public.BASE_URL}/project/delete/${id}`);
+    projects.value = projects.value.filter((pr) => pr.id !== id);
+    toast.add({ title: "Project deleted.", color: "success" });
+  } catch (e: any) {
+    toast.add({ title: "Failed to delete project.", color: "error" });
+  } finally {
+    projectToDelete.value = null;
+  }
+}
+
+function onProjectUpdated(updated: any) {
+  // replace the project in the list
+  const id = updated?.id;
+  if (!id) return;
+  const idx = projects.value.findIndex((p) => p.id === id);
+  if (idx !== -1)
+    projects.value.splice(idx, 1, { ...projects.value[idx], ...updated });
+  else projects.value.unshift(updated);
 }
 
 function onProjectCreated(p: any) {

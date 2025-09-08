@@ -67,7 +67,7 @@ export default defineNuxtPlugin(() => {
           }
 
           // Use a full navigation to reset state
-          window.location.href = "/login";
+          // window.location.href = "/login";
         }
       }
       return Promise.reject(error);
