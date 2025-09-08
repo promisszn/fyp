@@ -4,9 +4,9 @@
     <button
       @click="goHome"
       aria-label="Home"
-      class="w-10 h-10 flex items-center justify-center rounded-md bg-white/80 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md transition"
+      class="w-12 h-12 flex items-center justify-center rounded-xl bg-white/95 dark:bg-slate-800/95 border border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition"
     >
-      <img src="/favicon.ico" alt="Logo" class="w-6 h-6 object-contain" />
+      <img src="/favicon.ico" alt="Logo" class="w-7 h-7 object-contain" />
     </button>
   </div>
 
@@ -14,12 +14,12 @@
   <div v-if="name" class="fixed top-4 right-4 z-50" ref="root">
     <div class="relative">
       <button
-        class="flex items-center gap-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-full pl-1 pr-4 py-1 shadow-md hover:shadow-lg transition-shadow"
+        class="flex items-center gap-3 bg-white/95 dark:bg-slate-800/95 border border-gray-200 dark:border-slate-700 rounded-xl pl-2 pr-4 py-2 shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
         @click="toggleMenu"
         aria-label="User menu"
       >
         <div
-          class="w-9 h-9 rounded-full flex items-center justify-center text-white font-semibold"
+          class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm"
           :class="avatarBg"
         >
           {{ initials }}
@@ -110,7 +110,7 @@ function toggleMenu() {
 
 function onProfile() {
   menuOpen.value = false;
-//   navigateTo("/profile");
+  //   navigateTo("/profile");
 }
 
 async function onLogout() {
