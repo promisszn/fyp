@@ -91,12 +91,6 @@ const handleProfileSubmit = async () => {
       {
         first_name: firstName.value,
         last_name: lastName.value,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${useCookie("token").value}`,
-          "x-api-token": useCookie("api_token").value,
-        },
       }
     );
     toast.add({
