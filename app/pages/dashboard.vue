@@ -2,7 +2,7 @@
   <UserHeader />
 
   <!-- Add top padding so content isn't hidden under the fixed header -->
-  <div class="min-h-screen bg-gray-50 dark:bg-slate-900 pt-20 pb-8">
+  <div class="min-h-screen bg-gray-50 dark:bg-slate-900 pt-24 pb-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
         <h1 class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">Projects</h1>
@@ -28,7 +28,7 @@
             </div>
             <div class="space-y-2">
               <div
-                v-for="r in 4"
+                v-for="r in 10"
                 :key="r"
                 class="h-8 bg-gray-200 dark:bg-slate-600 rounded animate-pulse"
               ></div>
