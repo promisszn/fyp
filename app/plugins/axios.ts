@@ -61,13 +61,16 @@ export default defineNuxtPlugin(() => {
         if (typeof window !== "undefined") {
           try {
             const toast = useToast();
-            toast.add({ title: "Session expired. You have been signed out.", color: "warning" });
+            toast.add({
+              title: "Session expired. You have been signed out.",
+              color: "warning",
+            });
           } catch (e) {
             // if toast is unavailable, ignore
           }
 
           // Use a full navigation to reset state
-          // window.location.href = "/login";
+          window.location.href = "/login";
         }
       }
       return Promise.reject(error);
