@@ -15,8 +15,9 @@ export default defineNuxtPlugin(() => {
 
     const url = String(req.url);
 
-    // Don't add headers for auth endpoints (any path that starts with /auth)
-    if (/\/auth(\/|$)/.test(url)) {
+    // Don't add headers for login-related auth endpoints (these are used before we have tokens)
+    // Allow other auth endpoints (for example /auth/logout) to receive auth headers.
+    if (/\/auth\/login(\/otp)?/.test(url)) {
       return req;
     }
 

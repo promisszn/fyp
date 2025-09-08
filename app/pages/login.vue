@@ -152,7 +152,7 @@ const handleOtpSubmit = async () => {
 
     const userObj = response.data.data.user;
     if (userObj && userObj.profile_set === false) {
-      navigateTo("/profile");
+      navigateTo("/set-profile");
     } else {
       navigateTo("/dashboard");
     }
