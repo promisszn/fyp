@@ -4,4 +4,9 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ["@nuxt/image", "@nuxt/ui", "@vueuse/nuxt"],
   css: ["~/assets/css/main.css"],
+  runtimeConfig: {
+    public: {
+      BASE_URL: process.env.BASE_URL,
+    },
+  },
 });
