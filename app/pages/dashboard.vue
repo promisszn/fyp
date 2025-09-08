@@ -17,11 +17,10 @@
       <div class="bg-white rounded-lg shadow p-4">
         <!-- Loading skeleton -->
         <div v-if="loading" class="space-y-4">
-          <div class="h-6 w-1/3 bg-gray-200 rounded animate-pulse"></div>
           <div class="overflow-hidden">
-            <div class="grid grid-cols-5 gap-4 mb-2">
+            <div class="grid grid-cols-6 gap-4 mb-2">
               <div
-                v-for="n in 5"
+                v-for="n in 6"
                 :key="n"
                 class="h-4 bg-gray-200 rounded animate-pulse"
               ></div>
@@ -117,7 +116,6 @@ const showCreateModal = ref(false);
 const fetchProjects = async () => {
   loading.value = true;
   try {
-    // follow existing project conventions (response.data.data)
     const res = await axios.get(`${config.public.BASE_URL}/project/list`);
     projects.value = res.data?.data ?? res.data ?? [];
   } catch (e: any) {
@@ -135,21 +133,39 @@ onMounted(() => {
 function formatDate(v: string | null | undefined) {
   if (!v) return "-";
   try {
-    return new Date(v).toLocaleString();
+    const dt = new Date(v);
+    if (isNaN(dt.getTime())) return String(v);
+
+    const fmt = new Intl.DateTimeFormat(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+    const parts = fmt.formatToParts(dt);
+    return parts
+      .map((p) => (p.type === "dayPeriod" ? p.value.toLowerCase() : p.value))
+      .join("");
   } catch (e) {
     return String(v);
   }
 }
 
 function statusClass(status: string | null | undefined) {
-  const s = (status || "").toLowerCase();
-  if (s === "active" || s === "running" || s === "open")
-    return "text-green-600 font-semibold";
-  if (s === "pending" || s === "waiting")
-    return "text-yellow-600 font-semibold";
-  if (s === "failed" || s === "closed" || s === "archived")
-    return "text-red-600 font-semibold";
-  return "text-gray-600";
+  const raw = (status || "").toLowerCase();
+
+  const map: Record<string, string> = {
+    draft: "text-gray-600",
+    in_progress: "text-yellow-600 font-semibold",
+    field_work_complete: "text-blue-600 font-semibold",
+    computed: "text-indigo-600 font-semibold",
+    plan_prepared: "text-green-600 font-semibold",
+    completed: "text-green-600 font-semibold",
+  };
+
+  return map[raw] ?? "text-gray-600";
 }
 
 function openProject(p: any) {
@@ -160,8 +176,6 @@ function openProject(p: any) {
   }
   navigateTo(`/project/${id}`);
 }
-
-// createProject handled in CreateProjectModal; parent listens for 'created' event
 
 function onProjectCreated(p: any) {
   projects.value.unshift(p);

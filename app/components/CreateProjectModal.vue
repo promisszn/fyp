@@ -44,13 +44,14 @@
             <label class="text-sm font-medium text-gray-800">Type</label>
             <select
               v-model="localForm.type"
+              required
               class="mt-1 w-full border border-gray-300 rounded px-3 py-2 bg-white text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="" selected disabled>Select type</option>
-              <option value="cadastral">cadastral</option>
-              <option value="topographical">topographical</option>
-              <option value="engineering">engineering</option>
-              <option value="route">route</option>
+              <option value="cadastral">Cadastral</option>
+              <option value="topographical">Topographical</option>
+              <option value="engineering">Engineering</option>
+              <option value="route">Route</option>
             </select>
           </div>
         </div>
@@ -141,6 +142,8 @@
           <button
             type="button"
             class="px-4 py-2 border rounded text-gray-800"
+            :disabled="submitting"
+            :class="{ 'opacity-50 cursor-not-allowed': submitting }"
             @click="onClose"
           >
             Cancel
@@ -149,6 +152,7 @@
             type="submit"
             class="px-4 py-2 bg-blue-600 text-white rounded"
             :disabled="submitting"
+            :class="{ 'opacity-50 cursor-not-allowed': submitting }"
           >
             <span v-if="submitting">Creating…</span>
             <span v-else>Create</span>
@@ -197,6 +201,15 @@ function onClose() {
 }
 
 async function submit() {
+  if (!localForm.value.name) {
+    toast.add({ title: "Please enter a project name.", color: "error" });
+    return;
+  }
+  if (!localForm.value.type) {
+    toast.add({ title: "Please select a project type.", color: "error" });
+    return;
+  }
+
   submitting.value = true;
   try {
     const payload = JSON.parse(JSON.stringify(localForm.value));
