@@ -4,7 +4,15 @@
   <!-- Add top padding so content isn't hidden under the fixed header -->
   <div class="min-h-screen bg-gray-50 pt-20 pb-8">
     <div class="max-w-5xl mx-auto px-4">
-      <h1 class="text-2xl font-bold text-gray-800 mb-4">Projects</h1>
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-2xl font-bold text-gray-800">Projects</h1>
+        <button
+          @click="showCreateModal = true"
+          class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Create Project
+        </button>
+      </div>
 
       <div class="bg-white rounded-lg shadow p-4">
         <!-- Loading skeleton -->
@@ -53,8 +61,10 @@
         </div>
       </div>
     </div>
-  </div>
-</template>
+
+    <CreateProjectModal v-model="showCreateModal" @created="onProjectCreated" />
+    </div>
+  </template>
 
 <script lang="ts" setup>
 definePageMeta({
@@ -70,6 +80,8 @@ const toast = useToast();
 
 const projects = ref<any[]>([]);
 const loading = ref(true);
+
+const showCreateModal = ref(false);
 
 const fetchProjects = async () => {
   loading.value = true;
@@ -107,13 +119,18 @@ function statusClass(status: string | null | undefined) {
 }
 
 function openProject(p: any) {
-  // Best-effort navigation: try to open project detail route. Adjust if your app uses a different route.
   const id = p?.id || p?.project_id;
   if (!id) {
     toast.add({ title: "Cannot open project: missing id.", color: "error" });
     return;
   }
   navigateTo(`/project/${id}`);
+}
+
+// createProject handled in CreateProjectModal; parent listens for 'created' event
+
+function onProjectCreated(p: any) {
+  projects.value.unshift(p);
 }
 </script>
 
