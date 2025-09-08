@@ -42,6 +42,38 @@ export default defineNuxtPlugin(() => {
     return req;
   });
 
+  // Response interceptor: if we get a 401, clear auth cookies and redirect to login
+  axios.interceptors.response.use(
+    (res) => res,
+    (error) => {
+      const status = error?.response?.status;
+      if (status === 401) {
+        // Clear auth-related cookies
+        try {
+          useCookie("token").value = "";
+          useCookie("user").value = "";
+          useCookie("api_token").value = "";
+        } catch (e) {
+          // ignore cookie errors
+        }
+
+        // Client-side: notify user and redirect to login
+        if (typeof window !== "undefined") {
+          try {
+            const toast = useToast();
+            toast.add({ title: "Session expired. You have been signed out.", color: "warning" });
+          } catch (e) {
+            // if toast is unavailable, ignore
+          }
+
+          // Use a full navigation to reset state
+          window.location.href = "/login";
+        }
+      }
+      return Promise.reject(error);
+    }
+  );
+
   return {
     provide: {
       axios,

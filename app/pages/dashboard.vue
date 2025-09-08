@@ -20,10 +20,18 @@
           <div class="h-6 w-1/3 bg-gray-200 rounded animate-pulse"></div>
           <div class="overflow-hidden">
             <div class="grid grid-cols-5 gap-4 mb-2">
-              <div v-for="n in 5" :key="n" class="h-4 bg-gray-200 rounded animate-pulse"></div>
+              <div
+                v-for="n in 5"
+                :key="n"
+                class="h-4 bg-gray-200 rounded animate-pulse"
+              ></div>
             </div>
             <div class="space-y-2">
-              <div v-for="r in 4" :key="r" class="h-8 bg-gray-200 rounded animate-pulse"></div>
+              <div
+                v-for="r in 4"
+                :key="r"
+                class="h-8 bg-gray-200 rounded animate-pulse"
+              ></div>
             </div>
           </div>
         </div>
@@ -33,28 +41,51 @@
           <table class="min-w-full text-sm text-left">
             <thead>
               <tr class="text-xs text-gray-500 uppercase">
+                <th class="py-2 px-3">Project No.</th>
                 <th class="py-2 px-3">Name</th>
-                <th class="py-2 px-3">Owner</th>
+                <th class="py-2 px-3">Type</th>
                 <th class="py-2 px-3">Status</th>
                 <th class="py-2 px-3">Created</th>
                 <th class="py-2 px-3">Actions</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="project in projects" :key="project.id" class="border-t">
-                <td class="py-3 px-3 font-medium text-gray-800">{{ project.name }}</td>
-                <td class="py-3 px-3 text-gray-600">{{ project.owner || project.owner_name || '-' }}</td>
-                <td class="py-3 px-3">
-                  <span :class="statusClass(project.status)">{{ project.status || 'n/a' }}</span>
+              <tr
+                v-for="project in projects"
+                :key="project.id"
+                class="border-t"
+              >
+                <td class="py-3 px-3 font-medium text-gray-800">
+                  {{ project.number || "n/a" }}
                 </td>
-                <td class="py-3 px-3 text-gray-600">{{ formatDate(project.created_at) }}</td>
+                <td class="py-3 px-3 font-medium text-gray-800">
+                  {{ project.name }}
+                </td>
+                <td class="py-3 px-3 text-gray-600">
+                  {{ project.type || "n/a" }}
+                </td>
                 <td class="py-3 px-3">
-                  <button class="text-blue-600 hover:underline" @click="openProject(project)">Open</button>
+                  <span :class="statusClass(project.status)">{{
+                    project.status || "n/a"
+                  }}</span>
+                </td>
+                <td class="py-3 px-3 text-gray-600">
+                  {{ formatDate(project.created_at) }}
+                </td>
+                <td class="py-3 px-3">
+                  <button
+                    class="text-blue-600 hover:underline"
+                    @click="openProject(project)"
+                  >
+                    Open
+                  </button>
                 </td>
               </tr>
 
               <tr v-if="projects.length === 0">
-                <td colspan="5" class="py-6 text-center text-gray-500">No projects found.</td>
+                <td colspan="5" class="py-6 text-center text-gray-500">
+                  No projects found.
+                </td>
               </tr>
             </tbody>
           </table>
@@ -63,8 +94,8 @@
     </div>
 
     <CreateProjectModal v-model="showCreateModal" @created="onProjectCreated" />
-    </div>
-  </template>
+  </div>
+</template>
 
 <script lang="ts" setup>
 definePageMeta({
@@ -112,9 +143,12 @@ function formatDate(v: string | null | undefined) {
 
 function statusClass(status: string | null | undefined) {
   const s = (status || "").toLowerCase();
-  if (s === "active" || s === "running" || s === "open") return "text-green-600 font-semibold";
-  if (s === "pending" || s === "waiting") return "text-yellow-600 font-semibold";
-  if (s === "failed" || s === "closed" || s === "archived") return "text-red-600 font-semibold";
+  if (s === "active" || s === "running" || s === "open")
+    return "text-green-600 font-semibold";
+  if (s === "pending" || s === "waiting")
+    return "text-yellow-600 font-semibold";
+  if (s === "failed" || s === "closed" || s === "archived")
+    return "text-red-600 font-semibold";
   return "text-gray-600";
 }
 
