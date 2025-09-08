@@ -12,46 +12,61 @@
 
   <!-- User header fixed top-right; shown only when we have a name -->
   <div v-if="name" class="fixed top-4 right-4 z-50" ref="root">
-    <div class="relative">
+    <div class="flex items-center gap-2">
+      <!-- Theme toggle button -->
       <button
-        class="flex items-center gap-3 bg-white/95 dark:bg-slate-800/95 border border-gray-200 dark:border-slate-700 rounded-xl pl-2 pr-4 py-2 shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
-        @click="toggleMenu"
-        aria-label="User menu"
+        @click="toggleTheme"
+        :aria-pressed="isDark"
+        :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+        class="w-10 h-10 rounded-xl flex items-center justify-center bg-white/95 dark:bg-slate-800/95 border border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition"
       >
-        <div
-          class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm"
-          :class="avatarBg"
-        >
-          {{ initials }}
-        </div>
-        <div class="hidden sm:flex flex-col items-start leading-tight">
-          <span
-            class="text-sm font-semibold text-gray-800 dark:text-gray-100"
-            >{{ displayName }}</span
-          >
-          <span class="text-xs text-gray-500 dark:text-gray-300">Account</span>
-        </div>
+        <RiSunFill v-if="!isDark" class="h-5 w-5 text-yellow-500" />
+        <RiMoonFill v-else class="h-5 w-5 text-gray-200" />
       </button>
 
-      <transition name="fade">
-        <div
-          v-if="menuOpen"
-          class="absolute right-0 mt-2 w-44 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-md shadow-lg py-1 z-50"
+      <div class="relative">
+        <button
+          class="flex items-center gap-3 bg-white/95 dark:bg-slate-800/95 border border-gray-200 dark:border-slate-700 rounded-xl pl-2 pr-4 py-2 shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
+          @click="toggleMenu"
+          aria-label="User menu"
         >
-          <button
-            class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-slate-700"
-            @click="onProfile"
+          <div
+            class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm"
+            :class="avatarBg"
           >
-            Profile
-          </button>
-          <button
-            class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-slate-700"
-            @click="onLogout"
+            {{ initials }}
+          </div>
+          <div class="hidden sm:flex flex-col items-start leading-tight">
+            <span
+              class="text-sm font-semibold text-gray-800 dark:text-gray-100"
+              >{{ displayName }}</span
+            >
+            <span class="text-xs text-gray-500 dark:text-gray-300"
+              >Account</span
+            >
+          </div>
+        </button>
+
+        <transition name="fade">
+          <div
+            v-if="menuOpen"
+            class="absolute right-0 mt-2 w-44 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-md shadow-lg py-1 z-50"
           >
-            Logout
-          </button>
-        </div>
-      </transition>
+            <button
+              class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-slate-700"
+              @click="onProfile"
+            >
+              Profile
+            </button>
+            <button
+              class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-slate-700"
+              @click="onLogout"
+            >
+              Logout
+            </button>
+          </div>
+        </transition>
+      </div>
     </div>
   </div>
 </template>
@@ -60,6 +75,7 @@
 import { computed, ref, onMounted, onBeforeUnmount } from "vue";
 import { useCookie, navigateTo, useRuntimeConfig } from "#imports";
 import axios from "axios";
+import { RiSunFill, RiMoonFill } from "@remixicon/vue";
 
 // Read the `user` cookie which this project stores as a JSON string.
 const userCookie = useCookie("user");
@@ -134,6 +150,26 @@ async function onLogout() {
 // close the menu on escape or outside click
 const root = ref<HTMLElement | null>(null);
 
+// Theme state: store preference in localStorage and toggle the `dark` class on <html>
+const isDark = ref(false);
+
+function applyTheme(dark: boolean) {
+  if (typeof document === "undefined") return;
+  const el = document.documentElement;
+  if (dark) el.classList.add("dark");
+  else el.classList.remove("dark");
+}
+
+function toggleTheme() {
+  isDark.value = !isDark.value;
+  try {
+    localStorage.setItem("theme", isDark.value ? "dark" : "light");
+  } catch (e) {
+    // ignore storage errors
+  }
+  applyTheme(isDark.value);
+}
+
 function onDocClick(e: MouseEvent) {
   if (!menuOpen.value) return;
   if (!root.value) return;
@@ -141,7 +177,25 @@ function onDocClick(e: MouseEvent) {
   menuOpen.value = false;
 }
 
-onMounted(() => document.addEventListener("click", onDocClick));
+onMounted(() => {
+  // initialize theme from localStorage or system preference
+  try {
+    const saved = localStorage.getItem("theme");
+    if (saved === "dark") isDark.value = true;
+    else if (saved === "light") isDark.value = false;
+    else if (
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+    )
+      isDark.value = true;
+  } catch (e) {
+    isDark.value = false;
+  }
+  applyTheme(isDark.value);
+
+  document.addEventListener("click", onDocClick);
+});
+
 onBeforeUnmount(() => document.removeEventListener("click", onDocClick));
 </script>
 

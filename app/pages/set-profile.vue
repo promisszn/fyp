@@ -1,16 +1,16 @@
 <template>
-  <div class="flex justify-center items-center min-h-screen bg-gray-50">
+  <div class="flex justify-center items-center min-h-screen bg-gray-50 dark:bg-slate-900">
     <div
-      class="bg-white p-12 rounded-xl shadow-lg min-w-[400px] max-w-md w-full flex flex-col items-center"
+      class="bg-white dark:bg-slate-800 p-12 rounded-xl shadow-lg min-w-[400px] max-w-md w-full flex flex-col items-center"
     >
       <div class="flex flex-col items-center text-center mb-6 w-full">
         <div
-          class="flex justify-center items-center w-12 h-12 mx-auto mb-2 bg-blue-100 rounded-full"
+          class="flex justify-center items-center w-12 h-12 mx-auto mb-2 bg-blue-100 dark:bg-blue-900/30 rounded-full"
         >
-          <RiUser3Fill class="text-2xl text-blue-600" />
+          <RiUser3Fill class="text-2xl text-blue-600 dark:text-blue-400" />
         </div>
-        <h2 class="text-2xl font-bold text-gray-800 mb-1">Set Your Profile</h2>
-        <p class="text-gray-700 text-sm">
+        <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-1">Set Your Profile</h2>
+        <p class="text-gray-700 dark:text-gray-300 text-sm">
           Complete your profile to get started.
         </p>
       </div>
@@ -18,23 +18,23 @@
         @submit.prevent="handleProfileSubmit"
         class="w-full flex flex-col gap-1"
       >
-        <label class="font-semibold text-gray-800"
+        <label class="font-semibold text-gray-800 dark:text-gray-200"
           >First Name<span class="text-red-600">*</span></label
         >
         <input
           type="text"
           v-model="firstName"
           placeholder="Enter your first name"
-          class="py-2 px-3 border border-gray-300 rounded-md text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          class="py-2 px-3 border border-gray-300 dark:border-slate-600 rounded-md text-gray-900 dark:text-gray-100 bg-white dark:bg-slate-700 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
-        <label class="font-semibold text-gray-800 mt-4"
+        <label class="font-semibold text-gray-800 dark:text-gray-200 mt-4"
           >Last Name<span class="text-red-600">*</span></label
         >
         <input
           type="text"
           v-model="lastName"
           placeholder="Enter your last name"
-          class="py-2 px-3 border border-gray-300 rounded-md text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          class="py-2 px-3 border border-gray-300 dark:border-slate-600 rounded-md text-gray-900 dark:text-gray-100 bg-white dark:bg-slate-700 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
         <Transition name="slide-down">
           <p

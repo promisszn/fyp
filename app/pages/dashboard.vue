@@ -2,10 +2,10 @@
   <UserHeader />
 
   <!-- Add top padding so content isn't hidden under the fixed header -->
-  <div class="min-h-screen bg-gray-50 pt-20 pb-8">
+  <div class="min-h-screen bg-gray-50 dark:bg-slate-900 pt-20 pb-8">
     <div class="max-w-5xl mx-auto px-4">
       <div class="flex items-center justify-between mb-4">
-        <h1 class="text-2xl font-bold text-gray-800">Projects</h1>
+        <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Projects</h1>
         <button
           @click="showCreateModal = true"
           class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
@@ -14,7 +14,7 @@
         </button>
       </div>
 
-      <div class="bg-white rounded-lg shadow p-4">
+      <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
         <!-- Loading skeleton -->
         <div v-if="loading" class="space-y-4">
           <div class="overflow-hidden">
@@ -22,14 +22,14 @@
               <div
                 v-for="n in 6"
                 :key="n"
-                class="h-4 bg-gray-200 rounded animate-pulse"
+                class="h-4 bg-gray-200 dark:bg-slate-600 rounded animate-pulse"
               ></div>
             </div>
             <div class="space-y-2">
               <div
                 v-for="r in 4"
                 :key="r"
-                class="h-8 bg-gray-200 rounded animate-pulse"
+                class="h-8 bg-gray-200 dark:bg-slate-600 rounded animate-pulse"
               ></div>
             </div>
           </div>
@@ -39,7 +39,7 @@
         <div v-else>
           <table class="min-w-full text-sm text-left">
             <thead>
-              <tr class="text-xs text-gray-500 uppercase">
+              <tr class="text-xs text-gray-500 dark:text-gray-400 uppercase">
                 <th class="py-2 px-3">Project No.</th>
                 <th class="py-2 px-3">Name</th>
                 <th class="py-2 px-3">Type</th>
@@ -52,15 +52,15 @@
               <tr
                 v-for="project in projects"
                 :key="project.id"
-                class="border-t"
+                class="border-t border-gray-200 dark:border-slate-700"
               >
-                <td class="py-3 px-3 font-medium text-gray-800">
+                <td class="py-3 px-3 font-medium text-gray-800 dark:text-gray-200">
                   {{ project.number || "n/a" }}
                 </td>
-                <td class="py-3 px-3 font-medium text-gray-800 capitalize">
+                <td class="py-3 px-3 font-medium text-gray-800 dark:text-gray-200 capitalize">
                   {{ project.name }}
                 </td>
-                <td class="py-3 px-3 text-gray-600">
+                <td class="py-3 px-3 text-gray-600 dark:text-gray-300">
                   {{ project.type || "n/a" }}
                 </td>
                 <td class="py-3 px-3">
@@ -68,14 +68,14 @@
                     project.status || "n/a"
                   }}</span>
                 </td>
-                <td class="py-3 px-3 text-gray-600">
+                <td class="py-3 px-3 text-gray-600 dark:text-gray-300">
                   {{ formatDate(project.created_at) }}
                 </td>
                 <td class="py-3 px-3 relative">
                   <!-- action button -->
                   <button
                     @click.stop="toggleDropdown(project.id)"
-                    class="hover:text-blue-600 text-gray-600 cursor-pointer p-1 rounded"
+                    class="hover:text-blue-600 text-gray-600 dark:text-gray-300 dark:hover:text-blue-400 cursor-pointer p-1 rounded"
                     aria-haspopup="true"
                     :aria-expanded="activeDropdown === project.id"
                   >
@@ -86,16 +86,16 @@
                   <div
                     v-if="activeDropdown === project.id"
                     @click.stop
-                    class="absolute right-0 mt-2 w-40 bg-white border rounded shadow z-20"
+                    class="absolute right-0 mt-2 w-40 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded shadow z-20"
                   >
-                    <ul class="divide-y">
+                    <ul class="divide-y divide-gray-200 dark:divide-slate-600">
                       <li>
                         <button
                           @click="
                             openProject(project);
                             activeDropdown = null;
                           "
-                          class="w-full text-left px-3 py-2 text-gray-800 hover:bg-gray-100"
+                          class="w-full text-left px-3 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700"
                         >
                           View
                         </button>
@@ -106,7 +106,7 @@
                             editProject(project);
                             activeDropdown = null;
                           "
-                          class="w-full text-left px-3 py-2 text-gray-800 hover:bg-gray-100"
+                          class="w-full text-left px-3 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700"
                         >
                           Edit
                         </button>
@@ -117,7 +117,7 @@
                             deleteProject(project);
                             activeDropdown = null;
                           "
-                          class="w-full text-left px-3 py-2 text-red-600 hover:bg-gray-100"
+                          class="w-full text-left px-3 py-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-slate-700"
                         >
                           Delete
                         </button>
@@ -128,7 +128,7 @@
               </tr>
 
               <tr v-if="projects.length === 0">
-                <td colspan="5" class="py-6 text-center text-gray-500">
+                <td colspan="5" class="py-6 text-center text-gray-500 dark:text-gray-400">
                   No projects found.
                 </td>
               </tr>
@@ -239,7 +239,7 @@ function statusClass(status: string | null | undefined) {
   const raw = (status || "").toLowerCase();
 
   const map: Record<string, string> = {
-    draft: "text-gray-600",
+    draft: "text-gray-600 dark:text-gray-400",
     in_progress: "text-yellow-600 font-semibold",
     field_work_complete: "text-blue-600 font-semibold",
     computed: "text-indigo-600 font-semibold",
@@ -247,7 +247,7 @@ function statusClass(status: string | null | undefined) {
     completed: "text-green-600 font-semibold",
   };
 
-  return map[raw] ?? "text-gray-600";
+  return map[raw] ?? "text-gray-600 dark:text-gray-400";
 }
 
 function openProject(p: any) {

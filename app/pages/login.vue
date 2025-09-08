@@ -1,16 +1,16 @@
 <template>
-  <div class="flex justify-center items-center min-h-screen bg-gray-50">
+  <div class="flex justify-center items-center min-h-screen bg-gray-50 dark:bg-slate-900">
     <div
-      class="bg-white p-12 rounded-xl shadow-lg min-w-[400px] max-w-md w-full flex flex-col items-center"
+      class="bg-white dark:bg-slate-800 p-12 rounded-xl shadow-lg min-w-[400px] max-w-md w-full flex flex-col items-center"
     >
       <div class="flex flex-col items-center text-center mb-6 w-full">
         <div
-          class="flex justify-center items-center w-12 h-12 mx-auto mb-2 bg-blue-100 rounded-full"
+          class="flex justify-center items-center w-12 h-12 mx-auto mb-2 bg-blue-100 dark:bg-blue-900/30 rounded-full"
         >
-          <RiLock2Fill class="text-2xl text-blue-600" />
+          <RiLock2Fill class="text-2xl text-blue-600 dark:text-blue-400" />
         </div>
-        <h2 class="text-2xl font-bold text-gray-800 mb-1">Welcome back</h2>
-        <p class="text-gray-700 text-sm">
+        <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-1">Welcome back</h2>
+        <p class="text-gray-700 dark:text-gray-300 text-sm">
           Sign in securely with your email and otp.
         </p>
       </div>
@@ -19,14 +19,14 @@
         v-if="step === 'email'"
         class="w-full flex flex-col gap-1"
       >
-        <label class="font-semibold text-gray-800"
+        <label class="font-semibold text-gray-800 dark:text-gray-200"
           >Email<span class="text-red-600">*</span></label
         >
         <input
           type="email"
           v-model="email"
           placeholder="Enter your email"
-          class="py-2 px-3 border border-gray-300 rounded-md text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          class="py-2 px-3 border border-gray-300 dark:border-slate-600 rounded-md text-gray-900 dark:text-gray-100 bg-white dark:bg-slate-700 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
         <Transition name="slide-down">
           <p
@@ -49,14 +49,14 @@
         v-if="step === 'otp'"
         class="w-full flex flex-col gap-1"
       >
-        <label class="font-semibold text-gray-800"
+        <label class="font-semibold text-gray-800 dark:text-gray-200"
           >OTP<span class="text-red-600">*</span></label
         >
         <input
           type="text"
           v-model="otp"
           placeholder="Enter OTP"
-          class="py-2 px-3 border border-gray-300 rounded-md text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          class="py-2 px-3 border border-gray-300 dark:border-slate-600 rounded-md text-gray-900 dark:text-gray-100 bg-white dark:bg-slate-700 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
         <Transition name="slide-down">
           <p
@@ -74,7 +74,7 @@
           Continue
         </button>
         <p
-          class="text-blue-600 hover:underline text-right text-sm font-semibold cursor-pointer mt-1"
+          class="text-blue-600 dark:text-blue-400 hover:underline text-right text-sm font-semibold cursor-pointer mt-1"
           @click="step = 'email'"
         >
           Back
