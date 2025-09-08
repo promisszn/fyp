@@ -57,7 +57,7 @@
                 <td class="py-3 px-3 font-medium text-gray-800">
                   {{ project.number || "n/a" }}
                 </td>
-                <td class="py-3 px-3 font-medium text-gray-800">
+                <td class="py-3 px-3 font-medium text-gray-800 capitalize">
                   {{ project.name }}
                 </td>
                 <td class="py-3 px-3 text-gray-600">
@@ -73,10 +73,9 @@
                 </td>
                 <td class="py-3 px-3">
                   <button
-                    class="text-blue-600 hover:underline"
-                    @click="openProject(project)"
+                    class="hover:text-blue-600 text-gray-600 cursor-pointer"
                   >
-                    Open
+                    <RiMore2Fill />
                   </button>
                 </td>
               </tr>
@@ -97,6 +96,7 @@
 </template>
 
 <script lang="ts" setup>
+import { RiMore2Fill } from "@remixicon/vue";
 definePageMeta({
   middleware: ["auth"],
 });
