@@ -1,12 +1,22 @@
 <template>
   <div class="flex justify-center items-center min-h-screen bg-gray-50">
     <div
-      class="bg-white p-8 rounded-xl shadow-lg min-w-[400px] max-w-md w-full flex flex-col items-center"
+      class="bg-white p-12 rounded-xl shadow-lg min-w-[400px] max-w-md w-full flex flex-col items-center"
     >
-      <h2 class="text-2xl font-bold text-gray-800 mb-4">Set Your Profile</h2>
+      <div class="flex flex-col items-center text-center mb-6 w-full">
+        <div
+          class="flex justify-center items-center w-12 h-12 mx-auto mb-2 bg-blue-100 rounded-full"
+        >
+          <RiUser3Fill class="text-2xl text-blue-600" />
+        </div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-1">Set Your Profile</h2>
+        <p class="text-gray-700 text-sm">
+          Complete your profile to get started.
+        </p>
+      </div>
       <form
         @submit.prevent="handleProfileSubmit"
-        class="w-full flex flex-col gap-4"
+        class="w-full flex flex-col gap-1"
       >
         <label class="font-semibold text-gray-800"
           >First Name<span class="text-red-600">*</span></label
@@ -17,7 +27,7 @@
           placeholder="Enter your first name"
           class="py-2 px-3 border border-gray-300 rounded-md text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
-        <label class="font-semibold text-gray-800"
+        <label class="font-semibold text-gray-800 mt-4"
           >Last Name<span class="text-red-600">*</span></label
         >
         <input
@@ -26,23 +36,22 @@
           placeholder="Enter your last name"
           class="py-2 px-3 border border-gray-300 rounded-md text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
-
+        <Transition name="slide-down">
+          <p
+            v-if="error"
+            class="text-red-600 font-semibold text-sm -mt-1 w-full text-left"
+          >
+            {{ error }}
+          </p>
+        </Transition>
         <button
           type="submit"
           :disabled="loading"
-          class="bg-blue-600 text-white rounded-md p-3 font-semibold mt-2 disabled:bg-blue-300"
+          class="bg-blue-600 text-white rounded-md p-3 font-semibold mt-8 disabled:bg-blue-300"
         >
           Save Profile
         </button>
       </form>
-      <Transition name="slide-down">
-        <p
-          v-if="error"
-          class="text-red-600 font-semibold text-sm mt-0 w-full text-left"
-        >
-          {{ error }}
-        </p>
-      </Transition>
     </div>
   </div>
 </template>
@@ -52,6 +61,7 @@ definePageMeta({
   middleware: ["auth"],
 });
 
+import { RiUser3Fill } from "@remixicon/vue";
 import { ref } from "vue";
 import axios from "axios";
 const config = useRuntimeConfig();
@@ -84,7 +94,8 @@ const handleProfileSubmit = async () => {
       },
       {
         headers: {
-          token: useCookie("token").value,
+          Authorization: `Bearer ${useCookie("token").value}`,
+          "x-api-token": useCookie("api_token").value,
         },
       }
     );
@@ -93,11 +104,9 @@ const handleProfileSubmit = async () => {
       color: "success",
     });
 
-    console.log("Profile Response:", response.data.data);
     user.value = JSON.stringify(response.data.data);
     navigateTo("/dashboard");
   } catch (e: any) {
-    console.log("Profile Error:", e);
     error.value = e?.response?.data?.message || "Failed to save profile.";
     toast.add({
       title: "Failed to save profile.",
