@@ -223,7 +223,7 @@ async function submit() {
       emit("created", created);
     } else {
       toast.add({
-        title: "Project created (no payload returned).",
+        title: "Project created (no data returned).",
         color: "info",
       });
     }
