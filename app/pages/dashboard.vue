@@ -111,7 +111,7 @@
                   <td class="py-3 px-3 relative">
                     <!-- action button -->
                     <button
-                      @click.stop="toggleDropdown(project.id)"
+                      @click.stop="toggleDropdown(project.id, $event)"
                       class="hover:text-blue-600 text-gray-600 dark:text-gray-300 dark:hover:text-blue-400 cursor-pointer p-1 rounded"
                       aria-haspopup="true"
                       :aria-expanded="activeDropdown === project.id"
@@ -123,7 +123,7 @@
                     <div
                       v-if="activeDropdown === project.id"
                       @click.stop
-                      class="absolute right-0 mt-2 w-40 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded shadow z-20"
+                      :class="['absolute right-0 w-40 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded shadow z-20', dropdownOpensUp ? 'bottom-full mb-2' : 'mt-2']"
                     >
                       <ul
                         class="divide-y divide-gray-200 dark:divide-slate-600"
@@ -197,7 +197,7 @@
                   </p>
                 </div>
                 <button
-                  @click.stop="toggleDropdown(project.id)"
+                  @click.stop="toggleDropdown(project.id, $event)"
                   class="flex-shrink-0 ml-2 hover:text-blue-600 text-gray-600 dark:text-gray-300 dark:hover:text-blue-400 cursor-pointer p-1 rounded"
                   aria-haspopup="true"
                   :aria-expanded="activeDropdown === project.id"
@@ -205,51 +205,9 @@
                   <RiMore2Fill />
                 </button>
 
-                <!-- Mobile dropdown -->
-                <div
-                  v-if="activeDropdown === project.id"
-                  @click.stop
-                  class="absolute right-4 mt-8 w-40 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded shadow z-20"
-                >
-                  <ul class="divide-y divide-gray-200 dark:divide-slate-600">
-                    <li>
-                      <button
-                        @click="
-                          openProject(project);
-                          activeDropdown = null;
-                        "
-                        class="w-full text-left px-3 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700"
-                      >
-                        View
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        @click="
-                          editProject(project);
-                          activeDropdown = null;
-                        "
-                        class="w-full text-left px-3 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700"
-                      >
-                        Edit
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        @click="
-                          deleteProject(project);
-                          activeDropdown = null;
-                        "
-                        class="w-full text-left px-3 py-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-slate-700"
-                      >
-                        Delete
-                      </button>
-                    </li>
-                  </ul>
-                </div>
-              </div>
+                <!-- Mobile dropdown now teleported globally -->
 
-              <div class="space-y-2">
+                <!-- (Removed old inline mobile dropdown; using global teleported menu) -->
                 <div class="flex items-center justify-between text-xs">
                   <span class="text-gray-500 dark:text-gray-400">Type:</span>
                   <span class="text-gray-700 dark:text-gray-300">{{
@@ -296,6 +254,43 @@
       :message="confirmMessage"
       @confirmed="onConfirmedDelete"
     />
+
+    <!-- Teleported global dropdown menu (desktop & mobile) -->
+    <Teleport to="body">
+      <div
+        v-if="activeDropdown"
+        class="fixed inset-0 z-40 md:hidden"
+        @click="closeDropdown"
+      ></div>
+      <div
+        v-if="activeDropdown"
+        ref="dropdownEl"
+        class="fixed z-50 w-44 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded shadow focus:outline-none"
+        :style="dropdownStyle"
+        @click.stop
+      >
+        <ul class="divide-y divide-gray-200 dark:divide-slate-600 text-sm">
+          <li>
+            <button
+              @click="handleMenuAction('open')"
+              class="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-slate-700"
+            >Open</button>
+          </li>
+          <li>
+            <button
+              @click="handleMenuAction('edit')"
+              class="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-slate-700"
+            >Edit</button>
+          </li>
+          <li>
+            <button
+              @click="handleMenuAction('delete')"
+              class="w-full text-left px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-slate-700"
+            >Delete</button>
+          </li>
+        </ul>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -305,7 +300,7 @@ definePageMeta({
   middleware: ["auth"],
 });
 
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, onMounted, onBeforeUnmount, computed, nextTick } from "vue";
 import axios from "axios";
 import { useRuntimeConfig, navigateTo } from "#imports";
 
@@ -341,21 +336,93 @@ const fetchProjects = async () => {
   }
 };
 
-function toggleDropdown(id: any) {
-  activeDropdown.value = activeDropdown.value === id ? null : id;
+// Teleported dropdown state & logic
+const dropdownEl = ref<HTMLElement | null>(null);
+const dropdownCoords = ref({ top: 0, left: 0 });
+const dropdownOpensUp = ref(false);
+const activeProject = ref<any | null>(null);
+
+const dropdownStyle = computed(() => ({
+  top: dropdownCoords.value.top + 'px',
+  left: dropdownCoords.value.left + 'px',
+  minWidth: '11rem'
+}));
+
+function toggleDropdown(id: any, evt?: MouseEvent) {
+  if (activeDropdown.value === id) {
+    closeDropdown();
+    return;
+  }
+  activeDropdown.value = id;
+  activeProject.value = projects.value.find(p => p.id === id) || null;
+  positionDropdown(evt);
+}
+
+function positionDropdown(evt?: MouseEvent) {
+  try {
+    const trigger = (evt?.currentTarget || evt?.target) as HTMLElement | null;
+    if (!trigger) return;
+    const rect = trigger.getBoundingClientRect();
+    const estimatedHeight = 160; // approx menu height
+    const width = 176; // tailwind w-44 => 11rem -> 176px
+    const spaceBelow = window.innerHeight - rect.bottom;
+    dropdownOpensUp.value = spaceBelow < estimatedHeight && rect.top > estimatedHeight;
+
+    let top = dropdownOpensUp.value ? rect.top - estimatedHeight - 8 : rect.bottom + 8;
+    let left = rect.left + rect.width - width; // right align
+    left = Math.min(left, window.innerWidth - width - 8);
+    left = Math.max(8, left);
+    if (top < 8) top = 8;
+    dropdownCoords.value = { top, left };
+
+    nextTick(() => {
+      if (!dropdownEl.value) return;
+      const realH = dropdownEl.value.offsetHeight;
+      if (dropdownOpensUp.value) {
+        const preciseTop = rect.top - realH - 8;
+        dropdownCoords.value.top = Math.max(8, preciseTop);
+      } else {
+        const overflow = dropdownCoords.value.top + realH - window.innerHeight + 8;
+        if (overflow > 0 && rect.top > realH + 16) {
+          dropdownOpensUp.value = true;
+          dropdownCoords.value.top = Math.max(8, rect.top - realH - 8);
+        }
+      }
+    });
+  } catch (e) {
+    // swallow
+  }
+}
+
+function closeDropdown() {
+  activeDropdown.value = null;
+  activeProject.value = null;
+}
+
+function handleMenuAction(action: string) {
+  const p = activeProject.value;
+  if (!p) return;
+  if (action === 'open') openProject(p);
+  else if (action === 'edit') editProject(p);
+  else if (action === 'delete') deleteProject(p);
+  closeDropdown();
 }
 
 function handleOutsideClick() {
-  activeDropdown.value = null;
+  closeDropdown();
 }
 
 onMounted(() => {
   fetchProjects();
   document.addEventListener("click", handleOutsideClick);
+  window.addEventListener("resize", closeDropdown);
+  window.addEventListener("scroll", closeDropdown, true);
 });
 
 onBeforeUnmount(() => {
   document.removeEventListener("click", handleOutsideClick);
+  window.removeEventListener("resize", closeDropdown);
+  window.removeEventListener("scroll", closeDropdown, true);
 });
 
 function formatDate(v: string | null | undefined) {
