@@ -20,8 +20,13 @@
         :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
         class="w-10 h-10 rounded-xl flex items-center justify-center bg-white/95 dark:bg-slate-800/95 border border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition cursor-pointer"
       >
-        <RiSunFill v-if="!isDark" class="h-5 w-5 text-yellow-500" />
-        <RiMoonFill v-else class="h-5 w-5 text-gray-200" />
+        <ClientOnly>
+          <template #fallback>
+            <div class="h-5 w-5" />
+          </template>
+          <RiSunFill v-if="!isDark" class="h-5 w-5 text-yellow-500" />
+          <RiMoonFill v-else class="h-5 w-5 text-gray-200" />
+        </ClientOnly>
       </button>
 
       <div class="relative">

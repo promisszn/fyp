@@ -118,51 +118,6 @@
                     >
                       <RiMore2Fill />
                     </button>
-
-                    <!-- dropdown -->
-                    <div
-                      v-if="activeDropdown === project.id"
-                      @click.stop
-                      :class="['absolute right-0 w-40 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded shadow z-20', dropdownOpensUp ? 'bottom-full mb-2' : 'mt-2']"
-                    >
-                      <ul
-                        class="divide-y divide-gray-200 dark:divide-slate-600"
-                      >
-                        <li>
-                          <button
-                            @click="
-                              openProject(project);
-                              activeDropdown = null;
-                            "
-                            class="w-full text-left px-3 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700"
-                          >
-                            View
-                          </button>
-                        </li>
-                        <li>
-                          <button
-                            @click="
-                              editProject(project);
-                              activeDropdown = null;
-                            "
-                            class="w-full text-left px-3 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700"
-                          >
-                            Edit
-                          </button>
-                        </li>
-                        <li>
-                          <button
-                            @click="
-                              deleteProject(project);
-                              activeDropdown = null;
-                            "
-                            class="w-full text-left px-3 py-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-slate-700"
-                          >
-                            Delete
-                          </button>
-                        </li>
-                      </ul>
-                    </div>
                   </td>
                 </tr>
 
