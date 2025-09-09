@@ -135,14 +135,29 @@
                 Client
               </h4>
               <div class="text-sm space-y-1">
-                <div v-if="project.client?.name || project.client?.email || project.client?.phone">
-                  <div v-if="project.client.name" class="text-gray-700 dark:text-gray-300">
+                <div
+                  v-if="
+                    project.client?.name ||
+                    project.client?.email ||
+                    project.client?.phone
+                  "
+                >
+                  <div
+                    v-if="project.client.name"
+                    class="text-gray-700 dark:text-gray-300"
+                  >
                     {{ project.client.name }}
                   </div>
-                  <div v-if="project.client.email" class="text-gray-500 dark:text-gray-400">
+                  <div
+                    v-if="project.client.email"
+                    class="text-gray-500 dark:text-gray-400"
+                  >
                     {{ project.client.email }}
                   </div>
-                  <div v-if="project.client.phone" class="text-gray-500 dark:text-gray-400">
+                  <div
+                    v-if="project.client.phone"
+                    class="text-gray-500 dark:text-gray-400"
+                  >
                     {{ project.client.phone }}
                   </div>
                 </div>
@@ -156,11 +171,19 @@
                 Surveyor
               </h4>
               <div class="text-sm space-y-1">
-                <div v-if="project.surveyor?.name || project.surveyor?.license_no">
-                  <div v-if="project.surveyor.name" class="text-gray-700 dark:text-gray-300">
+                <div
+                  v-if="project.surveyor?.name || project.surveyor?.license_no"
+                >
+                  <div
+                    v-if="project.surveyor.name"
+                    class="text-gray-700 dark:text-gray-300"
+                  >
                     {{ project.surveyor.name }}
                   </div>
-                  <div v-if="project.surveyor.license_no" class="text-gray-500 dark:text-gray-400">
+                  <div
+                    v-if="project.surveyor.license_no"
+                    class="text-gray-500 dark:text-gray-400"
+                  >
                     License: {{ project.surveyor.license_no }}
                   </div>
                 </div>
@@ -174,14 +197,30 @@
                 Location
               </h4>
               <div class="text-sm space-y-1">
-                <div v-if="project.location?.address || project.location?.city || project.location?.state || project.location?.country">
-                  <div v-if="project.location.address" class="text-gray-700 dark:text-gray-300">
+                <div
+                  v-if="
+                    project.location?.address ||
+                    project.location?.city ||
+                    project.location?.state ||
+                    project.location?.country
+                  "
+                >
+                  <div
+                    v-if="project.location.address"
+                    class="text-gray-700 dark:text-gray-300"
+                  >
                     {{ project.location.address }}
                   </div>
-                  <div v-if="project.location.city || project.location.state" class="text-gray-500 dark:text-gray-400">
+                  <div
+                    v-if="project.location.city || project.location.state"
+                    class="text-gray-500 dark:text-gray-400"
+                  >
                     {{ getLocationText() }}
                   </div>
-                  <div v-if="project.location.country" class="text-gray-500 dark:text-gray-400">
+                  <div
+                    v-if="project.location.country"
+                    class="text-gray-500 dark:text-gray-400"
+                  >
                     {{ project.location.country }}
                   </div>
                 </div>
@@ -233,7 +272,7 @@
     v-model="showDeleteModal"
     title="Delete Project"
     message="Are you sure you want to delete this project? This action cannot be undone."
-    @confirm="confirmDelete"
+    @confirmed="confirmDelete"
   />
 </template>
 
@@ -314,7 +353,7 @@ const getStatusClass = (status: string) => {
 const getLocationText = () => {
   const city = project.value.location?.city;
   const state = project.value.location?.state;
-  
+
   if (city && state) {
     return `${city}, ${state}`;
   } else if (city) {
@@ -322,7 +361,7 @@ const getLocationText = () => {
   } else if (state) {
     return state;
   } else {
-    return '';
+    return "";
   }
 };
 

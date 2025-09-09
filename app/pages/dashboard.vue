@@ -4,8 +4,14 @@
   <!-- Add top padding so content isn't hidden under the fixed header -->
   <div class="min-h-screen bg-gray-50 dark:bg-slate-900 pt-24 pb-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
-        <h1 class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">Projects</h1>
+      <div
+        class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4"
+      >
+        <h1
+          class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100"
+        >
+          Projects
+        </h1>
         <button
           @click="showCreateModal = true"
           class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm sm:text-base"
@@ -41,9 +47,15 @@
               :key="r"
               class="p-4 border border-gray-200 dark:border-slate-600 rounded-lg space-y-3"
             >
-              <div class="h-4 bg-gray-200 dark:bg-slate-600 rounded animate-pulse w-3/4"></div>
-              <div class="h-3 bg-gray-200 dark:bg-slate-600 rounded animate-pulse w-1/2"></div>
-              <div class="h-3 bg-gray-200 dark:bg-slate-600 rounded animate-pulse w-2/3"></div>
+              <div
+                class="h-4 bg-gray-200 dark:bg-slate-600 rounded animate-pulse w-3/4"
+              ></div>
+              <div
+                class="h-3 bg-gray-200 dark:bg-slate-600 rounded animate-pulse w-1/2"
+              ></div>
+              <div
+                class="h-3 bg-gray-200 dark:bg-slate-600 rounded animate-pulse w-2/3"
+              ></div>
             </div>
           </div>
         </div>
@@ -69,21 +81,31 @@
                   :key="project.id"
                   class="border-t border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50"
                 >
-                  <td class="py-3 px-3 font-medium text-gray-800 dark:text-gray-200">
-                    {{ project.number || "n/a" }}
+                  <td
+                    class="py-3 px-3 font-medium text-gray-800 dark:text-gray-200"
+                  >
+                    {{ project.number || "N/A" }}
                   </td>
-                  <td class="py-3 px-3 font-medium text-gray-800 dark:text-gray-200 capitalize">
+                  <td
+                    class="py-3 px-3 font-medium text-gray-800 dark:text-gray-200 capitalize"
+                  >
                     <div class="max-w-xs truncate">{{ project.name }}</div>
                   </td>
-                  <td class="py-3 px-3 text-gray-600 dark:text-gray-300 hidden lg:table-cell">
-                    {{ project.type || "n/a" }}
+                  <td
+                    class="py-3 px-3 text-gray-600 dark:text-gray-300 hidden lg:table-cell"
+                  >
+                    {{ project.type || "N/A" }}
                   </td>
                   <td class="py-3 px-3">
-                    <span :class="statusClass(project.status)" class="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-slate-700">{{
-                      project.status || "n/a"
-                    }}</span>
+                    <span
+                      :class="statusClass(project.status)"
+                      class="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-slate-700"
+                      >{{ project.status || "N/A" }}</span
+                    >
                   </td>
-                  <td class="py-3 px-3 text-gray-600 dark:text-gray-300 hidden xl:table-cell text-xs">
+                  <td
+                    class="py-3 px-3 text-gray-600 dark:text-gray-300 hidden xl:table-cell text-xs"
+                  >
                     {{ formatDate(project.created_at) }}
                   </td>
                   <td class="py-3 px-3 relative">
@@ -103,7 +125,9 @@
                       @click.stop
                       class="absolute right-0 mt-2 w-40 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded shadow z-20"
                     >
-                      <ul class="divide-y divide-gray-200 dark:divide-slate-600">
+                      <ul
+                        class="divide-y divide-gray-200 dark:divide-slate-600"
+                      >
                         <li>
                           <button
                             @click="
@@ -143,7 +167,10 @@
                 </tr>
 
                 <tr v-if="projects.length === 0">
-                  <td colspan="6" class="py-6 text-center text-gray-500 dark:text-gray-400">
+                  <td
+                    colspan="6"
+                    class="py-6 text-center text-gray-500 dark:text-gray-400"
+                  >
                     No projects found.
                   </td>
                 </tr>
@@ -160,11 +187,13 @@
             >
               <div class="flex items-start justify-between mb-3">
                 <div class="flex-1 min-w-0">
-                  <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 capitalize truncate">
+                  <h3
+                    class="text-sm font-semibold text-gray-800 dark:text-gray-200 capitalize truncate"
+                  >
                     {{ project.name }}
                   </h3>
                   <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    #{{ project.number || "n/a" }}
+                    #{{ project.number || "N/A" }}
                   </p>
                 </div>
                 <button
@@ -223,22 +252,31 @@
               <div class="space-y-2">
                 <div class="flex items-center justify-between text-xs">
                   <span class="text-gray-500 dark:text-gray-400">Type:</span>
-                  <span class="text-gray-700 dark:text-gray-300">{{ project.type || "n/a" }}</span>
-                </div>
-                <div class="flex items-center justify-between text-xs">
-                  <span class="text-gray-500 dark:text-gray-400">Status:</span>
-                  <span :class="statusClass(project.status)" class="px-2 py-1 rounded-full bg-gray-100 dark:bg-slate-700">{{
-                    project.status || "n/a"
+                  <span class="text-gray-700 dark:text-gray-300">{{
+                    project.type || "N/A"
                   }}</span>
                 </div>
                 <div class="flex items-center justify-between text-xs">
+                  <span class="text-gray-500 dark:text-gray-400">Status:</span>
+                  <span
+                    :class="statusClass(project.status)"
+                    class="px-2 py-1 rounded-full bg-gray-100 dark:bg-slate-700"
+                    >{{ project.status || "N/A" }}</span
+                  >
+                </div>
+                <div class="flex items-center justify-between text-xs">
                   <span class="text-gray-500 dark:text-gray-400">Created:</span>
-                  <span class="text-gray-700 dark:text-gray-300">{{ formatDate(project.created_at) }}</span>
+                  <span class="text-gray-700 dark:text-gray-300">{{
+                    formatDate(project.created_at)
+                  }}</span>
                 </div>
               </div>
             </div>
 
-            <div v-if="projects.length === 0" class="py-8 text-center text-gray-500 dark:text-gray-400">
+            <div
+              v-if="projects.length === 0"
+              class="py-8 text-center text-gray-500 dark:text-gray-400"
+            >
               No projects found.
             </div>
           </div>
