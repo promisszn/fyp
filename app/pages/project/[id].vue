@@ -430,7 +430,7 @@ onMounted(async () => {
       title: "Failed to load project. Redirecting to projects list.",
       color: "error",
     });
-    navigateTo("/projects");
+    navigateTo("/dashboard");
   } finally {
     loading.value = false;
   }
