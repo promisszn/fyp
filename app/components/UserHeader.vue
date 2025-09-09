@@ -73,7 +73,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onBeforeUnmount } from "vue";
-import { useCookie, navigateTo, useRuntimeConfig } from "#imports";
+import { useCookie, navigateTo, useRuntimeConfig, useColorMode } from "#imports";
 import axios from "axios";
 import { RiSunFill, RiMoonFill } from "@remixicon/vue";
 
@@ -150,24 +150,11 @@ async function onLogout() {
 // close the menu on escape or outside click
 const root = ref<HTMLElement | null>(null);
 
-// Theme state: store preference in localStorage and toggle the `dark` class on <html>
-const isDark = ref(false);
-
-function applyTheme(dark: boolean) {
-  if (typeof document === "undefined") return;
-  const el = document.documentElement;
-  if (dark) el.classList.add("dark");
-  else el.classList.remove("dark");
-}
-
+// Theme state via @nuxtjs/color-mode
+const colorMode = useColorMode();
+const isDark = computed(() => colorMode.value === 'dark');
 function toggleTheme() {
-  isDark.value = !isDark.value;
-  try {
-    localStorage.setItem("theme", isDark.value ? "dark" : "light");
-  } catch (e) {
-    // ignore storage errors
-  }
-  applyTheme(isDark.value);
+  colorMode.preference = isDark.value ? 'light' : 'dark';
 }
 
 function onDocClick(e: MouseEvent) {
@@ -178,21 +165,6 @@ function onDocClick(e: MouseEvent) {
 }
 
 onMounted(() => {
-  // initialize theme from localStorage or system preference
-  try {
-    const saved = localStorage.getItem("theme");
-    if (saved === "dark") isDark.value = true;
-    else if (saved === "light") isDark.value = false;
-    else if (
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches
-    )
-      isDark.value = true;
-  } catch (e) {
-    isDark.value = false;
-  }
-  applyTheme(isDark.value);
-
   document.addEventListener("click", onDocClick);
 });
 

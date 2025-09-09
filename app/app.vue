@@ -22,9 +22,11 @@ useHead({
 <template>
   <UApp :toaster="toaster">
     <NuxtLoadingIndicator />
-
-    <NuxtLayout>
-      <NuxtPage />
-    </NuxtLayout>
+    <!-- Wrap content with unified background so all pages share theme surface -->
+    <div class="min-h-screen bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-gray-100 transition-colors">
+      <NuxtLayout>
+        <NuxtPage />
+      </NuxtLayout>
+    </div>
   </UApp>
 </template>

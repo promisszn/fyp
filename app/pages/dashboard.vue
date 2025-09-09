@@ -2,7 +2,7 @@
   <UserHeader />
 
   <!-- Add top padding so content isn't hidden under the fixed header -->
-  <div class="min-h-screen bg-gray-50 dark:bg-slate-900 pt-24 pb-8">
+  <div class="min-h-screen pt-24 pb-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div
         class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4"
