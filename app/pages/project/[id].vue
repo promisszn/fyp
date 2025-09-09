@@ -8,7 +8,7 @@
       <div class="mb-4">
         <button
           @click="navigateTo('/dashboard')"
-          class="inline-flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors"
+          class="inline-flex items-center gap-2 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors"
         >
           <RiArrowLeftLine class="w-4 h-4" />
           Back to Dashboard

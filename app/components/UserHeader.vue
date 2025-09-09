@@ -26,7 +26,7 @@
 
       <div class="relative">
         <button
-          class="flex items-center gap-3 bg-white/95 dark:bg-slate-800/95 border border-gray-200 dark:border-slate-700 rounded-xl pl-2 pr-4 py-2 shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
+          class="flex items-center gap-3 bg-white/95 dark:bg-slate-800/95 border border-gray-200 dark:border-slate-700 rounded-xl p-2 shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
           @click="toggleMenu"
           aria-label="User menu"
         >
