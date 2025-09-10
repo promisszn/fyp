@@ -110,13 +110,31 @@ const props = defineProps<{
   modelValue?: any;
   coordinates?: CoordInput[];
   parcelName?: string;
-  parcels?: Array<{ name?: string }>; // optional list of parcels to choose a label from
+  parcels?: Array<{ name?: string; ids?: string[] }>; // optional list of parcels (used to filter coordinates by ids)
 }>();
 const emit = defineEmits(["complete"]);
 
 // Prepare scaled points for a 100x100 SVG canvas with padding and Y-axis inversion
+const selectedParcel = computed(() => {
+  const name = selectedParcelName.value?.trim();
+  if (!name || !Array.isArray(props.parcels)) return null;
+  return (
+    props.parcels.find((p) => (p?.name || "").trim() === name) || null
+  );
+});
+
+const filteredCoordinates = computed<CoordInput[]>(() => {
+  const coords = props.coordinates || [];
+  const ids = selectedParcel.value?.ids?.filter(Boolean) || [];
+  if (!ids.length) return coords;
+  const set = new Set(ids);
+  const filtered = coords.filter((r) => r.point && set.has(r.point));
+  // Fallback to all coords if filter yields none
+  return filtered.length ? filtered : coords;
+});
+
 const points = computed(() => {
-  const src = (props.coordinates || [])
+  const src = filteredCoordinates.value
     .filter((r) => r.northing != null && r.easting != null)
     .map((r) => ({
       key: r.point || `${r.easting},${r.northing}`,
