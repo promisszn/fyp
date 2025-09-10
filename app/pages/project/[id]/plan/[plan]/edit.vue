@@ -128,10 +128,6 @@
           @finish="finishPlan"
         />
       </div>
-
-      <div v-if="debug" class="mt-6 text-xs text-gray-500 dark:text-gray-400">
-        <pre>{{ planData }}</pre>
-      </div>
     </div>
   </div>
 </template>
@@ -171,7 +167,6 @@ const steps = [
 
 const currentStep = ref(1);
 const completed = ref<Set<number>>(new Set());
-const debug = false;
 
 // Aggregated plan data across steps
 const planData = reactive({

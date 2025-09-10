@@ -12,7 +12,13 @@
           >
             <RiArrowLeftLine class="w-4 h-4" /> Back to Project
           </button>
-          <div class="ml-auto">
+          <div class="ml-auto flex items-center gap-2">
+            <button
+              @click="showDeleteModal = true"
+              class="inline-flex items-center px-3 py-2 text-sm rounded-md border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+            >
+              <RiDeleteBinLine class="w-4 h-4 mr-1" /> Delete
+            </button>
             <button
               @click="navigateTo(`/project/${projectId}/plan/${planId}/edit`)"
               class="inline-flex items-center px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700"
@@ -264,19 +270,24 @@
             </div>
           </div>
         </div>
-
-        <div v-if="debug" class="mt-6 text-xs text-gray-500 dark:text-gray-400">
-          <pre>{{ planData }}</pre>
-        </div>
       </div>
     </div>
   </div>
+
+  <!-- Delete Plan Confirmation Modal -->
+  <ConfirmModal
+    v-model="showDeleteModal"
+    title="Delete Plan"
+    message="Are you sure you want to delete this plan? This action cannot be undone."
+    @confirmed="confirmDelete"
+  />
 </template>
 
 <script lang="ts" setup>
 definePageMeta({ middleware: ["auth"] });
 
-import { RiArrowLeftLine } from "@remixicon/vue";
+import { RiArrowLeftLine, RiDeleteBinLine } from "@remixicon/vue";
+import ConfirmModal from "~/components/ConfirmModal.vue";
 import { ref, reactive, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { navigateTo } from "#imports";
@@ -288,7 +299,7 @@ const toast = useToast();
 const projectId = route.params.id as string;
 const planId = route.params.plan as string;
 const initialLoading = ref(true);
-const debug = false;
+const showDeleteModal = ref(false);
 
 const planData = reactive({
   basic: { name: "", type: "" },
@@ -381,7 +392,16 @@ function formatNumber(v: number | string | null | undefined) {
   );
 }
 
-// no-op
+async function confirmDelete() {
+  try {
+    await axios.delete(`/plan/delete/${planId}`);
+    toast.add({ title: "Plan deleted successfully", color: "success" });
+    navigateTo(`/project/${projectId}`);
+  } catch (error) {
+    toast.add({ title: "Failed to delete plan", color: "error" });
+  }
+  showDeleteModal.value = false;
+}
 </script>
 
 <style scoped></style>
