@@ -252,10 +252,26 @@
               :key="plan.id"
               class="bg-white dark:bg-slate-800 rounded-lg shadow p-4 hover:shadow-md transition-shadow border border-gray-200 dark:border-slate-600"
             >
-              <div
-                class="font-bold text-lg mb-1 text-gray-800 dark:text-gray-200"
-              >
-                {{ plan.name }}
+              <div class="flex items-start justify-between mb-1">
+                <div class="font-bold text-lg text-gray-800 dark:text-gray-200">
+                  {{ plan.name }}
+                </div>
+                <div class="flex items-center gap-1">
+                  <button
+                    @click="editPlan(plan)"
+                    class="p-1.5 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-md transition-colors"
+                    title="Edit Plan"
+                  >
+                    <RiEditLine class="w-4 h-4" />
+                  </button>
+                  <button
+                    @click="openPlanDelete(plan)"
+                    class="p-1.5 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-md transition-colors"
+                    title="Delete Plan"
+                  >
+                    <RiDeleteBinLine class="w-4 h-4" />
+                  </button>
+                </div>
               </div>
               <div
                 v-if="plan.type"
@@ -299,6 +315,14 @@
     title="Delete Project"
     message="Are you sure you want to delete this project? This action cannot be undone."
     @confirmed="confirmDelete"
+  />
+
+  <!-- Delete Plan Confirmation Modal -->
+  <ConfirmModal
+    v-model="showPlanDeleteModal"
+    title="Delete Plan"
+    message="Are you sure you want to delete this plan? This action cannot be undone."
+    @confirmed="confirmDeletePlan"
   />
 </template>
 
@@ -360,6 +384,8 @@ const showDeleteModal = ref(false);
 
 // Plans
 const plans = ref<PlanData[]>([]);
+const showPlanDeleteModal = ref(false);
+const planToDelete = ref<PlanData | null>(null);
 
 // Format date function
 const formatDate = (dateString?: string) => {
@@ -422,6 +448,29 @@ const confirmDelete = async () => {
 const createPlan = () => {
   if (!project.value.id) return;
   navigateTo(`/project/${project.value.id}/plan/create`);
+};
+
+const editPlan = (plan: PlanData) => {
+  navigateTo(`/project/${route.params.id}/plan/${plan.id}/edit`);
+};
+
+const openPlanDelete = (plan: PlanData) => {
+  planToDelete.value = plan;
+  showPlanDeleteModal.value = true;
+};
+
+const confirmDeletePlan = async () => {
+  const id = planToDelete.value?.id;
+  if (!id) return;
+  try {
+    await axios.delete(`/plan/delete/${id}`);
+    toast.add({ title: "Plan deleted successfully", color: "success" });
+    plans.value = plans.value.filter((p) => p.id !== id);
+  } catch (error) {
+    toast.add({ title: "Failed to delete plan", color: "error" });
+  }
+  showPlanDeleteModal.value = false;
+  planToDelete.value = null;
 };
 
 onMounted(async () => {
