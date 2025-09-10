@@ -100,6 +100,7 @@
           v-else-if="currentStep === 3"
           :model-value="{ drawing: planData.drawing }"
           :coordinates="planData.coordinates"
+          :parcel-name="planData.parcels[0]?.name || planData.basic.name"
           @update:model-value="onDrawingUpdate"
           @complete="completeDrawing"
         />

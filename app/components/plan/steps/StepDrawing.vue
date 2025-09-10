@@ -15,12 +15,29 @@
           class="w-full h-full"
         >
           <!-- polygon shape -->
+          <!-- parcel label at centroid -->
+          <text
+            v-if="parcelLabel && points.length"
+            :x="centroid.x"
+            :y="centroid.y"
+            text-anchor="middle"
+            dominant-baseline="middle"
+            font-size="6"
+            font-weight="600"
+            fill="#f8fafc"
+            stroke="#000"
+            stroke-opacity="0.35"
+            stroke-width="0.8"
+            paint-order="stroke"
+          >
+            {{ parcelLabel }}
+          </text>
           <polygon
             v-if="polygon"
             :points="polygon"
             fill="none"
-            stroke="#2563eb"
-            stroke-width="1.5"
+            stroke="#fff"
+            stroke-width="1.2"
           />
           <!-- points -->
           <g>
@@ -29,16 +46,16 @@
               :key="p.key"
               :cx="p.x"
               :cy="p.y"
-              r="1.2"
-              fill="#1e40af"
+              r="1.3"
+              stroke="#fff"
             />
             <text
               v-for="p in points"
               :key="p.key + '-label'"
               :x="p.x + 1.8"
               :y="p.y - 1.2"
-              font-size="3"
-              fill="#334155"
+              font-size="5"
+              fill="#fff"
             >
               {{ p.label }}
             </text>
@@ -75,7 +92,11 @@ type CoordInput = {
 };
 
 // Keep modelValue in props to avoid extraneous-attrs warnings from parent, but unused here.
-const props = defineProps<{ modelValue?: any; coordinates?: CoordInput[] }>();
+const props = defineProps<{
+  modelValue?: any;
+  coordinates?: CoordInput[];
+  parcelName?: string;
+}>();
 const emit = defineEmits(["complete"]);
 
 // Prepare scaled points for a 100x100 SVG canvas with padding and Y-axis inversion
@@ -123,6 +144,37 @@ const points = computed(() => {
 const polygon = computed(() => {
   if (!points.value.length) return "";
   return points.value.map((p) => `${p.x},${p.y}`).join(" ");
+});
+
+const parcelLabel = computed(() => (props.parcelName || "").trim());
+
+// centroid of polygon (in SVG coords). If degenerate, fallback to average of points
+const centroid = computed(() => {
+  const pts = points.value;
+  const n = pts.length;
+  if (!n) return { x: 50, y: 50 };
+  if (n < 3) {
+    const sx = pts.reduce((s, p) => s + p.x, 0);
+    const sy = pts.reduce((s, p) => s + p.y, 0);
+    return { x: sx / n, y: sy / n };
+  }
+  let area2 = 0; // 2 * area (signed)
+  let cx = 0;
+  let cy = 0;
+  for (let i = 0; i < n; i++) {
+  const p0 = pts[i]!;
+  const p1 = pts[(i + 1) % n]!;
+  const f = p0.x * p1.y - p1.x * p0.y;
+    area2 += f;
+    cx += (p0.x + p1.x) * f;
+    cy += (p0.y + p1.y) * f;
+  }
+  if (area2 === 0) {
+    const sx = pts.reduce((s, p) => s + p.x, 0);
+    const sy = pts.reduce((s, p) => s + p.y, 0);
+    return { x: sx / n, y: sy / n };
+  }
+  return { x: cx / (3 * area2), y: cy / (3 * area2) };
 });
 function onComplete() {
   emit("complete");
