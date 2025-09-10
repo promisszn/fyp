@@ -97,7 +97,7 @@
       </button>
     </div>
     <p class="text-[11px] text-gray-500 dark:text-gray-400">
-      Each coordinate can be selected only once across all parcels.
+      You can reuse the same coordinate across multiple parcels.
     </p>
   </div>
 </template>
@@ -144,21 +144,8 @@ const maxColumns = computed(() =>
   Math.max(1, ...local.parcels.map((p) => p.ids.length || 0))
 );
 
-const selectedSet = computed(() => {
-  const s = new Set<string>();
-  for (const p of local.parcels) {
-    for (const id of p.ids) {
-      if (id) s.add(id);
-    }
-  }
-  return s;
-});
-
-function optionsFor(rowIdx: number, colIdx: number, current: string) {
-  // Allow current value even if already selected
-  const used = new Set(selectedSet.value);
-  if (current) used.delete(current);
-  return props.coordinateIds.filter((id) => !used.has(id));
+function optionsFor(_rowIdx: number, _colIdx: number, _current: string) {
+  return props.coordinateIds;
 }
 
 function addRow() {
@@ -180,7 +167,7 @@ const canSave = computed(() => {
 
 function onComplete() {
   if (!canSave.value) return;
-  // Clean empty ids and ensure uniqueness is respected already by options
+  // Clean empty ids; duplicates are allowed by design
   const cleaned = local.parcels.map((p) => ({
     _key: p._key,
     name: p.name.trim(),
