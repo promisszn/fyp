@@ -62,7 +62,9 @@
           v-if="currentStep === 1"
           :model-value="{ basic: planData.basic }"
           :plan-types="PLAN_TYPES"
-          @update:model-value="val => Object.assign(planData.basic, val.basic)"
+          @update:model-value="
+            (val) => Object.assign(planData.basic, val.basic)
+          "
           @complete="completeBasic"
           @cancel="cancel"
         >
@@ -405,8 +407,10 @@
 
 <script lang="ts" setup>
 import { RiArrowLeftLine, RiArrowRightLine } from "@remixicon/vue";
-import StepBasicDetails from "../../../../components/plan/steps/StepBasicDetails.vue";
+import StepBasicDetails from "~/components/plan/steps/StepBasicDetails.vue";
+
 definePageMeta({ middleware: ["auth"] });
+
 import { ref, reactive } from "vue";
 import { useRoute } from "vue-router";
 import { navigateTo } from "#imports";
@@ -416,7 +420,6 @@ const route = useRoute();
 const toast = useToast();
 
 const projectId = route.params.id as string;
-
 
 // Steps meta
 const steps = [
