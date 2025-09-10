@@ -88,7 +88,9 @@
         <StepParcels
           v-else-if="currentStep === 2"
           :model-value="{ parcels: planData.parcels }"
-          :coordinate-ids="planData.coordinates.map(c => c.point).filter(Boolean)"
+          :coordinate-ids="
+            planData.coordinates.map((c) => c.point).filter(Boolean)
+          "
           :loading="submittingParcels"
           @update:model-value="onParcelsUpdate"
           @complete="completeParcels"
@@ -97,6 +99,7 @@
         <StepDrawing
           v-else-if="currentStep === 3"
           :model-value="{ drawing: planData.drawing }"
+          :coordinates="planData.coordinates"
           @update:model-value="onDrawingUpdate"
           @complete="completeDrawing"
         />
@@ -279,7 +282,10 @@ async function completeParcels() {
   try {
     submittingParcels.value = true;
     const payload = {
-      parcels: planData.parcels.map((p: any) => ({ name: p.name, ids: Array.isArray(p.ids) ? p.ids.filter((id: string) => !!id) : [] })),
+      parcels: planData.parcels.map((p: any) => ({
+        name: p.name,
+        ids: Array.isArray(p.ids) ? p.ids.filter((id: string) => !!id) : [],
+      })),
     };
     await axios.put(`/plan/parcels/edit/${planId}`, payload);
     markCompleted(2);
@@ -292,12 +298,10 @@ async function completeParcels() {
   }
 }
 
-// Drawing
+// Drawing: display-only, allow proceeding
 function completeDrawing() {
-  if (!planData.drawing.fileName) return;
   markCompleted(3);
   currentStep.value = 4;
-  toast.add({ title: "Drawing saved", color: "success" });
 }
 
 // Embellishment
@@ -318,7 +322,7 @@ function finishPlan() {
 // Update handlers to avoid implicit any in template
 type CoordinatesUpdate = { coordinates: any[] };
 type ParcelsUpdate = { parcels: any[] };
-type DrawingUpdate = { drawing: { file: File | null; fileName: string } };
+type DrawingUpdate = { drawing: Record<string, any> };
 type EmbellishmentUpdate = { embellishment: { notes: string } };
 type ReportUpdate = {
   report: { generate: boolean };

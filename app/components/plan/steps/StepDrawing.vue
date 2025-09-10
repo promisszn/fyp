@@ -1,50 +1,126 @@
 <template>
   <div class="space-y-6">
-    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Drawing</h2>
-    <div class="p-4 border border-dashed border-gray-300 dark:border-slate-600 rounded-md text-center text-sm text-gray-500 dark:text-gray-400">
-      <p class="mb-2">Upload or generate drawing (placeholder).</p>
-      <input type="file" @change="onFile" class="block mx-auto text-xs" />
-      <p v-if="local.drawing.fileName" class="mt-2 text-xs text-green-600">Selected: {{ local.drawing.fileName }}</p>
+    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+      Drawing
+    </h2>
+
+    <!-- Simple SVG Plot (plain background) -->
+    <div
+      class="rounded-md overflow-hidden border border-gray-200 dark:border-slate-600 bg-black"
+    >
+      <div v-if="points.length" class="w-full h-72">
+        <svg
+          viewBox="0 0 100 100"
+          preserveAspectRatio="xMidYMid meet"
+          class="w-full h-full"
+        >
+          <!-- polygon shape -->
+          <polyline
+            v-if="polyline"
+            :points="polyline"
+            fill="none"
+            stroke="#2563eb"
+            stroke-width="1.5"
+          />
+          <!-- points -->
+          <g>
+            <circle
+              v-for="p in points"
+              :key="p.key"
+              :cx="p.x"
+              :cy="p.y"
+              r="1.2"
+              fill="#1e40af"
+            />
+            <text
+              v-for="p in points"
+              :key="p.key + '-label'"
+              :x="p.x + 1.8"
+              :y="p.y - 1.2"
+              font-size="3"
+              fill="#334155"
+            >
+              {{ p.label }}
+            </text>
+          </g>
+        </svg>
+      </div>
+      <div
+        v-else
+        class="p-6 text-center text-sm text-gray-500 dark:text-gray-400"
+      >
+        No coordinates to plot yet. Add coordinates in Step 1.
+      </div>
     </div>
+
     <div class="flex justify-end gap-3">
-      <button @click="onComplete" :disabled="!local.drawing.fileName" class="px-4 py-2 rounded bg-blue-600 text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700">Save & Continue</button>
+      <button
+        @click="onComplete"
+        class="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700"
+      >
+        Continue
+      </button>
     </div>
-    <p class="text-[11px] text-gray-500 dark:text-gray-400">Select a drawing file to proceed.</p>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, watch } from "vue";
+import { computed } from "vue";
 
-interface DrawingState {
-  file: File | null;
-  fileName: string;
-}
+type CoordInput = {
+  point: string;
+  northing: number | null;
+  easting: number | null;
+  elevation?: number | null;
+};
 
-const props = defineProps<{ modelValue: { drawing: DrawingState } }>();
-const emit = defineEmits(["update:modelValue", "complete"]);
+// Keep modelValue in props to avoid extraneous-attrs warnings from parent, but unused here.
+const props = defineProps<{ modelValue?: any; coordinates?: CoordInput[] }>();
+const emit = defineEmits(["complete"]);
 
-const local = reactive<{ drawing: DrawingState }>({ drawing: { file: null, fileName: "" } });
+// Prepare scaled points for a 100x100 SVG canvas with padding and Y-axis inversion
+const points = computed(() => {
+  const src = (props.coordinates || [])
+    .filter((r) => r.northing != null && r.easting != null)
+    .map((r) => ({
+      key: r.point || `${r.easting},${r.northing}`,
+      label: r.point || "",
+      x: Number(r.easting),
+      y: Number(r.northing),
+    }));
+  if (!src.length)
+    return [] as Array<{ key: string; label: string; x: number; y: number }>;
 
-watch(
-  () => props.modelValue,
-  (v) => {
-    if (v) local.drawing = { ...v.drawing };
-  },
-  { immediate: true, deep: true }
-);
-
-function onFile(evt: Event) {
-  const input = evt.target as HTMLInputElement;
-  if (input.files && input.files[0]) {
-    const f = input.files[0];
-    local.drawing.file = f;
-    local.drawing.fileName = f.name;
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity;
+  for (const p of src) {
+    if (p.x < minX) minX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y > maxY) maxY = p.y;
   }
-}
+  const rangeX = Math.max(1, maxX - minX);
+  const rangeY = Math.max(1, maxY - minY);
+  const pad = 8; // percent of 100
+  const inner = 100 - pad * 2;
+  const scale = inner / Math.max(rangeX, rangeY);
+
+  return src.map((p) => ({
+    key: p.key,
+    label: p.label,
+    x: pad + (p.x - minX) * scale,
+    // invert Y so larger northing goes up
+    y: pad + (maxY - p.y) * scale,
+  }));
+});
+
+const polyline = computed(() => {
+  if (!points.value.length) return "";
+  return points.value.map((p) => `${p.x},${p.y}`).join(" ");
+});
 function onComplete() {
-  if (!local.drawing.fileName) return;
-  emit("update:modelValue", { drawing: { ...local.drawing } });
   emit("complete");
 }
 </script>
