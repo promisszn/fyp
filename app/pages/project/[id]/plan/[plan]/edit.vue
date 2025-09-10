@@ -259,7 +259,8 @@ onMounted(async () => {
         completed.value.add(2);
       }
       if (hasCoords && hasParcels) {
-        currentStep.value = 3;
+        currentStep.value = 4;
+        completed.value.add(3);
       } else if (hasCoords) {
         currentStep.value = 2;
       } else {
