@@ -88,6 +88,8 @@
         <StepParcels
           v-else-if="currentStep === 2"
           :model-value="{ parcels: planData.parcels }"
+          :coordinate-ids="planData.coordinates.map(c => c.point).filter(Boolean)"
+          :loading="submittingParcels"
           @update:model-value="onParcelsUpdate"
           @complete="completeParcels"
         />
@@ -149,6 +151,7 @@ const toast = useToast();
 const projectId = route.params.id as string;
 const planId = route.params.plan as string;
 const submittingCoordinates = ref(false);
+const submittingParcels = ref(false);
 const initialLoading = ref(true);
 
 const steps = [
@@ -193,13 +196,12 @@ onMounted(async () => {
         }));
       }
 
-      // Parcels: API sample uses name + ids[]; map minimally to our fields
+      // Parcels: API uses name + ids[]; map to component shape
       if (Array.isArray(data.parcels)) {
         planData.parcels = data.parcels.map((p: any) => ({
           _key: crypto.randomUUID(),
-          parcel_id: p.name ?? "",
-          area: null,
-          purpose: p.ids && Array.isArray(p.ids) ? p.ids.join(", ") : "",
+          name: p.name ?? "",
+          ids: Array.isArray(p.ids) ? [...p.ids] : [],
         }));
       }
 
@@ -271,11 +273,23 @@ async function completeCoordinates() {
 }
 
 // Parcels
-function completeParcels() {
+async function completeParcels() {
+  if (submittingParcels.value) return;
   if (!planData.parcels.length) return;
-  markCompleted(2);
-  currentStep.value = 3;
-  toast.add({ title: "Parcels saved", color: "success" });
+  try {
+    submittingParcels.value = true;
+    const payload = {
+      parcels: planData.parcels.map((p: any) => ({ name: p.name, ids: Array.isArray(p.ids) ? p.ids.filter((id: string) => !!id) : [] })),
+    };
+    await axios.put(`/plan/parcels/edit/${planId}`, payload);
+    markCompleted(2);
+    currentStep.value = 3;
+    toast.add({ title: "Parcels saved", color: "success" });
+  } catch (error) {
+    toast.add({ title: "Failed to save parcels", color: "error" });
+  } finally {
+    submittingParcels.value = false;
+  }
 }
 
 // Drawing

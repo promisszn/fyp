@@ -4,76 +4,189 @@
       Parcel Table
     </h2>
     <div class="overflow-x-auto">
-      <table class="min-w-full text-sm border border-gray-200 dark:border-slate-600 rounded-md overflow-hidden">
-        <thead class="bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300">
+      <table
+        class="min-w-full text-sm border border-gray-200 dark:border-slate-600 rounded-md overflow-hidden"
+      >
+        <thead
+          class="bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300"
+        >
           <tr>
-            <th class="px-3 py-2 text-left">Parcel ID</th>
-            <th class="px-3 py-2 text-left">Area (sqm)</th>
-            <th class="px-3 py-2 text-left">Purpose</th>
+            <th class="px-3 py-2 text-left">Name</th>
+            <th
+              v-for="n in maxColumns"
+              :key="`col-${n}`"
+              class="px-3 py-2 text-left"
+            >
+              {{ n }}
+            </th>
             <th class="px-3 py-2"></th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(parcel, idx) in local.parcels" :key="parcel._key" class="border-t border-gray-200 dark:border-slate-700">
+          <tr
+            v-for="(parcel, idx) in local.parcels"
+            :key="parcel._key"
+            class="border-t border-gray-200 dark:border-slate-700"
+          >
             <td class="px-3 py-1">
-              <input v-model="parcel.parcel_id" type="text" class="w-40 px-2 py-1 text-xs rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:outline-none" />
+              <input
+                v-model="parcel.name"
+                type="text"
+                class="w-40 px-2 py-1 text-xs rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:outline-none"
+              />
             </td>
-            <td class="px-3 py-1">
-              <input v-model.number="parcel.area" type="number" step="0.01" class="w-28 px-2 py-1 text-xs rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:outline-none" />
+            <td
+              v-for="(n, cIdx) in maxColumns"
+              :key="`r-${idx}-c-${n}`"
+              class="px-3 py-1"
+            >
+              <select
+                v-model="parcel.ids[cIdx]"
+                class="w-28 px-2 py-1 text-xs rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:outline-none"
+              >
+                <option :value="''">--</option>
+                <option
+                  v-for="opt in optionsFor(idx, cIdx, parcel.ids[cIdx] || '')"
+                  :key="opt"
+                  :value="opt"
+                >
+                  {{ opt }}
+                </option>
+              </select>
             </td>
-            <td class="px-3 py-1">
-              <input v-model="parcel.purpose" type="text" class="w-48 px-2 py-1 text-xs rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:outline-none" />
-            </td>
-            <td class="px-3 py-1 text-right">
-              <button @click="removeRow(idx)" class="text-red-600 hover:text-red-700 text-xs">Remove</button>
+            <td class="px-3 py-1 text-right space-x-2 flex">
+              <button
+                @click="addIdSlot(parcel)"
+                class="text-xs text-gray-700 dark:text-gray-200 hover:underline w-16"
+              >
+                + Add Point
+              </button>
+              <button
+                @click="removeRow(idx)"
+                class="text-red-600 hover:text-red-700 text-xs"
+              >
+                Remove
+              </button>
             </td>
           </tr>
           <tr v-if="!local.parcels.length">
-            <td colspan="4" class="px-3 py-4 text-center text-xs text-gray-500 dark:text-gray-400">No parcels added yet.</td>
+            <td
+              :colspan="maxColumns + 2"
+              class="px-3 py-4 text-center text-xs text-gray-500 dark:text-gray-400"
+            >
+              No parcels added yet.
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
     <div class="flex gap-3">
-      <button @click="addRow" type="button" class="px-3 py-1.5 text-xs rounded bg-gray-200 hover:bg-gray-300 dark:bg-slate-600 dark:hover:bg-slate-500 text-gray-700 dark:text-gray-200">Add Parcel</button>
-      <button @click="onComplete" :disabled="!local.parcels.length" class="px-4 py-2 ml-auto rounded bg-blue-600 text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700">Save & Continue</button>
+      <button
+        @click="addRow"
+        type="button"
+        class="px-3 py-1.5 text-xs rounded bg-gray-200 hover:bg-gray-300 dark:bg-slate-600 dark:hover:bg-slate-500 text-gray-700 dark:text-gray-200"
+      >
+        Add Parcel
+      </button>
+      <button
+        @click="onComplete"
+        :disabled="!canSave || loading"
+        class="px-4 py-2 ml-auto rounded bg-blue-600 text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700"
+      >
+        Save & Continue
+      </button>
     </div>
-    <p class="text-[11px] text-gray-500 dark:text-gray-400">Add at least one parcel to proceed.</p>
+    <p class="text-[11px] text-gray-500 dark:text-gray-400">
+      Each coordinate can be selected only once across all parcels.
+    </p>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, watch } from "vue";
+import { computed, reactive, watch } from "vue";
 
 interface ParcelRow {
   _key: string;
-  parcel_id: string;
-  area: number | null;
-  purpose: string;
+  name: string;
+  ids: string[];
 }
 
-const props = defineProps<{ modelValue: { parcels: ParcelRow[] } }>();
+const props = withDefaults(
+  defineProps<{
+    modelValue: { parcels: ParcelRow[] };
+    coordinateIds: string[];
+    loading?: boolean;
+  }>(),
+  { loading: false }
+);
 const emit = defineEmits(["update:modelValue", "complete"]);
 
 const local = reactive<{ parcels: ParcelRow[] }>({ parcels: [] });
 
+// shallow watch parcels list reference
 watch(
-  () => props.modelValue,
-  (v) => {
-    if (v) local.parcels = [...v.parcels];
+  () => props.modelValue.parcels,
+  (arr) => {
+    if (Array.isArray(arr)) {
+      local.parcels = arr.map((p) => ({
+        _key: p._key || crypto.randomUUID(),
+        name: p.name || "",
+        ids: Array.isArray(p.ids) ? [...p.ids] : [],
+      }));
+    } else {
+      local.parcels = [];
+    }
   },
-  { immediate: true, deep: true }
+  { immediate: true }
 );
 
+const maxColumns = computed(() =>
+  Math.max(1, ...local.parcels.map((p) => p.ids.length || 0))
+);
+
+const selectedSet = computed(() => {
+  const s = new Set<string>();
+  for (const p of local.parcels) {
+    for (const id of p.ids) {
+      if (id) s.add(id);
+    }
+  }
+  return s;
+});
+
+function optionsFor(rowIdx: number, colIdx: number, current: string) {
+  // Allow current value even if already selected
+  const used = new Set(selectedSet.value);
+  if (current) used.delete(current);
+  return props.coordinateIds.filter((id) => !used.has(id));
+}
+
 function addRow() {
-  local.parcels.push({ _key: crypto.randomUUID(), parcel_id: "", area: null, purpose: "" });
+  local.parcels.push({ _key: crypto.randomUUID(), name: "", ids: [""] });
 }
 function removeRow(idx: number) {
   local.parcels.splice(idx, 1);
 }
+function addIdSlot(parcel: ParcelRow) {
+  parcel.ids.push("");
+}
+
+const canSave = computed(() => {
+  if (!local.parcels.length) return false;
+  return local.parcels.every(
+    (p) => p.name.trim().length > 0 && p.ids.some((id) => !!id)
+  );
+});
+
 function onComplete() {
-  if (!local.parcels.length) return;
-  emit("update:modelValue", { parcels: [...local.parcels] });
+  if (!canSave.value) return;
+  // Clean empty ids and ensure uniqueness is respected already by options
+  const cleaned = local.parcels.map((p) => ({
+    _key: p._key,
+    name: p.name.trim(),
+    ids: p.ids.filter((id) => !!id),
+  }));
+  emit("update:modelValue", { parcels: cleaned });
   emit("complete");
 }
 </script>
