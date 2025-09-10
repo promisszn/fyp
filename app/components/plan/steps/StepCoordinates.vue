@@ -7,17 +7,36 @@
       class="flex items-center justify-between gap-3 p-3 rounded-md border border-blue-200 dark:border-slate-700 bg-blue-50/70 dark:bg-slate-800/50"
     >
       <div class="flex items-center gap-3">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-blue-600 dark:text-blue-400">
-          <path d="M12 3a1 1 0 0 1 1 1v8.586l2.293-2.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4A1 1 0 0 1 8.707 10.293L11 12.586V4a1 1 0 0 1 1-1z"/>
-          <path d="M4 15a1 1 0 0 1 1-1h2a1 1 0 1 1 0 2H6v3h12v-3h-1a1 1 0 1 1 0-2h2a1 1 0 0 1 1 1v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4z"/>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          class="w-5 h-5 text-blue-600 dark:text-blue-400"
+        >
+          <path
+            d="M12 3a1 1 0 0 1 1 1v8.586l2.293-2.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4A1 1 0 0 1 8.707 10.293L11 12.586V4a1 1 0 0 1 1-1z"
+          />
+          <path
+            d="M4 15a1 1 0 0 1 1-1h2a1 1 0 1 1 0 2H6v3h12v-3h-1a1 1 0 1 1 0-2h2a1 1 0 0 1 1 1v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4z"
+          />
         </svg>
         <div>
-          <div class="text-xs font-medium text-gray-800 dark:text-gray-200">Import coordinates (CSV or TXT)</div>
-          <div class="text-[11px] text-gray-600 dark:text-gray-400">Columns: point, northing, easting[, elevation]</div>
+          <div class="text-xs font-medium text-gray-800 dark:text-gray-200">
+            Import coordinates (CSV or TXT)
+          </div>
+          <div class="text-[11px] text-gray-600 dark:text-gray-400">
+            Columns: GCP_Name, Easting, Northing, Elevation
+          </div>
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <input ref="fileInputRef" type="file" accept=".csv,.txt" @change="onFile" class="hidden" />
+        <input
+          ref="fileInputRef"
+          type="file"
+          accept=".csv,.txt"
+          @change="onFile"
+          class="hidden"
+        />
         <button
           type="button"
           @click="triggerFile"
@@ -42,9 +61,9 @@
           class="bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300"
         >
           <tr>
-            <th class="px-3 py-2 text-left">Pt #</th>
-            <th class="px-3 py-2 text-left">Northing</th>
+            <th class="px-3 py-2 text-left">GCP_Name</th>
             <th class="px-3 py-2 text-left">Easting</th>
+            <th class="px-3 py-2 text-left">Northing</th>
             <th class="px-3 py-2 text-left">Elevation</th>
             <th class="px-3 py-2"></th>
           </tr>
@@ -64,7 +83,7 @@
             </td>
             <td class="px-3 py-1">
               <input
-                v-model.number="row.northing"
+                v-model.number="row.easting"
                 type="number"
                 step="0.01"
                 class="w-28 px-2 py-1 text-xs rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:outline-none"
@@ -72,7 +91,7 @@
             </td>
             <td class="px-3 py-1">
               <input
-                v-model.number="row.easting"
+                v-model.number="row.northing"
                 type="number"
                 step="0.01"
                 class="w-28 px-2 py-1 text-xs rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:outline-none"
@@ -192,7 +211,7 @@ function parseCSV(text: string): CoordRow[] {
 
   // detect header
   const header = (lines[0] ?? "").toLowerCase();
-  const hasHeader = /point|pt|north|east|easting|northing/.test(header);
+  const hasHeader = /point|pt|east|north|northing|easting/.test(header);
   const dataLines = hasHeader ? lines.slice(1) : lines;
 
   const rows: CoordRow[] = [];
@@ -200,8 +219,8 @@ function parseCSV(text: string): CoordRow[] {
     const cols = line.includes(",") ? line.split(",") : line.split(/[\s;\t]+/);
     if (cols.length < 3) continue;
     const point = String(cols[0]).trim();
-    const nRaw = String(cols[1]).trim();
-    const eRaw = String(cols[2]).trim();
+    const eRaw = String(cols[1]).trim();
+    const nRaw = String(cols[2]).trim();
     const elevRaw = cols[3] != null ? String(cols[3]).trim() : "";
 
     const northing = nRaw ? Number(nRaw) : null;
@@ -237,11 +256,11 @@ function onFile(ev: Event) {
 
 function downloadTemplate() {
   const csv = [
-    "point,northing,easting,elevation",
-    "P1,37.779,-122.423,",
-    "P2,37.779,-122.414,",
-    "P3,37.772,-122.414,",
-    "P4,37.772,-122.423,",
+    "GCP_Name,Easting,Northing,Elevation",
+    "P1,603781.688,869484.989,296.355",
+    "P2,603926.144,869448.531,293.543",
+    "P3,603852.11,869547.157,297.874",
+    "P4,603786.856,869608.297,299.454",
   ].join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
