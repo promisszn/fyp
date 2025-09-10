@@ -109,6 +109,7 @@
         <StepEmbellishment
           v-else-if="currentStep === 4"
           :model-value="{ embellishment: planData.embellishment }"
+          :loading="submittingEmbellishment"
           @update:model-value="onEmbellishmentUpdate"
           @complete="completeEmbellishment"
         />
@@ -157,6 +158,7 @@ const projectId = route.params.id as string;
 const planId = route.params.plan as string;
 const submittingCoordinates = ref(false);
 const submittingParcels = ref(false);
+const submittingEmbellishment = ref(false);
 const initialLoading = ref(true);
 
 const steps = [
@@ -177,7 +179,21 @@ const planData = reactive({
   coordinates: [] as any[],
   parcels: [] as any[],
   drawing: { file: null as File | null, fileName: "" },
-  embellishment: { notes: "" },
+  embellishment: {
+    name: "",
+    font: "Arial",
+    font_size: 12,
+    title: "",
+    address: "",
+    local_govt: "",
+    state: "",
+    plan_number: "",
+    origin: "utm_zone_31",
+    scale: 1,
+    beacon_type: "none",
+    personel_name: "",
+    surveyor_name: "",
+  },
   report: { generate: true },
 });
 
@@ -208,6 +224,29 @@ onMounted(async () => {
           name: p.name ?? "",
           ids: Array.isArray(p.ids) ? [...p.ids] : [],
         }));
+      }
+
+      // Embellishment prefill: API returns these fields flattened in the plan object
+      const emb: any = data;
+      if (emb) {
+        planData.embellishment = {
+          ...planData.embellishment,
+          name: emb.name ?? planData.embellishment.name,
+          font: emb.font ?? planData.embellishment.font,
+          font_size: emb.font_size ?? planData.embellishment.font_size,
+          title: emb.title ?? planData.embellishment.title,
+          address: emb.address ?? planData.embellishment.address,
+          local_govt: emb.local_govt ?? planData.embellishment.local_govt,
+          state: emb.state ?? planData.embellishment.state,
+          plan_number: emb.plan_number ?? planData.embellishment.plan_number,
+          origin: emb.origin ?? planData.embellishment.origin,
+          scale: emb.scale ?? planData.embellishment.scale,
+          beacon_type: emb.beacon_type ?? planData.embellishment.beacon_type,
+          personel_name:
+            emb.personel_name ?? planData.embellishment.personel_name,
+          surveyor_name:
+            emb.surveyor_name ?? planData.embellishment.surveyor_name,
+        };
       }
 
       // Auto-progress steps if data exists
@@ -307,10 +346,35 @@ function completeDrawing() {
 }
 
 // Embellishment
-function completeEmbellishment() {
-  markCompleted(4);
-  currentStep.value = 5;
-  toast.add({ title: "Embellishment saved", color: "success" });
+async function completeEmbellishment() {
+  if (submittingEmbellishment.value) return;
+  try {
+    submittingEmbellishment.value = true;
+    const e = planData.embellishment;
+    const payload = {
+      name: e.name,
+      font: e.font,
+      font_size: Number(e.font_size ?? 12),
+      title: e.title,
+      address: e.address,
+      local_govt: e.local_govt,
+      state: e.state,
+      plan_number: e.plan_number,
+      origin: e.origin,
+      scale: Number(e.scale ?? 1),
+      beacon_type: e.beacon_type,
+      personel_name: e.personel_name,
+      surveyor_name: e.surveyor_name,
+    };
+    await axios.put(`/plan/edit/${planId}`, payload);
+    markCompleted(4);
+    currentStep.value = 5;
+    toast.add({ title: "Embellishment saved", color: "success" });
+  } catch (error) {
+    toast.add({ title: "Failed to save embellishment", color: "error" });
+  } finally {
+    submittingEmbellishment.value = false;
+  }
 }
 
 // Final Step
@@ -325,10 +389,40 @@ function finishPlan() {
 type CoordinatesUpdate = { coordinates: any[] };
 type ParcelsUpdate = { parcels: any[] };
 type DrawingUpdate = { drawing: Record<string, any> };
-type EmbellishmentUpdate = { embellishment: { notes: string } };
+type EmbellishmentUpdate = {
+  embellishment: {
+    name: string;
+    font: string;
+    font_size: number;
+    title: string;
+    address: string;
+    local_govt: string;
+    state: string;
+    plan_number: string;
+    origin: string;
+    scale: number;
+    beacon_type: string;
+    personel_name: string;
+    surveyor_name: string;
+  };
+};
 type ReportUpdate = {
   report: { generate: boolean };
-  embellishment: { notes: string };
+  embellishment: {
+    name: string;
+    font: string;
+    font_size: number;
+    title: string;
+    address: string;
+    local_govt: string;
+    state: string;
+    plan_number: string;
+    origin: string;
+    scale: number;
+    beacon_type: string;
+    personel_name: string;
+    surveyor_name: string;
+  };
 };
 
 function onCoordinatesUpdate(v: CoordinatesUpdate) {
@@ -345,7 +439,7 @@ function onEmbellishmentUpdate(v: EmbellishmentUpdate) {
 }
 function onReportUpdate(v: ReportUpdate) {
   planData.report = v.report;
-  planData.embellishment = v.embellishment;
+  Object.assign(planData.embellishment, v.embellishment);
 }
 </script>
 
