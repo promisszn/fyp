@@ -89,6 +89,14 @@
         Add Parcel
       </button>
       <button
+        @click="clearAll"
+        type="button"
+        :disabled="!local.parcels.length"
+        class="px-3 py-1.5 text-xs rounded border border-red-300 text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900/30"
+      >
+        Clear All
+      </button>
+      <button
         @click="onComplete"
         :disabled="!canSave || loading"
         class="px-4 py-2 ml-auto rounded bg-blue-600 text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700"
@@ -100,10 +108,18 @@
       You can reuse the same coordinate across multiple parcels.
     </p>
   </div>
+
+  <!-- Confirm clear all parcels modal -->
+  <ConfirmModal
+    v-model="showClearConfirm"
+    title="Clear all parcels?"
+    message="This will remove all parcel rows from the table. This action cannot be undone."
+    @confirmed="confirmClear"
+  />
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, watch } from "vue";
+import { computed, reactive, watch, ref } from "vue";
 
 interface ParcelRow {
   _key: string;
@@ -122,6 +138,7 @@ const props = withDefaults(
 const emit = defineEmits(["update:modelValue", "complete"]);
 
 const local = reactive<{ parcels: ParcelRow[] }>({ parcels: [] });
+const showClearConfirm = ref(false);
 
 // shallow watch parcels list reference
 watch(
@@ -156,6 +173,15 @@ function removeRow(idx: number) {
 }
 function addIdSlot(parcel: ParcelRow) {
   parcel.ids.push("");
+}
+
+function clearAll() {
+  if (!local.parcels.length) return;
+  showClearConfirm.value = true;
+}
+
+function confirmClear() {
+  local.parcels = [];
 }
 
 const canSave = computed(() => {

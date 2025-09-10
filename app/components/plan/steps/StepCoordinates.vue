@@ -135,6 +135,14 @@
         Add Row
       </button>
       <button
+        @click="clearAll"
+        type="button"
+        :disabled="!local.coordinates.length"
+        class="px-3 py-1.5 text-xs rounded border border-red-300 text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900/30"
+      >
+        Clear All
+      </button>
+      <button
         @click="onComplete"
         :disabled="!local.coordinates.length || loading"
         class="px-4 py-2 ml-auto rounded bg-blue-600 text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700"
@@ -146,6 +154,14 @@
       Add at least one coordinate to proceed.
     </p>
   </div>
+
+  <!-- Confirm clear all coordinates modal -->
+  <ConfirmModal
+    v-model="showClearConfirm"
+    title="Clear all coordinates?"
+    message="This will remove all coordinate rows from the table. This action cannot be undone."
+    @confirmed="confirmClear"
+  />
 </template>
 
 <script setup lang="ts">
@@ -167,6 +183,7 @@ const emit = defineEmits(["update:modelValue", "complete"]);
 
 const local = reactive<{ coordinates: CoordRow[] }>({ coordinates: [] });
 const fileInputRef = ref<HTMLInputElement | null>(null);
+const showClearConfirm = ref(false);
 function triggerFile() {
   fileInputRef.value?.click();
 }
@@ -194,6 +211,13 @@ function addRow() {
 }
 function removeRow(idx: number) {
   local.coordinates.splice(idx, 1);
+}
+function clearAll() {
+  if (!local.coordinates.length) return;
+  showClearConfirm.value = true;
+}
+function confirmClear() {
+  local.coordinates = [];
 }
 function onComplete() {
   if (!local.coordinates.length) return;
