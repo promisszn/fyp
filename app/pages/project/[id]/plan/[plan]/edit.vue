@@ -15,7 +15,12 @@
       </div>
 
       <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">
-        Edit Plan
+        Edit Plan<span
+          v-if="planData.basic.name"
+          class="ml-2 text-2xl font-semibold text-gray-600 dark:text-gray-300"
+        >
+          — {{ planData.basic.name }}</span
+        >
       </h1>
 
       <!-- Step Tabs -->
@@ -56,7 +61,22 @@
       </div>
 
       <!-- Step Content -->
-      <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+      <div
+        v-if="initialLoading"
+        class="bg-white dark:bg-slate-800 rounded-lg shadow p-6"
+      >
+        <div class="animate-pulse space-y-4">
+          <div class="h-5 bg-gray-200 dark:bg-slate-700 rounded w-1/3"></div>
+          <div class="h-40 bg-gray-100 dark:bg-slate-700/60 rounded"></div>
+          <div class="flex gap-3">
+            <div class="h-8 bg-gray-200 dark:bg-slate-700 rounded w-24"></div>
+            <div
+              class="h-8 bg-gray-200 dark:bg-slate-700 rounded w-40 ml-auto"
+            ></div>
+          </div>
+        </div>
+      </div>
+      <div v-else class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
         <StepCoordinates
           v-if="currentStep === 1"
           :model-value="{ coordinates: planData.coordinates }"
@@ -118,7 +138,7 @@ import StepReport from "~/components/plan/steps/StepReport.vue";
 
 definePageMeta({ middleware: ["auth"] });
 
-import { ref, reactive } from "vue";
+import { ref, reactive, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { navigateTo } from "#imports";
 import axios from "axios";
@@ -129,6 +149,7 @@ const toast = useToast();
 const projectId = route.params.id as string;
 const planId = route.params.plan as string;
 const submittingCoordinates = ref(false);
+const initialLoading = ref(true);
 
 const steps = [
   { key: "coordinates", title: "Coordinate Table" },
@@ -150,6 +171,60 @@ const planData = reactive({
   drawing: { file: null as File | null, fileName: "" },
   embellishment: { notes: "" },
   report: { generate: true },
+});
+
+onMounted(async () => {
+  try {
+    const res = await axios.get(`/plan/fetch/${planId}`);
+    const data = res?.data?.data;
+    if (data) {
+      // Basic
+      planData.basic.name = data.name || "";
+      planData.basic.type = data.type || "";
+
+      // Coordinates: map API -> component shape
+      if (Array.isArray(data.coordinates)) {
+        planData.coordinates = data.coordinates.map((c: any) => ({
+          _key: crypto.randomUUID(),
+          point: c.id ?? "",
+          northing: c.northing ?? null,
+          easting: c.easting ?? null,
+          elevation: c.elevation ?? null,
+        }));
+      }
+
+      // Parcels: API sample uses name + ids[]; map minimally to our fields
+      if (Array.isArray(data.parcels)) {
+        planData.parcels = data.parcels.map((p: any) => ({
+          _key: crypto.randomUUID(),
+          parcel_id: p.name ?? "",
+          area: null,
+          purpose: p.ids && Array.isArray(p.ids) ? p.ids.join(", ") : "",
+        }));
+      }
+
+      // Auto-progress steps if data exists
+      const hasCoords = planData.coordinates.length > 0;
+      const hasParcels = planData.parcels.length > 0;
+      if (hasCoords) {
+        completed.value.add(1);
+      }
+      if (hasParcels) {
+        completed.value.add(2);
+      }
+      if (hasCoords && hasParcels) {
+        currentStep.value = 3;
+      } else if (hasCoords) {
+        currentStep.value = 2;
+      } else {
+        currentStep.value = 1;
+      }
+    }
+  } catch (error) {
+    toast.add({ title: "Failed to load plan", color: "error" });
+  } finally {
+    initialLoading.value = false;
+  }
 });
 
 // Helpers

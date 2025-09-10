@@ -118,11 +118,15 @@ const emit = defineEmits(["update:modelValue", "complete"]);
 const local = reactive<{ coordinates: CoordRow[] }>({ coordinates: [] });
 
 watch(
-  () => props.modelValue,
-  (v) => {
-    if (v) local.coordinates = [...v.coordinates];
+  () => props.modelValue.coordinates,
+  (arr) => {
+    if (Array.isArray(arr)) {
+      local.coordinates = arr.map((r) => ({ ...r }));
+    } else {
+      local.coordinates = [];
+    }
   },
-  { immediate: true, deep: true }
+  { immediate: true }
 );
 
 function addRow() {
