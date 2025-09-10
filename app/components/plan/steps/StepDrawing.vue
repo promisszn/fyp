@@ -7,22 +7,72 @@
     <!-- Parcel label selector (only shown when multiple options exist) -->
     <div v-if="parcelOptions.length > 1" class="flex items-center justify-end">
       <div class="mb-1">
-        <label class="mr-2 text-xs text-gray-600 dark:text-gray-300">Parcel label</label>
+        <label class="mr-2 text-xs text-gray-600 dark:text-gray-300"
+          >Parcel label</label
+        >
         <select
           v-model="selectedParcelName"
           class="text-sm border rounded px-2 py-1 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600"
         >
-          <option v-for="name in parcelOptions" :key="name" :value="name">{{ name }}</option>
+          <option v-for="name in parcelOptions" :key="name" :value="name">
+            {{ name }}
+          </option>
         </select>
       </div>
     </div>
 
-    <!-- Leaflet map (CRS.Simple) via @nuxtjs/leaflet -->
-    <div class="rounded-md overflow-hidden border border-gray-200 dark:border-slate-600">
+    <!-- Leaflet map with base-layer switch (auto: WebMercator tiles if geographic, else CRS.Simple) -->
+    <div
+      class="rounded-md overflow-hidden border border-gray-200 dark:border-slate-600"
+    >
       <ClientOnly>
-        <div class="relative w-full h-72">
+        <div
+          class="relative w-full h-72"
+          :class="{ 'simple-crs': crsMode === 'simple' }"
+        >
           <div ref="mapEl" class="w-full h-full" />
-          <div v-if="!latLngs.length" class="absolute inset-0 grid place-items-center text-sm text-gray-400">
+          <!-- Base layer toggle (shown for geographic coords) -->
+          <div
+            v-if="crsMode === 'geo' && latLngs.length"
+            class="absolute top-2 right-2 z-[1000]"
+          >
+            <div
+              class="inline-flex rounded-md overflow-hidden shadow border border-gray-200 dark:border-slate-700 backdrop-blur bg-white/90 dark:bg-slate-800/90"
+              role="group"
+              aria-label="Base layer toggle"
+            >
+              <button
+                type="button"
+                class="px-3 py-1.5 text-xs font-medium focus:outline-none transition-colors"
+                :class="[
+                  activeBaseKey === 'OpenStreetMap'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100/60 dark:hover:bg-slate-700/60',
+                ]"
+                @click="activeBaseKey = 'OpenStreetMap'"
+                :aria-pressed="activeBaseKey === 'OpenStreetMap'"
+              >
+                Street
+              </button>
+              <button
+                type="button"
+                class="px-3 py-1.5 text-xs font-medium focus:outline-none transition-colors border-l border-gray-200 dark:border-slate-700"
+                :class="[
+                  activeBaseKey === 'Satellite'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100/60 dark:hover:bg-slate-700/60',
+                ]"
+                @click="activeBaseKey = 'Satellite'"
+                :aria-pressed="activeBaseKey === 'Satellite'"
+              >
+                Satellite
+              </button>
+            </div>
+          </div>
+          <div
+            v-if="!latLngs.length"
+            class="absolute inset-0 grid place-items-center text-sm text-gray-400"
+          >
             No coordinates to plot yet. Add coordinates in Step 1.
           </div>
         </div>
@@ -41,7 +91,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onBeforeUnmount, shallowRef, nextTick } from "vue";
+import {
+  computed,
+  ref,
+  watch,
+  onMounted,
+  onBeforeUnmount,
+  shallowRef,
+  nextTick,
+} from "vue";
 
 type CoordInput = {
   point: string;
@@ -63,9 +121,7 @@ const emit = defineEmits(["complete"]);
 const selectedParcel = computed(() => {
   const name = selectedParcelName.value?.trim();
   if (!name || !Array.isArray(props.parcels)) return null;
-  return (
-    props.parcels.find((p) => (p?.name || "").trim() === name) || null
-  );
+  return props.parcels.find((p) => (p?.name || "").trim() === name) || null;
 });
 
 const filteredCoordinates = computed<CoordInput[]>(() => {
@@ -97,32 +153,64 @@ const mapRef = shallowRef<any>(null);
 let polygonLayer: any | null = null;
 let pointLayers: any[] = [];
 let centroidMarker: any | null = null;
+const baseLayers = shallowRef<Record<string, any>>({});
+const activeBaseKey = ref<string>("OpenStreetMap");
+const crsMode = ref<"geo" | "simple" | null>(null);
+
+// Determine geographic orientation (supports lon/lat or lat/lon). "none" means non-geographic.
+const geoOrientation = computed<"lonlat" | "latlon" | "none">(() => {
+  const pts = rawPoints.value;
+  if (!pts.length) return "lonlat"; // default to lon/lat when empty
+  let lonlat = 0;
+  let latlon = 0;
+  for (const p of pts) {
+    const x = p.x;
+    const y = p.y;
+    if (x >= -180 && x <= 180 && y >= -90 && y <= 90) lonlat++;
+    if (x >= -90 && x <= 90 && y >= -180 && y <= 180) latlon++;
+  }
+  if (lonlat === 0 && latlon === 0) return "none";
+  return lonlat >= latlon ? "lonlat" : "latlon";
+});
 
 // Array of [lat, lng] pairs for polygon
 const latLngs = computed<[number, number][]>(() => {
-  return rawPoints.value.map((p) => [p.y, p.x]);
+  const orient = geoOrientation.value;
+  if (orient === "latlon") return rawPoints.value.map((p) => [p.x, p.y]); // x=lat, y=lng
+  return rawPoints.value.map((p) => [p.y, p.x]); // y=lat, x=lng (default)
 });
 
-// Map bounds with a small padding percentage
+// Points mapped to lat/lng for markers with labels
+const pointsLatLng = computed(() =>
+  rawPoints.value.map((p) => {
+    const orient = geoOrientation.value;
+    return orient === "latlon"
+      ? { key: p.key, label: p.label, lat: p.x, lng: p.y }
+      : { key: p.key, label: p.label, lat: p.y, lng: p.x };
+  })
+);
+
+// Map bounds computed from lat/lng pairs with padding
 const bounds = computed(() => {
-  const pts = rawPoints.value;
-  if (!pts.length) return undefined as unknown as [[number, number], [number, number]];
-  let minX = Infinity,
-    minY = Infinity,
-    maxX = -Infinity,
-    maxY = -Infinity;
-  for (const p of pts) {
-    if (p.x < minX) minX = p.x;
-    if (p.y < minY) minY = p.y;
-    if (p.x > maxX) maxX = p.x;
-    if (p.y > maxY) maxY = p.y;
+  const pts = latLngs.value;
+  if (!pts.length)
+    return undefined as unknown as [[number, number], [number, number]];
+  let minLat = Infinity,
+    minLng = Infinity,
+    maxLat = -Infinity,
+    maxLng = -Infinity;
+  for (const [lat, lng] of pts) {
+    if (lat < minLat) minLat = lat;
+    if (lng < minLng) minLng = lng;
+    if (lat > maxLat) maxLat = lat;
+    if (lng > maxLng) maxLng = lng;
   }
-  const w = Math.max(1, maxX - minX);
-  const h = Math.max(1, maxY - minY);
+  const w = Math.max(1, maxLng - minLng);
+  const h = Math.max(1, maxLat - minLat);
   const pad = 0.08 * Math.max(w, h);
   return [
-    [minY - pad, minX - pad],
-    [maxY + pad, maxX + pad],
+    [minLat - pad, minLng - pad],
+    [maxLat + pad, maxLng + pad],
   ] as [[number, number], [number, number]];
 });
 
@@ -185,7 +273,92 @@ const centroid = computed(() => {
   return { x: cx / (3 * area2), y: cy / (3 * area2) };
 });
 
-const centroidLatLng = computed<[number, number]>(() => [centroid.value.y, centroid.value.x]);
+const centroidLatLng = computed<[number, number]>(() => {
+  const pts = latLngs.value;
+  const n = pts.length;
+  if (!n) return [0, 0];
+  if (n < 3) {
+    const s = pts.reduce(
+      (acc, [lat, lng]) => [acc[0] + lat, acc[1] + lng] as [number, number],
+      [0, 0]
+    );
+    return [s[0] / n, s[1] / n];
+  }
+  let area2 = 0;
+  let cx = 0;
+  let cy = 0;
+  for (let i = 0; i < n; i++) {
+    const [x0, y0] = [pts[i]![1], pts[i]![0]]; // treat lng=x, lat=y for centroid calc
+    const [x1, y1] = [pts[(i + 1) % n]![1], pts[(i + 1) % n]![0]];
+    const f = x0 * y1 - x1 * y0;
+    area2 += f;
+    cx += (x0 + x1) * f;
+    cy += (y0 + y1) * f;
+  }
+  if (area2 === 0) {
+    const s = pts.reduce(
+      (acc, [lat, lng]) => [acc[0] + lat, acc[1] + lng] as [number, number],
+      [0, 0]
+    );
+    return [s[0] / n, s[1] / n];
+  }
+  return [cy / (3 * area2), cx / (3 * area2)];
+});
+
+// Heuristic: detect if coords look geographic in either orientation
+const isGeographic = computed<boolean>(() => geoOrientation.value !== "none");
+
+function teardownBaseLayers() {
+  const map = mapRef.value;
+  if (!map) return;
+  for (const key of Object.keys(baseLayers.value)) {
+    const layer = baseLayers.value[key];
+    if (map.hasLayer(layer)) map.removeLayer(layer);
+  }
+  baseLayers.value = {};
+}
+
+function setupBaseLayers() {
+  const L = LRef.value;
+  const map = mapRef.value;
+  if (!L || !map) return;
+  teardownBaseLayers();
+  if (crsMode.value !== "geo") return; // no tile layers for Simple CRS
+
+  const osm = L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap contributors",
+    }
+  );
+  const esri = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    {
+      maxZoom: 19,
+      attribution:
+        "Tiles &copy; Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community",
+    }
+  );
+
+  baseLayers.value = {
+    OpenStreetMap: osm,
+    Satellite: esri,
+  };
+  applyActiveBase();
+}
+
+function applyActiveBase() {
+  const map = mapRef.value;
+  if (!map || crsMode.value !== "geo") return;
+  for (const [key, layer] of Object.entries(baseLayers.value)) {
+    if (key === activeBaseKey.value) {
+      if (!map.hasLayer(layer)) layer.addTo(map);
+    } else if (map.hasLayer(layer)) {
+      map.removeLayer(layer);
+    }
+  }
+}
 
 function renderLayers() {
   const L = LRef.value;
@@ -211,13 +384,27 @@ function renderLayers() {
   if (b) map.fitBounds(L.latLngBounds(b), { padding: [10, 10] });
 
   // Polygon
-  polygonLayer = L.polygon(latLngs.value, { color: "#ffffff", weight: 1, fill: false }).addTo(map);
+  polygonLayer = L.polygon(latLngs.value, {
+    color: "#000000",
+    weight: 2,
+    fill: false,
+  }).addTo(map);
 
-  // Points + labels
-  for (const p of rawPoints.value) {
-    const cm = L.circleMarker([p.y, p.x], { radius: 2, color: "#ffffff", weight: 1, fill: false })
+  // Points + labels (respect orientation)
+  for (const p of pointsLatLng.value) {
+    const cm = L.circleMarker([p.lat, p.lng], {
+      radius: 4,
+      color: "#000000",
+      weight: 2,
+      fill: false,
+    })
       .addTo(map)
-      .bindTooltip(p.label, { permanent: true, direction: "top", className: "leaflet-tooltip point-label", offset: [6, -6] });
+      .bindTooltip(p.label, {
+        permanent: true,
+        direction: "top",
+        className: "leaflet-tooltip point-label",
+        offset: [10, -6],
+      });
     pointLayers.push(cm);
   }
 
@@ -227,7 +414,11 @@ function renderLayers() {
       icon: L.divIcon({ className: "empty-icon", html: "", iconSize: [0, 0] }),
     })
       .addTo(map)
-      .bindTooltip(parcelLabel.value, { permanent: true, direction: "center", className: "leaflet-tooltip parcel-label" });
+      .bindTooltip(parcelLabel.value, {
+        permanent: true,
+        direction: "center",
+        className: "leaflet-tooltip parcel-label",
+      });
   }
 }
 
@@ -235,19 +426,24 @@ onMounted(async () => {
   const L = await import("leaflet");
   LRef.value = L;
   if (!mapEl.value) return;
+  // Decide CRS mode based on data
+  crsMode.value = isGeographic.value ? "geo" : "simple";
   mapRef.value = L.map(mapEl.value, {
-    crs: L.CRS.Simple,
-    attributionControl: false,
+    crs: crsMode.value === "geo" ? L.CRS.EPSG3857 : L.CRS.Simple,
+    attributionControl: true,
     zoomControl: true,
-    minZoom: -5,
+    minZoom: crsMode.value === "geo" ? 1 : -5,
+    worldCopyJump: crsMode.value === "geo",
   });
   await nextTick();
   mapRef.value.invalidateSize();
+  setupBaseLayers();
   renderLayers();
 });
 
 onBeforeUnmount(() => {
   const map = mapRef.value;
+  teardownBaseLayers();
   if (map) map.remove();
   mapRef.value = null;
   LRef.value = null;
@@ -260,6 +456,36 @@ watch([latLngs, parcelLabel], () => {
   renderLayers();
 });
 
+// Switch base layer when toggled
+watch(activeBaseKey, () => applyActiveBase());
+
+// If CRS mode changes (e.g., user switches parcels with different coord systems), recreate the map
+watch(isGeographic, async (geo) => {
+  const L = LRef.value;
+  const el = mapEl.value;
+  if (!L || !el) return;
+  const newMode: "geo" | "simple" = geo ? "geo" : "simple";
+  if (newMode === crsMode.value && mapRef.value) return;
+  // Teardown current
+  if (mapRef.value) {
+    teardownBaseLayers();
+    mapRef.value.remove();
+  }
+  // Recreate map
+  crsMode.value = newMode;
+  mapRef.value = L.map(el, {
+    crs: crsMode.value === "geo" ? L.CRS.EPSG3857 : L.CRS.Simple,
+    attributionControl: true,
+    zoomControl: true,
+    minZoom: crsMode.value === "geo" ? 1 : -5,
+    worldCopyJump: crsMode.value === "geo",
+  });
+  await nextTick();
+  mapRef.value.invalidateSize();
+  setupBaseLayers();
+  renderLayers();
+});
+
 function onComplete() {
   emit("complete");
 }
@@ -267,24 +493,27 @@ function onComplete() {
 
 <style scoped>
 /* Make Leaflet tooltips match the dark map */
-:deep(.leaflet-container) {
+/* :deep(.simple-crs .leaflet-container) {
   background: #000;
-}
+} */
 :deep(.leaflet-tooltip.point-label) {
   background: transparent;
   border: none;
   box-shadow: none;
-  color: #fff;
+  color: #000;
   padding: 0;
-  font-size: 11px;
+  font-size: 14px;
 }
 :deep(.leaflet-tooltip.parcel-label) {
   background: transparent;
   border: none;
   box-shadow: none;
-  color: #f8fafc;
+  color: #000;
   font-weight: 700;
   font-size: 14px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+:deep(.leaflet-tooltip-top:before) {
+  border-top-color: #000 !important;
 }
 </style>
