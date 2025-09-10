@@ -258,16 +258,23 @@
                 {{ plan.name }}
               </div>
               <div
-                v-if="plan.software"
-                class="text-gray-600 dark:text-gray-300 mb-2"
-              >
-                Software: {{ plan.software }}
-              </div>
-              <div
                 v-if="plan.type"
                 class="text-sm text-gray-500 dark:text-gray-400"
               >
                 Type: {{ plan.type }}
+              </div>
+              <div class="text-sm text-gray-500 dark:text-gray-400">
+                Created: {{ formatDate(plan.created_at) }}
+              </div>
+              <div>
+                <button
+                  @click="
+                    navigateTo(`/project/${route.params.id}/plan/${plan.id}`)
+                  "
+                  class="mt-4 inline-block py-1 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  View Details &rarr;
+                </button>
               </div>
             </div>
           </div>
@@ -337,8 +344,9 @@ interface ProjectData {
 interface PlanData {
   id: string | number;
   name: string;
-  software?: string;
   type?: string;
+  status?: string;
+  created_at?: string;
 }
 
 const toast = useToast();
@@ -354,7 +362,8 @@ const showDeleteModal = ref(false);
 const plans = ref<PlanData[]>([]);
 
 // Format date function
-const formatDate = (dateString: string) => {
+const formatDate = (dateString?: string) => {
+  if (!dateString) return 'N/A';
   return new Date(dateString).toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
