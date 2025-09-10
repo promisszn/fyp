@@ -7,13 +7,14 @@
       <table
         class="min-w-full text-sm border border-gray-200 dark:border-slate-600 rounded-md overflow-hidden"
       >
-        <thead class="bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300">
+        <thead
+          class="bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300"
+        >
           <tr>
             <th class="px-3 py-2 text-left">Pt #</th>
             <th class="px-3 py-2 text-left">Northing</th>
             <th class="px-3 py-2 text-left">Easting</th>
             <th class="px-3 py-2 text-left">Elevation</th>
-            <th class="px-3 py-2 text-left">Desc</th>
             <th class="px-3 py-2"></th>
           </tr>
         </thead>
@@ -24,28 +25,51 @@
             class="border-t border-gray-200 dark:border-slate-700"
           >
             <td class="px-3 py-1">
-              <input v-model="row.point" type="text" class="w-16 px-2 py-1 text-xs rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:outline-none" />
+              <input
+                v-model="row.point"
+                type="text"
+                class="w-16 px-2 py-1 text-xs rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:outline-none"
+              />
             </td>
             <td class="px-3 py-1">
-              <input v-model.number="row.northing" type="number" step="0.01" class="w-28 px-2 py-1 text-xs rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:outline-none" />
+              <input
+                v-model.number="row.northing"
+                type="number"
+                step="0.01"
+                class="w-28 px-2 py-1 text-xs rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:outline-none"
+              />
             </td>
             <td class="px-3 py-1">
-              <input v-model.number="row.easting" type="number" step="0.01" class="w-28 px-2 py-1 text-xs rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:outline-none" />
+              <input
+                v-model.number="row.easting"
+                type="number"
+                step="0.01"
+                class="w-28 px-2 py-1 text-xs rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:outline-none"
+              />
             </td>
             <td class="px-3 py-1">
-              <input v-model.number="row.elevation" type="number" step="0.01" class="w-24 px-2 py-1 text-xs rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:outline-none" />
+              <input
+                v-model.number="row.elevation"
+                type="number"
+                step="0.01"
+                class="w-24 px-2 py-1 text-xs rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:outline-none"
+              />
             </td>
-            <td class="px-3 py-1">
-              <input v-model="row.description" type="text" class="w-40 px-2 py-1 text-xs rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:outline-none" />
-            </td>
+
             <td class="px-3 py-1 text-right">
-              <button @click="removeRow(idx)" class="text-red-600 hover:text-red-700 text-xs">
+              <button
+                @click="removeRow(idx)"
+                class="text-red-600 hover:text-red-700 text-xs"
+              >
                 Remove
               </button>
             </td>
           </tr>
           <tr v-if="!local.coordinates.length">
-            <td colspan="6" class="px-3 py-4 text-center text-xs text-gray-500 dark:text-gray-400">
+            <td
+              colspan="6"
+              class="px-3 py-4 text-center text-xs text-gray-500 dark:text-gray-400"
+            >
               No coordinates added yet.
             </td>
           </tr>
@@ -53,14 +77,24 @@
       </table>
     </div>
     <div class="flex gap-3">
-      <button @click="addRow" type="button" class="px-3 py-1.5 text-xs rounded bg-gray-200 hover:bg-gray-300 dark:bg-slate-600 dark:hover:bg-slate-500 text-gray-700 dark:text-gray-200">
+      <button
+        @click="addRow"
+        type="button"
+        class="px-3 py-1.5 text-xs rounded bg-gray-200 hover:bg-gray-300 dark:bg-slate-600 dark:hover:bg-slate-500 text-gray-700 dark:text-gray-200"
+      >
         Add Row
       </button>
-      <button @click="onComplete" :disabled="!local.coordinates.length" class="px-4 py-2 ml-auto rounded bg-blue-600 text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700">
+      <button
+        @click="onComplete"
+        :disabled="!local.coordinates.length || loading"
+        class="px-4 py-2 ml-auto rounded bg-blue-600 text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700"
+      >
         Save & Continue
       </button>
     </div>
-    <p class="text-[11px] text-gray-500 dark:text-gray-400">Add at least one coordinate to proceed.</p>
+    <p class="text-[11px] text-gray-500 dark:text-gray-400">
+      Add at least one coordinate to proceed.
+    </p>
   </div>
 </template>
 
@@ -73,10 +107,12 @@ interface CoordRow {
   northing: number | null;
   easting: number | null;
   elevation: number | null;
-  description: string;
 }
 
-const props = defineProps<{ modelValue: { coordinates: CoordRow[] } }>();
+const props = withDefaults(
+  defineProps<{ modelValue: { coordinates: CoordRow[] }; loading?: boolean }>(),
+  { loading: false }
+);
 const emit = defineEmits(["update:modelValue", "complete"]);
 
 const local = reactive<{ coordinates: CoordRow[] }>({ coordinates: [] });
@@ -96,7 +132,6 @@ function addRow() {
     northing: null,
     easting: null,
     elevation: null,
-    description: "",
   });
 }
 function removeRow(idx: number) {

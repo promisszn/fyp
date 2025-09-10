@@ -60,6 +60,7 @@
         <StepCoordinates
           v-if="currentStep === 1"
           :model-value="{ coordinates: planData.coordinates }"
+          :loading="submittingCoordinates"
           @update:model-value="onCoordinatesUpdate"
           @complete="completeCoordinates"
         />
@@ -87,7 +88,10 @@
 
         <StepReport
           v-else-if="currentStep === 5"
-          :model-value="{ report: planData.report, embellishment: planData.embellishment }"
+          :model-value="{
+            report: planData.report,
+            embellishment: planData.embellishment,
+          }"
           :basic="planData.basic"
           :coordinates-count="planData.coordinates.length"
           :parcels-count="planData.parcels.length"
@@ -117,14 +121,15 @@ definePageMeta({ middleware: ["auth"] });
 import { ref, reactive } from "vue";
 import { useRoute } from "vue-router";
 import { navigateTo } from "#imports";
-// No basic details step in edit flow; keeping remaining steps.
+import axios from "axios";
 
 const route = useRoute();
 const toast = useToast();
 
 const projectId = route.params.id as string;
+const planId = route.params.plan as string;
+const submittingCoordinates = ref(false);
 
-// Steps meta (Basic removed; Coordinates is now step 1)
 const steps = [
   { key: "coordinates", title: "Coordinate Table" },
   { key: "parcels", title: "Parcel Table" },
@@ -165,43 +170,32 @@ function markCompleted(step: number) {
   completed.value.add(step);
 }
 
-function cancel() {
-  navigateTo(`/project/${projectId}`);
-}
-
 // Coordinate handling
-function addCoordinate() {
-  planData.coordinates.push({
-    _key: crypto.randomUUID(),
-    point: "",
-    northing: null,
-    easting: null,
-    elevation: null,
-    description: "",
-  });
-}
-function removeCoordinate(idx: number) {
-  planData.coordinates.splice(idx, 1);
-}
-function completeCoordinates() {
+async function completeCoordinates() {
+  if (submittingCoordinates.value) return;
   if (!planData.coordinates.length) return;
-  markCompleted(1);
-  currentStep.value = 2;
-  toast.add({ title: "Coordinates saved", color: "success" });
+  try {
+    submittingCoordinates.value = true;
+    const payload = {
+      coordinates: planData.coordinates.map((r: any) => ({
+        id: r.point,
+        northing: r.northing != null ? Number(r.northing) : 0,
+        easting: r.easting != null ? Number(r.easting) : 0,
+        elevation: r.elevation != null ? Number(r.elevation) : 0,
+      })),
+    };
+    await axios.put(`/plan/coordinates/edit/${planId}`, payload);
+    markCompleted(1);
+    currentStep.value = 2;
+    toast.add({ title: "Coordinates saved", color: "success" });
+  } catch (error) {
+    toast.add({ title: "Failed to save coordinates", color: "error" });
+  } finally {
+    submittingCoordinates.value = false;
+  }
 }
 
 // Parcels
-function addParcel() {
-  planData.parcels.push({
-    _key: crypto.randomUUID(),
-    parcel_id: "",
-    area: null,
-    purpose: "",
-  });
-}
-function removeParcel(idx: number) {
-  planData.parcels.splice(idx, 1);
-}
 function completeParcels() {
   if (!planData.parcels.length) return;
   markCompleted(2);
@@ -210,14 +204,6 @@ function completeParcels() {
 }
 
 // Drawing
-function handleDrawingUpload(evt: Event) {
-  const input = evt.target as HTMLInputElement;
-  if (input.files && input.files[0]) {
-    const f = input.files[0];
-    planData.drawing.file = f;
-    planData.drawing.fileName = f.name;
-  }
-}
 function completeDrawing() {
   if (!planData.drawing.fileName) return;
   markCompleted(3);
@@ -245,7 +231,10 @@ type CoordinatesUpdate = { coordinates: any[] };
 type ParcelsUpdate = { parcels: any[] };
 type DrawingUpdate = { drawing: { file: File | null; fileName: string } };
 type EmbellishmentUpdate = { embellishment: { notes: string } };
-type ReportUpdate = { report: { generate: boolean }; embellishment: { notes: string } };
+type ReportUpdate = {
+  report: { generate: boolean };
+  embellishment: { notes: string };
+};
 
 function onCoordinatesUpdate(v: CoordinatesUpdate) {
   planData.coordinates = v.coordinates;
