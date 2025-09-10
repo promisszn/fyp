@@ -289,7 +289,7 @@
                   "
                   class="mt-4 inline-block py-1 text-sm text-blue-600 dark:text-blue-400 hover:underline"
                 >
-                  View Details &rarr;
+                  View Details <RiArrowRightSLine class="inline w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -327,7 +327,12 @@
 </template>
 
 <script lang="ts" setup>
-import { RiArrowLeftLine, RiEditLine, RiDeleteBinLine } from "@remixicon/vue";
+import {
+  RiArrowLeftLine,
+  RiArrowRightSLine,
+  RiEditLine,
+  RiDeleteBinLine,
+} from "@remixicon/vue";
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import axios from "axios";
@@ -389,7 +394,7 @@ const planToDelete = ref<PlanData | null>(null);
 
 // Format date function
 const formatDate = (dateString?: string) => {
-  if (!dateString) return 'N/A';
+  if (!dateString) return "N/A";
   return new Date(dateString).toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",

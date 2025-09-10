@@ -6,11 +6,11 @@
       <!-- Back -->
       <div class="mb-4">
         <button
-          @click="navigateTo(`/project/${projectId}`)"
+          @click="navigateTo(`/project/${projectId}/plan/${planId}`)"
           class="inline-flex items-center gap-2 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
         >
           <RiArrowLeftLine class="w-4 h-4" />
-          Back to Project
+          Back to Plan Details
         </button>
       </div>
 
