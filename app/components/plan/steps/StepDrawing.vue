@@ -37,17 +37,18 @@
             :points="polygon"
             fill="none"
             stroke="#fff"
-            stroke-width="1.2"
+            stroke-width="1"
           />
-          <!-- points -->
           <g>
             <circle
               v-for="p in points"
-              :key="p.key"
+              :key="p.key + '-pt'"
               :cx="p.x"
               :cy="p.y"
-              r="1.3"
+              r="1.5"
+              fill="none"
               stroke="#fff"
+              stroke-width="1"
             />
             <text
               v-for="p in points"
@@ -162,9 +163,9 @@ const centroid = computed(() => {
   let cx = 0;
   let cy = 0;
   for (let i = 0; i < n; i++) {
-  const p0 = pts[i]!;
-  const p1 = pts[(i + 1) % n]!;
-  const f = p0.x * p1.y - p1.x * p0.y;
+    const p0 = pts[i]!;
+    const p1 = pts[(i + 1) % n]!;
+    const f = p0.x * p1.y - p1.x * p0.y;
     area2 += f;
     cx += (p0.x + p1.x) * f;
     cy += (p0.y + p1.y) * f;
@@ -176,6 +177,7 @@ const centroid = computed(() => {
   }
   return { x: cx / (3 * area2), y: cy / (3 * area2) };
 });
+
 function onComplete() {
   emit("complete");
 }
