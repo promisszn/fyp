@@ -3,7 +3,13 @@
     <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Report</h2>
     <div class="space-y-4">
       <div class="flex items-center gap-2">
-        <input id="includeReport" type="checkbox" v-model="local.report.generate" class="rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500" />
+        <input
+          id="includeReport"
+          type="checkbox"
+          v-model="local.report.generate"
+          @change="emitUpdate"
+          class="rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+        />
         <label for="includeReport" class="text-sm text-gray-700 dark:text-gray-300">Generate summary report</label>
       </div>
       <div v-if="local.report.generate" class="border border-dashed border-gray-300 dark:border-slate-600 rounded-md p-4 text-xs text-gray-600 dark:text-gray-300 space-y-2">
@@ -29,7 +35,10 @@
 import { computed, reactive, watch } from "vue";
 
 interface Basic { name: string; type: string }
-interface Embellishment { notes: string }
+interface Embellishment {
+  notes?: string;
+  [key: string]: any;
+}
 interface Report { generate: boolean }
 
 const props = defineProps<{
@@ -42,20 +51,23 @@ const emit = defineEmits(["update:modelValue", "cancel", "finish"]);
 
 const local = reactive({ report: { generate: true }, embellishment: { notes: "" } });
 
+// Sync from parent once on mount and whenever the reference changes (avoid deep echo loops)
 watch(
   () => props.modelValue,
   (v) => {
     if (v) {
       local.report = { ...v.report };
-      local.embellishment = { ...v.embellishment };
+      local.embellishment = { ...(v.embellishment || {}), notes: v.embellishment?.notes ?? "" };
     }
   },
-  { immediate: true, deep: true }
+  { immediate: true }
 );
 
-watch(
-  () => local.report,
-  (v) => emit("update:modelValue", { report: { ...v }, embellishment: { ...local.embellishment } }),
-  { deep: true }
-);
+function emitUpdate() {
+  emit("update:modelValue", {
+    report: { ...local.report },
+    // Emit only the fields we manage to avoid overwriting others
+    embellishment: { notes: local.embellishment.notes },
+  });
+}
 </script>

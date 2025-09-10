@@ -381,6 +381,7 @@ async function completeEmbellishment() {
 function finishPlan() {
   markCompleted(5);
   toast.add({ title: "Plan data ready (not yet submitted)", color: "success" });
+  navigateTo(`/project/${projectId}/plan/${planId}`);
   // TODO: Submit aggregated planData to API.
   // After success: navigateTo(`/project/${projectId}`)
 }
