@@ -140,8 +140,9 @@
               :key="project.id"
               class="p-4 border border-gray-200 dark:border-slate-600 rounded-lg hover:shadow-md transition-shadow"
             >
-              <div class="flex items-start justify-between mb-3">
-                <div class="flex-1 min-w-0">
+              <!-- Header row -->
+              <div class="flex items-start justify-between">
+                <div class="flex-1 min-w-0 pr-2">
                   <h3
                     class="text-sm font-semibold text-gray-800 dark:text-gray-200 capitalize truncate"
                   >
@@ -153,35 +154,37 @@
                 </div>
                 <button
                   @click.stop="toggleDropdown(project.id, $event)"
-                  class="flex-shrink-0 ml-2 hover:text-blue-600 text-gray-600 dark:text-gray-300 dark:hover:text-blue-400 cursor-pointer p-1 rounded"
+                  class="flex-shrink-0 hover:text-blue-600 text-gray-600 dark:text-gray-300 dark:hover:text-blue-400 cursor-pointer p-1 rounded"
                   aria-haspopup="true"
                   :aria-expanded="activeDropdown === project.id"
                 >
                   <RiMore2Fill />
                 </button>
+              </div>
 
-                <!-- Mobile dropdown now teleported globally -->
-
-                <!-- (Removed old inline mobile dropdown; using global teleported menu) -->
-                <div class="flex items-center justify-between text-xs">
-                  <span class="text-gray-500 dark:text-gray-400">Type:</span>
-                  <span class="text-gray-700 dark:text-gray-300">{{
-                    project.type || "N/A"
-                  }}</span>
+              <!-- Meta data rows -->
+              <div class="mt-3 space-y-2 text-xs">
+                <div class="flex justify-between">
+                  <span class="text-gray-500 dark:text-gray-400">Type</span>
+                  <span
+                    class="text-gray-700 dark:text-gray-300 truncate max-w-[55%] text-right"
+                    >{{ project.type || "N/A" }}</span
+                  >
                 </div>
-                <div class="flex items-center justify-between text-xs">
-                  <span class="text-gray-500 dark:text-gray-400">Status:</span>
+                <div class="flex justify-between items-center">
+                  <span class="text-gray-500 dark:text-gray-400">Status</span>
                   <span
                     :class="statusClass(project.status)"
-                    class="px-2 py-1 rounded-full bg-gray-100 dark:bg-slate-700"
+                    class="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-700 text-[10px] font-medium max-w-[55%] text-right truncate"
                     >{{ project.status || "N/A" }}</span
                   >
                 </div>
-                <div class="flex items-center justify-between text-xs">
-                  <span class="text-gray-500 dark:text-gray-400">Created:</span>
-                  <span class="text-gray-700 dark:text-gray-300">{{
-                    formatDate(project.created_at)
-                  }}</span>
+                <div class="flex justify-between">
+                  <span class="text-gray-500 dark:text-gray-400">Created</span>
+                  <span
+                    class="text-gray-700 dark:text-gray-300 max-w-[55%] text-right truncate"
+                    >{{ formatDate(project.created_at) }}</span
+                  >
                 </div>
               </div>
             </div>
@@ -229,19 +232,25 @@
             <button
               @click="handleMenuAction('open')"
               class="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-slate-700"
-            >Open</button>
+            >
+              Open
+            </button>
           </li>
           <li>
             <button
               @click="handleMenuAction('edit')"
               class="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-slate-700"
-            >Edit</button>
+            >
+              Edit
+            </button>
           </li>
           <li>
             <button
               @click="handleMenuAction('delete')"
               class="w-full text-left px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-slate-700"
-            >Delete</button>
+            >
+              Delete
+            </button>
           </li>
         </ul>
       </div>
@@ -298,9 +307,9 @@ const dropdownOpensUp = ref(false);
 const activeProject = ref<any | null>(null);
 
 const dropdownStyle = computed(() => ({
-  top: dropdownCoords.value.top + 'px',
-  left: dropdownCoords.value.left + 'px',
-  minWidth: '11rem'
+  top: dropdownCoords.value.top + "px",
+  left: dropdownCoords.value.left + "px",
+  minWidth: "11rem",
 }));
 
 function toggleDropdown(id: any, evt?: MouseEvent) {
@@ -309,7 +318,7 @@ function toggleDropdown(id: any, evt?: MouseEvent) {
     return;
   }
   activeDropdown.value = id;
-  activeProject.value = projects.value.find(p => p.id === id) || null;
+  activeProject.value = projects.value.find((p) => p.id === id) || null;
   positionDropdown(evt);
 }
 
@@ -321,9 +330,12 @@ function positionDropdown(evt?: MouseEvent) {
     const estimatedHeight = 160; // approx menu height
     const width = 176; // tailwind w-44 => 11rem -> 176px
     const spaceBelow = window.innerHeight - rect.bottom;
-    dropdownOpensUp.value = spaceBelow < estimatedHeight && rect.top > estimatedHeight;
+    dropdownOpensUp.value =
+      spaceBelow < estimatedHeight && rect.top > estimatedHeight;
 
-    let top = dropdownOpensUp.value ? rect.top - estimatedHeight - 8 : rect.bottom + 8;
+    let top = dropdownOpensUp.value
+      ? rect.top - estimatedHeight - 8
+      : rect.bottom + 8;
     let left = rect.left + rect.width - width; // right align
     left = Math.min(left, window.innerWidth - width - 8);
     left = Math.max(8, left);
@@ -337,7 +349,8 @@ function positionDropdown(evt?: MouseEvent) {
         const preciseTop = rect.top - realH - 8;
         dropdownCoords.value.top = Math.max(8, preciseTop);
       } else {
-        const overflow = dropdownCoords.value.top + realH - window.innerHeight + 8;
+        const overflow =
+          dropdownCoords.value.top + realH - window.innerHeight + 8;
         if (overflow > 0 && rect.top > realH + 16) {
           dropdownOpensUp.value = true;
           dropdownCoords.value.top = Math.max(8, rect.top - realH - 8);
@@ -357,9 +370,9 @@ function closeDropdown() {
 function handleMenuAction(action: string) {
   const p = activeProject.value;
   if (!p) return;
-  if (action === 'open') openProject(p);
-  else if (action === 'edit') editProject(p);
-  else if (action === 'delete') deleteProject(p);
+  if (action === "open") openProject(p);
+  else if (action === "edit") editProject(p);
+  else if (action === "delete") deleteProject(p);
   closeDropdown();
 }
 
