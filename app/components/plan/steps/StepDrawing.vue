@@ -15,9 +15,9 @@
           class="w-full h-full"
         >
           <!-- polygon shape -->
-          <polyline
-            v-if="polyline"
-            :points="polyline"
+          <polygon
+            v-if="polygon"
+            :points="polygon"
             fill="none"
             stroke="#2563eb"
             stroke-width="1.5"
@@ -106,17 +106,21 @@ const points = computed(() => {
   const pad = 8; // percent of 100
   const inner = 100 - pad * 2;
   const scale = inner / Math.max(rangeX, rangeY);
+  const usedWidth = rangeX * scale;
+  const usedHeight = rangeY * scale;
+  const offsetX = pad + (inner - usedWidth) / 2;
+  const offsetY = pad + (inner - usedHeight) / 2;
 
   return src.map((p) => ({
     key: p.key,
     label: p.label,
-    x: pad + (p.x - minX) * scale,
+    x: offsetX + (p.x - minX) * scale,
     // invert Y so larger northing goes up
-    y: pad + (maxY - p.y) * scale,
+    y: offsetY + (maxY - p.y) * scale,
   }));
 });
 
-const polyline = computed(() => {
+const polygon = computed(() => {
   if (!points.value.length) return "";
   return points.value.map((p) => `${p.x},${p.y}`).join(" ");
 });
