@@ -17,71 +17,16 @@
       </div>
     </div>
 
-    <!-- Simple SVG Plot (plain background) -->
-    <div
-      class="rounded-md overflow-hidden border border-gray-200 dark:border-slate-600 bg-black"
-    >
-      <div v-if="points.length" class="w-full h-72">
-        <svg
-          viewBox="0 0 100 100"
-          preserveAspectRatio="xMidYMid meet"
-          class="w-full h-full"
-        >
-          <!-- polygon shape -->
-          <!-- parcel label at centroid -->
-          <text
-            v-if="parcelLabel && points.length"
-            :x="centroid.x"
-            :y="centroid.y"
-            text-anchor="middle"
-            dominant-baseline="middle"
-            font-size="6"
-            font-weight="600"
-            fill="#f8fafc"
-            stroke="#000"
-            stroke-opacity="0.35"
-            stroke-width="0.8"
-            paint-order="stroke"
-          >
-            {{ parcelLabel }}
-          </text>
-          <polygon
-            v-if="polygon"
-            :points="polygon"
-            fill="none"
-            stroke="#fff"
-            stroke-width="1"
-          />
-          <g>
-            <circle
-              v-for="p in points"
-              :key="p.key + '-pt'"
-              :cx="p.x"
-              :cy="p.y"
-              r="1.5"
-              fill="none"
-              stroke="#fff"
-              stroke-width="1"
-            />
-            <text
-              v-for="p in points"
-              :key="p.key + '-label'"
-              :x="p.x + 1.8"
-              :y="p.y - 1.2"
-              font-size="5"
-              fill="#fff"
-            >
-              {{ p.label }}
-            </text>
-          </g>
-        </svg>
-      </div>
-      <div
-        v-else
-        class="p-6 text-center text-sm text-gray-500 dark:text-gray-400"
-      >
-        No coordinates to plot yet. Add coordinates in Step 1.
-      </div>
+    <!-- Leaflet map (CRS.Simple) via @nuxtjs/leaflet -->
+    <div class="rounded-md overflow-hidden border border-gray-200 dark:border-slate-600">
+      <ClientOnly>
+        <div class="relative w-full h-72">
+          <div ref="mapEl" class="w-full h-full" />
+          <div v-if="!latLngs.length" class="absolute inset-0 grid place-items-center text-sm text-gray-400">
+            No coordinates to plot yet. Add coordinates in Step 1.
+          </div>
+        </div>
+      </ClientOnly>
     </div>
 
     <div class="flex justify-end gap-3">
@@ -96,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, ref, watch, onMounted, onBeforeUnmount, shallowRef, nextTick } from "vue";
 
 type CoordInput = {
   point: string;
@@ -114,7 +59,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(["complete"]);
 
-// Prepare scaled points for a 100x100 SVG canvas with padding and Y-axis inversion
+// Prepare raw points (no scaling). We'll render with Leaflet using CRS.Simple.
 const selectedParcel = computed(() => {
   const name = selectedParcelName.value?.trim();
   if (!name || !Array.isArray(props.parcels)) return null;
@@ -133,7 +78,7 @@ const filteredCoordinates = computed<CoordInput[]>(() => {
   return filtered.length ? filtered : coords;
 });
 
-const points = computed(() => {
+const rawPoints = computed(() => {
   const src = filteredCoordinates.value
     .filter((r) => r.northing != null && r.easting != null)
     .map((r) => ({
@@ -142,42 +87,46 @@ const points = computed(() => {
       x: Number(r.easting),
       y: Number(r.northing),
     }));
-  if (!src.length)
-    return [] as Array<{ key: string; label: string; x: number; y: number }>;
+  return src as Array<{ key: string; label: string; x: number; y: number }>;
+});
 
+// Leaflet map state (client-only)
+const LRef = shallowRef<any>(null);
+const mapEl = ref<HTMLElement | null>(null);
+const mapRef = shallowRef<any>(null);
+let polygonLayer: any | null = null;
+let pointLayers: any[] = [];
+let centroidMarker: any | null = null;
+
+// Array of [lat, lng] pairs for polygon
+const latLngs = computed<[number, number][]>(() => {
+  return rawPoints.value.map((p) => [p.y, p.x]);
+});
+
+// Map bounds with a small padding percentage
+const bounds = computed(() => {
+  const pts = rawPoints.value;
+  if (!pts.length) return undefined as unknown as [[number, number], [number, number]];
   let minX = Infinity,
     minY = Infinity,
     maxX = -Infinity,
     maxY = -Infinity;
-  for (const p of src) {
+  for (const p of pts) {
     if (p.x < minX) minX = p.x;
     if (p.y < minY) minY = p.y;
     if (p.x > maxX) maxX = p.x;
     if (p.y > maxY) maxY = p.y;
   }
-  const rangeX = Math.max(1, maxX - minX);
-  const rangeY = Math.max(1, maxY - minY);
-  const pad = 8; // percent of 100
-  const inner = 100 - pad * 2;
-  const scale = inner / Math.max(rangeX, rangeY);
-  const usedWidth = rangeX * scale;
-  const usedHeight = rangeY * scale;
-  const offsetX = pad + (inner - usedWidth) / 2;
-  const offsetY = pad + (inner - usedHeight) / 2;
-
-  return src.map((p) => ({
-    key: p.key,
-    label: p.label,
-    x: offsetX + (p.x - minX) * scale,
-    // invert Y so larger northing goes up
-    y: offsetY + (maxY - p.y) * scale,
-  }));
+  const w = Math.max(1, maxX - minX);
+  const h = Math.max(1, maxY - minY);
+  const pad = 0.08 * Math.max(w, h);
+  return [
+    [minY - pad, minX - pad],
+    [maxY + pad, maxX + pad],
+  ] as [[number, number], [number, number]];
 });
 
-const polygon = computed(() => {
-  if (!points.value.length) return "";
-  return points.value.map((p) => `${p.x},${p.y}`).join(" ");
-});
+// center derived from bounds when fitting; no explicit center needed
 
 // Parcel label options and selection
 const selectedParcelName = ref<string>("");
@@ -207,9 +156,9 @@ watch(
 
 const parcelLabel = computed(() => selectedParcelName.value);
 
-// centroid of polygon (in SVG coords). If degenerate, fallback to average of points
+// centroid of polygon (raw coords). If degenerate, fallback to average of points
 const centroid = computed(() => {
-  const pts = points.value;
+  const pts = rawPoints.value;
   const n = pts.length;
   if (!n) return { x: 50, y: 50 };
   if (n < 3) {
@@ -236,7 +185,106 @@ const centroid = computed(() => {
   return { x: cx / (3 * area2), y: cy / (3 * area2) };
 });
 
+const centroidLatLng = computed<[number, number]>(() => [centroid.value.y, centroid.value.x]);
+
+function renderLayers() {
+  const L = LRef.value;
+  const map = mapRef.value;
+  if (!L || !map) return;
+
+  // Clear existing layers
+  if (polygonLayer) {
+    map.removeLayer(polygonLayer);
+    polygonLayer = null;
+  }
+  for (const l of pointLayers) map.removeLayer(l);
+  pointLayers = [];
+  if (centroidMarker) {
+    map.removeLayer(centroidMarker);
+    centroidMarker = null;
+  }
+
+  if (!latLngs.value.length) return;
+
+  // Fit bounds
+  const b = bounds.value as unknown as [[number, number], [number, number]];
+  if (b) map.fitBounds(L.latLngBounds(b), { padding: [10, 10] });
+
+  // Polygon
+  polygonLayer = L.polygon(latLngs.value, { color: "#ffffff", weight: 1, fill: false }).addTo(map);
+
+  // Points + labels
+  for (const p of rawPoints.value) {
+    const cm = L.circleMarker([p.y, p.x], { radius: 2, color: "#ffffff", weight: 1, fill: false })
+      .addTo(map)
+      .bindTooltip(p.label, { permanent: true, direction: "top", className: "leaflet-tooltip point-label", offset: [6, -6] });
+    pointLayers.push(cm);
+  }
+
+  // Parcel label at centroid
+  if (parcelLabel.value) {
+    centroidMarker = L.marker(centroidLatLng.value, {
+      icon: L.divIcon({ className: "empty-icon", html: "", iconSize: [0, 0] }),
+    })
+      .addTo(map)
+      .bindTooltip(parcelLabel.value, { permanent: true, direction: "center", className: "leaflet-tooltip parcel-label" });
+  }
+}
+
+onMounted(async () => {
+  const L = await import("leaflet");
+  LRef.value = L;
+  if (!mapEl.value) return;
+  mapRef.value = L.map(mapEl.value, {
+    crs: L.CRS.Simple,
+    attributionControl: false,
+    zoomControl: true,
+    minZoom: -5,
+  });
+  await nextTick();
+  mapRef.value.invalidateSize();
+  renderLayers();
+});
+
+onBeforeUnmount(() => {
+  const map = mapRef.value;
+  if (map) map.remove();
+  mapRef.value = null;
+  LRef.value = null;
+  polygonLayer = null;
+  pointLayers = [];
+  centroidMarker = null;
+});
+
+watch([latLngs, parcelLabel], () => {
+  renderLayers();
+});
+
 function onComplete() {
   emit("complete");
 }
 </script>
+
+<style scoped>
+/* Make Leaflet tooltips match the dark map */
+:deep(.leaflet-container) {
+  background: #000;
+}
+:deep(.leaflet-tooltip.point-label) {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: #fff;
+  padding: 0;
+  font-size: 11px;
+}
+:deep(.leaflet-tooltip.parcel-label) {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: #f8fafc;
+  font-weight: 700;
+  font-size: 14px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+</style>
