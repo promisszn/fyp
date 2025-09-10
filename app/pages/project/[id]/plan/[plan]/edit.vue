@@ -101,6 +101,7 @@
           :model-value="{ drawing: planData.drawing }"
           :coordinates="planData.coordinates"
           :parcel-name="planData.parcels[0]?.name || planData.basic.name"
+          :parcels="planData.parcels"
           @update:model-value="onDrawingUpdate"
           @complete="completeDrawing"
         />

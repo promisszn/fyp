@@ -4,6 +4,19 @@
       Drawing
     </h2>
 
+    <!-- Parcel label selector (only shown when multiple options exist) -->
+    <div v-if="parcelOptions.length > 1" class="flex items-center justify-end">
+      <div class="mb-1">
+        <label class="mr-2 text-xs text-gray-600 dark:text-gray-300">Parcel label</label>
+        <select
+          v-model="selectedParcelName"
+          class="text-sm border rounded px-2 py-1 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600"
+        >
+          <option v-for="name in parcelOptions" :key="name" :value="name">{{ name }}</option>
+        </select>
+      </div>
+    </div>
+
     <!-- Simple SVG Plot (plain background) -->
     <div
       class="rounded-md overflow-hidden border border-gray-200 dark:border-slate-600 bg-black"
@@ -83,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 
 type CoordInput = {
   point: string;
@@ -97,6 +110,7 @@ const props = defineProps<{
   modelValue?: any;
   coordinates?: CoordInput[];
   parcelName?: string;
+  parcels?: Array<{ name?: string }>; // optional list of parcels to choose a label from
 }>();
 const emit = defineEmits(["complete"]);
 
@@ -147,7 +161,33 @@ const polygon = computed(() => {
   return points.value.map((p) => `${p.x},${p.y}`).join(" ");
 });
 
-const parcelLabel = computed(() => (props.parcelName || "").trim());
+// Parcel label options and selection
+const selectedParcelName = ref<string>("");
+const parcelOptions = computed<string[]>(() => {
+  const opts: string[] = [];
+  const initial = (props.parcelName || "").trim();
+  if (initial) opts.push(initial);
+  if (Array.isArray(props.parcels)) {
+    for (const p of props.parcels) {
+      const n = (p?.name || "").trim();
+      if (n) opts.push(n);
+    }
+  }
+  // unique, keep order
+  return Array.from(new Set(opts));
+});
+
+watch(
+  () => parcelOptions.value,
+  (opts) => {
+    if (!selectedParcelName.value || !opts.includes(selectedParcelName.value)) {
+      selectedParcelName.value = opts[0] || "";
+    }
+  },
+  { immediate: true }
+);
+
+const parcelLabel = computed(() => selectedParcelName.value);
 
 // centroid of polygon (in SVG coords). If degenerate, fallback to average of points
 const centroid = computed(() => {
