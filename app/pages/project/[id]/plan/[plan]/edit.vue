@@ -96,8 +96,15 @@
           @complete="completeParcels"
         />
 
-        <StepDrawing
+        <StepComputation
           v-else-if="currentStep === 3"
+          :parcels="planData.parcels"
+          :coordinates="planData.coordinates"
+          @complete="completeComputation"
+        />
+
+        <StepDrawing
+          v-else-if="currentStep === 4"
           :model-value="{ drawing: planData.drawing }"
           :coordinates="planData.coordinates"
           :parcel-name="planData.parcels[0]?.name || planData.basic.name"
@@ -107,7 +114,7 @@
         />
 
         <StepEmbellishment
-          v-else-if="currentStep === 4"
+          v-else-if="currentStep === 5"
           :model-value="{ embellishment: planData.embellishment }"
           :loading="submittingEmbellishment"
           @update:model-value="onEmbellishmentUpdate"
@@ -115,7 +122,7 @@
         />
 
         <StepReport
-          v-else-if="currentStep === 5"
+          v-else-if="currentStep === 6"
           :model-value="{
             report: planData.report,
             embellishment: planData.embellishment,
@@ -136,6 +143,7 @@
 import { RiArrowLeftLine } from "@remixicon/vue";
 import StepCoordinates from "~/components/plan/steps/StepCoordinates.vue";
 import StepParcels from "~/components/plan/steps/StepParcels.vue";
+import StepComputation from "~/components/plan/steps/StepComputation.vue";
 import StepDrawing from "~/components/plan/steps/StepDrawing.vue";
 import StepEmbellishment from "~/components/plan/steps/StepEmbellishment.vue";
 import StepReport from "~/components/plan/steps/StepReport.vue";
@@ -160,6 +168,7 @@ const initialLoading = ref(true);
 const steps = [
   { key: "coordinates", title: "Coordinate Table" },
   { key: "parcels", title: "Parcel Table" },
+  { key: "computation", title: "Computations" },
   { key: "drawing", title: "Drawing" },
   { key: "embellishment", title: "Plan Embellishment" },
   { key: "report", title: "Report" },
@@ -253,9 +262,9 @@ onMounted(async () => {
       if (hasParcels) {
         completed.value.add(2);
       }
+      // If coords and parcels exist, move to computation step before drawing
       if (hasCoords && hasParcels) {
-        currentStep.value = 4;
-        completed.value.add(3);
+        currentStep.value = 3;
       } else if (hasCoords) {
         currentStep.value = 2;
       } else {
@@ -337,6 +346,14 @@ async function completeParcels() {
 
 // Drawing: display-only, allow proceeding
 function completeDrawing() {
+  // drawing is step 4
+  markCompleted(4);
+  currentStep.value = 5;
+}
+
+// Computation step complete: mark and proceed to drawing
+function completeComputation() {
+  // computation step index is 3
   markCompleted(3);
   currentStep.value = 4;
 }
@@ -363,8 +380,9 @@ async function completeEmbellishment() {
       surveyor_name: e.surveyor_name,
     };
     await axios.put(`/plan/edit/${planId}`, payload);
-    markCompleted(4);
-    currentStep.value = 5;
+  // embellishment is step 5
+  markCompleted(5);
+  currentStep.value = 6;
     toast.add({ title: "Embellishment saved", color: "success" });
   } catch (error) {
     toast.add({ title: "Failed to save embellishment", color: "error" });
@@ -375,7 +393,8 @@ async function completeEmbellishment() {
 
 // Final Step
 function finishPlan() {
-  markCompleted(5);
+  // report is step 6
+  markCompleted(6);
   toast.add({ title: "Plan data ready (not yet submitted)", color: "success" });
   navigateTo(`/project/${projectId}/plan/${planId}`);
   // TODO: Submit aggregated planData to API.
