@@ -100,7 +100,7 @@
           v-else-if="currentStep === 3"
           :parcels="planData.parcels"
           :coordinates="planData.coordinates"
-          @complete="completeComputation"
+          @complete="onComputationComplete"
         />
 
         <StepDrawing
@@ -109,6 +109,7 @@
           :coordinates="planData.coordinates"
           :parcel-name="planData.parcels[0]?.name || planData.basic.name"
           :parcels="planData.parcels"
+          :legs="computationResult?.legs || []"
           @update:model-value="onDrawingUpdate"
           @complete="completeDrawing"
         />
@@ -200,6 +201,9 @@ const planData = reactive({
   },
   report: { generate: true },
 });
+
+// Computation payload captured from StepComputation
+const computationResult = ref<{ legs?: any[]; traverse?: any } | null>(null);
 
 onMounted(async () => {
   try {
@@ -356,6 +360,12 @@ function completeComputation() {
   // computation step index is 3
   markCompleted(3);
   currentStep.value = 4;
+}
+
+function onComputationComplete(payload: { legs?: any[]; traverse?: any } | null) {
+  computationResult.value = payload || null;
+  // mark and move to drawing
+  completeComputation();
 }
 
 // Embellishment

@@ -79,7 +79,7 @@
       <div class="flex justify-end mt-4">
         <button
           class="px-4 py-2 bg-blue-600 text-white rounded"
-          @click="$emit('complete')"
+          @click="emitComplete"
         >
           Continue to Drawing
         </button>
@@ -90,6 +90,11 @@
 
 <script lang="ts" setup>
 import { ref, watch, computed, onMounted } from "vue";
+const emit = defineEmits(["complete"]);
+
+function emitComplete() {
+  emit("complete", { legs: legs.value, traverse: traverse.value });
+}
 import axios from "axios";
 
 const props = defineProps({

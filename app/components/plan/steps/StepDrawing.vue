@@ -27,7 +27,7 @@
     >
       <ClientOnly>
         <div
-          class="relative w-full h-72"
+          class="relative w-full h-96"
           :class="{ 'simple-crs': crsMode === 'simple' }"
         >
           <div ref="mapEl" class="w-full h-full" />
@@ -113,7 +113,18 @@ const props = defineProps<{
   modelValue?: any;
   coordinates?: CoordInput[];
   parcelName?: string;
-  parcels?: Array<{ name?: string; ids?: string[] }>; // optional list of parcels (used to filter coordinates by ids)
+  parcels?: Array<{ name?: string; ids?: string[] }>;
+  legs?: Array<{
+    from: { id: string; northing: number; easting: number };
+    to: { id: string; northing: number; easting: number };
+    distance: number;
+    bearing?: {
+      decimal?: number;
+      degrees?: number;
+      minutes?: number;
+      seconds?: number;
+    };
+  }>;
 }>();
 const emit = defineEmits(["complete"]);
 
@@ -153,6 +164,7 @@ const mapRef = shallowRef<any>(null);
 let polygonLayer: any | null = null;
 let pointLayers: any[] = [];
 let centroidMarker: any | null = null;
+let dimensionLayers: any[] = [];
 const baseLayers = shallowRef<Record<string, any>>({});
 const activeBaseKey = ref<string>("OpenStreetMap");
 const crsMode = ref<"geo" | "simple" | null>(null);
@@ -408,6 +420,158 @@ function renderLayers() {
     pointLayers.push(cm);
   }
 
+  // Dimension labels from legs (distance + bearing)
+  // Remove old dimension layers
+  for (const dl of dimensionLayers) map.removeLayer(dl);
+  dimensionLayers = [];
+  if (Array.isArray(props.legs) && props.legs.length) {
+    for (const leg of props.legs) {
+      // find latlng for from and to by matching point ids with pointsLatLng labels
+      const from = pointsLatLng.value.find(
+        (pp) => pp.label === leg.from.id || pp.key === leg.from.id
+      );
+      const to = pointsLatLng.value.find(
+        (pp) => pp.label === leg.to.id || pp.key === leg.to.id
+      );
+      if (!from || !to) continue;
+      const midLat = (from.lat + to.lat) / 2;
+      const midLng = (from.lng + to.lng) / 2;
+      // compute bearing label (degrees + minutes) and distance label separately
+      const distTxt = `${Number(leg.distance).toFixed(3)} m`;
+      // format bearing as degrees and minutes with unit
+      const bd = leg.bearing;
+      let bearingTxt = "";
+      if (bd && typeof bd.decimal === "number") {
+        const deg = Math.floor(bd.decimal);
+        const minutes = Math.floor((bd.decimal - deg) * 60);
+        bearingTxt = `${deg}° ${minutes}'`;
+      } else if (bd && typeof bd.degrees === "number") {
+        const deg = bd.degrees;
+        const minutes = bd.minutes ?? 0;
+        bearingTxt = `${deg}° ${minutes}'`;
+      }
+
+      // compute a small pixel offset so labels don't sit directly on the line
+      const midPoint = L.latLng(midLat, midLng);
+      // offset direction perpendicular to the segment in pixel space
+      const fromPt = map.latLngToLayerPoint(L.latLng(from.lat, from.lng));
+      const toPt = map.latLngToLayerPoint(L.latLng(to.lat, to.lng));
+      const dx = toPt.x - fromPt.x;
+      const dy = toPt.y - fromPt.y;
+      const layerPoint = map.latLngToLayerPoint(midPoint);
+      // dynamic offset based on segment pixel length so short segments get smaller offsets
+      const segPixelLen = Math.sqrt(dx * dx + dy * dy);
+      // offset scales with segment length but clamped to reasonable bounds
+      const offsetPx = Math.min(
+        48,
+        Math.max(8, Math.floor(segPixelLen * 0.14))
+      );
+      // perpendicular (normalized)
+      const len = Math.max(1, segPixelLen);
+      const px = -dy / len;
+      const py = dx / len;
+
+      // compute angle of the segment in screen (layer) coordinates
+      const angleRad = Math.atan2(dy, dx);
+      let angleDeg = (angleRad * 180) / Math.PI;
+      // keep text upright: rotate into range [-90,90]
+      if (angleDeg > 90) angleDeg -= 180;
+      if (angleDeg < -90) angleDeg += 180;
+
+      // decide which side is inside (towards centroid) vs outside
+      let bearingSign = 1;
+      try {
+        const centroidLL = L.latLng(
+          centroidLatLng.value[0],
+          centroidLatLng.value[1]
+        );
+        const centroidLayer = map.latLngToLayerPoint(centroidLL);
+        const cx = centroidLayer.x - layerPoint.x;
+        const cy = centroidLayer.y - layerPoint.y;
+        const dot = cx * px + cy * py; // if positive, positive perp points toward centroid (inside)
+        // we want bearing outside (away from centroid)
+        bearingSign = dot > 0 ? -1 : 1;
+      } catch (e) {
+        bearingSign = 1;
+      }
+
+      // make bearing offset proportional but clamped so it never goes absurdly far
+      const bearingOffset = Math.max(
+        8,
+        Math.min(Math.floor(segPixelLen * 0.7), offsetPx + 10)
+      );
+      // distance offset should be smaller and proportional to segment length
+      const distOffset = Math.max(
+        4,
+        Math.min(Math.floor(segPixelLen * 0.33), Math.floor(offsetPx / 2))
+      );
+
+      // bearing label (outside)
+      const bearingPt = L.point(
+        layerPoint.x + px * bearingOffset * bearingSign,
+        layerPoint.y + py * bearingOffset * bearingSign
+      );
+      const bearingLatLng = map.layerPointToLatLng(bearingPt);
+      // center rotated label so vertical/higher-angle labels align around marker point
+      const bearingHtml = `<div class="dim-box" style="transform: translate(-50%,-50%) rotate(${angleDeg}deg); transform-origin: center;">${bearingTxt}</div>`;
+      const bearingIcon = L.divIcon({
+        className: "dimension-label bearing-label",
+        html: bearingHtml,
+        iconAnchor: [0, 0],
+      });
+      const bearingMarker = L.marker(bearingLatLng, {
+        icon: bearingIcon,
+        interactive: false,
+      }).addTo(map);
+
+      // distance label (inside)
+      const distPt = L.point(
+        layerPoint.x - px * distOffset * bearingSign,
+        layerPoint.y - py * distOffset * bearingSign
+      );
+      const distLatLng = map.layerPointToLatLng(distPt);
+      const distHtml = `<div class="dim-box" style="transform: translate(-50%,-50%) rotate(${angleDeg}deg); transform-origin: center;">${distTxt}</div>`;
+      const distIcon = L.divIcon({
+        className: "dimension-label distance-label",
+        html: distHtml,
+        iconAnchor: [0, 0],
+      });
+      const distMarker = L.marker(distLatLng, {
+        icon: distIcon,
+        interactive: false,
+      }).addTo(map);
+
+      // ensure distance label is closer to midpoint than bearing label; if not, pull it in
+      try {
+        const midLP = layerPoint;
+        const bLP = map.latLngToLayerPoint(bearingLatLng);
+        const dLP = map.latLngToLayerPoint(distLatLng);
+        const db = Math.hypot(bLP.x - midLP.x, bLP.y - midLP.y);
+        const dd = Math.hypot(dLP.x - midLP.x, dLP.y - midLP.y);
+        if (dd > db) {
+          // move distance to halfway between midpoint and bearing (but on inside side)
+          const halfOffset = Math.max(4, Math.floor(bearingOffset / 2));
+          const newDistPt = L.point(
+            layerPoint.x - px * halfOffset * bearingSign,
+            layerPoint.y - py * halfOffset * bearingSign
+          );
+          const newDistLatLng = map.layerPointToLatLng(newDistPt);
+          // update marker (no leader lines)
+          map.removeLayer(distMarker);
+          const newDistMarker = L.marker(newDistLatLng, {
+            icon: distIcon,
+            interactive: false,
+          }).addTo(map);
+          dimensionLayers.push(bearingMarker, newDistMarker);
+        } else {
+          dimensionLayers.push(bearingMarker, distMarker);
+        }
+      } catch (e) {
+        dimensionLayers.push(bearingMarker, distMarker);
+      }
+    }
+  }
+
   // Parcel label at centroid
   if (parcelLabel.value) {
     centroidMarker = L.marker(centroidLatLng.value, {
@@ -450,6 +614,7 @@ onBeforeUnmount(() => {
   polygonLayer = null;
   pointLayers = [];
   centroidMarker = null;
+  dimensionLayers = [];
 });
 
 watch([latLngs, parcelLabel], () => {
@@ -492,10 +657,6 @@ function onComplete() {
 </script>
 
 <style scoped>
-/* Make Leaflet tooltips match the dark map */
-/* :deep(.simple-crs .leaflet-container) {
-  background: #000;
-} */
 :deep(.leaflet-tooltip.point-label) {
   background: transparent;
   border: none;
@@ -515,5 +676,38 @@ function onComplete() {
 
 :deep(.leaflet-tooltip-top:before) {
   border-top-color: #000 !important;
+}
+
+:deep(.dimension-label .dim-box) {
+  background: rgba(255, 255, 255, 0.96);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  font-size: 15px;
+  font-weight: 600;
+  color: #111;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  white-space: nowrap;
+  display: inline-block;
+  line-height: 1;
+}
+
+:deep(.leaflet-interactive.leader-line) {
+  stroke: #333;
+}
+
+:deep(.bearing-label .dim-box) {
+  background: rgba(10, 132, 255, 0.95);
+  color: white;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 8px 12px;
+  font-size: 15px;
+}
+
+:deep(.distance-label .dim-box) {
+  background: rgba(250, 250, 250, 0.98);
+  color: #111;
+  padding: 8px 12px;
+  font-size: 15px;
 }
 </style>
