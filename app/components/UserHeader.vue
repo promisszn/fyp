@@ -131,7 +131,7 @@ function toggleMenu() {
 
 function onProfile() {
   menuOpen.value = false;
-  //   navigateTo("/profile");
+    navigateTo("/set-profile");
 }
 
 async function onLogout() {
