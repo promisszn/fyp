@@ -4,23 +4,6 @@
       Drawing
     </h2>
 
-    <!-- Parcel label selector (only shown when multiple options exist) -->
-    <div v-if="parcelOptions.length > 1" class="flex items-center justify-end">
-      <div class="mb-1">
-        <label class="mr-2 text-xs text-gray-600 dark:text-gray-300"
-          >Parcel label</label
-        >
-        <select
-          v-model="selectedParcelName"
-          class="text-sm border rounded px-2 py-1 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600"
-        >
-          <option v-for="name in parcelOptions" :key="name" :value="name">
-            {{ name }}
-          </option>
-        </select>
-      </div>
-    </div>
-
     <!-- Leaflet map with base-layer switch (auto: WebMercator tiles if geographic, else CRS.Simple) -->
     <div
       class="rounded-md overflow-hidden border border-gray-200 dark:border-slate-600"
@@ -128,42 +111,63 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(["complete"]);
 
-// Prepare raw points (no scaling). We'll render with Leaflet using CRS.Simple.
-const selectedParcel = computed(() => {
-  const name = selectedParcelName.value?.trim();
-  if (!name || !Array.isArray(props.parcels)) return null;
-  return props.parcels.find((p) => (p?.name || "").trim() === name) || null;
+// Prepare parcel data for rendering all parcels together
+const allParcels = computed(() => {
+  if (!Array.isArray(props.parcels) || !Array.isArray(props.coordinates)) {
+    return [];
+  }
+
+  return props.parcels
+    .map((parcel) => {
+      const parcelName = (parcel?.name || "").trim();
+      const parcelIds = parcel?.ids?.filter(Boolean) || [];
+      if (!parcelIds.length) return null;
+
+      // Filter coordinates for this parcel
+      const set = new Set(parcelIds);
+      const filtered =
+        props.coordinates?.filter((r) => r.point && set.has(r.point)) || [];
+      if (!filtered.length) return null;
+
+      // Map to raw points
+      const points = filtered
+        .filter((r) => r.northing != null && r.easting != null)
+        .map((r) => ({
+          key: r.point || `${r.easting},${r.northing}`,
+          label: r.point || "",
+          x: Number(r.easting),
+          y: Number(r.northing),
+        }));
+
+      if (!points.length) return null;
+
+      return { name: parcelName, points };
+    })
+    .filter(Boolean) as Array<{
+    name: string;
+    points: Array<{ key: string; label: string; x: number; y: number }>;
+  }>;
 });
 
-const filteredCoordinates = computed<CoordInput[]>(() => {
-  const coords = props.coordinates || [];
-  const ids = selectedParcel.value?.ids?.filter(Boolean) || [];
-  if (!ids.length) return coords;
-  const set = new Set(ids);
-  const filtered = coords.filter((r) => r.point && set.has(r.point));
-  // Fallback to all coords if filter yields none
-  return filtered.length ? filtered : coords;
+// Get all raw points to determine bounds and geographic orientation
+const allRawPoints = computed(() => {
+  const points: Array<{ key: string; label: string; x: number; y: number }> =
+    [];
+  allParcels.value.forEach((parcel) => {
+    parcel.points.forEach((point) => points.push(point));
+  });
+  return points;
 });
 
-const rawPoints = computed(() => {
-  const src = filteredCoordinates.value
-    .filter((r) => r.northing != null && r.easting != null)
-    .map((r) => ({
-      key: r.point || `${r.easting},${r.northing}`,
-      label: r.point || "",
-      x: Number(r.easting),
-      y: Number(r.northing),
-    }));
-  return src as Array<{ key: string; label: string; x: number; y: number }>;
-});
+
 
 // Leaflet map state (client-only)
 const LRef = shallowRef<any>(null);
 const mapEl = ref<HTMLElement | null>(null);
 const mapRef = shallowRef<any>(null);
-let polygonLayer: any | null = null;
+let polygonLayers: any[] = [];
 let pointLayers: any[] = [];
-let centroidMarker: any | null = null;
+let centroidMarkers: any[] = [];
 let dimensionLayers: any[] = [];
 const baseLayers = shallowRef<Record<string, any>>({});
 const activeBaseKey = ref<string>("OpenStreetMap");
@@ -171,7 +175,7 @@ const crsMode = ref<"geo" | "simple" | null>(null);
 
 // Determine geographic orientation (supports lon/lat or lat/lon). "none" means non-geographic.
 const geoOrientation = computed<"lonlat" | "latlon" | "none">(() => {
-  const pts = rawPoints.value;
+  const pts = allRawPoints.value;
   if (!pts.length) return "lonlat"; // default to lon/lat when empty
   let lonlat = 0;
   let latlon = 0;
@@ -185,16 +189,34 @@ const geoOrientation = computed<"lonlat" | "latlon" | "none">(() => {
   return lonlat >= latlon ? "lonlat" : "latlon";
 });
 
-// Array of [lat, lng] pairs for polygon
+// Generate arrays of [lat, lng] pairs for each parcel's polygon
+const parcelLatLngs = computed<
+  Array<{ name: string; points: [number, number][] }>
+>(() => {
+  const orient = geoOrientation.value;
+  return allParcels.value.map((parcel) => {
+    const points = parcel.points.map((p) => {
+      if (orient === "latlon") return [p.x, p.y] as [number, number]; // x=lat, y=lng
+      return [p.y, p.x] as [number, number]; // y=lat, x=lng (default)
+    });
+    return { name: parcel.name, points };
+  });
+});
+
+// Single array of [lat, lng] pairs for backward compatibility
 const latLngs = computed<[number, number][]>(() => {
   const orient = geoOrientation.value;
-  if (orient === "latlon") return rawPoints.value.map((p) => [p.x, p.y]); // x=lat, y=lng
-  return rawPoints.value.map((p) => [p.y, p.x]); // y=lat, x=lng (default)
+  if (allRawPoints.value.length === 0) return [];
+
+  return allRawPoints.value.map((p) => {
+    if (orient === "latlon") return [p.x, p.y] as [number, number]; // x=lat, y=lng
+    return [p.y, p.x] as [number, number]; // y=lat, x=lng (default)
+  });
 });
 
 // Points mapped to lat/lng for markers with labels
 const pointsLatLng = computed(() =>
-  rawPoints.value.map((p) => {
+  allRawPoints.value.map((p) => {
     const orient = geoOrientation.value;
     return orient === "latlon"
       ? { key: p.key, label: p.label, lat: p.x, lng: p.y }
@@ -202,120 +224,86 @@ const pointsLatLng = computed(() =>
   })
 );
 
-// Map bounds computed from lat/lng pairs with padding
+// Map bounds computed from all points with padding
 const bounds = computed(() => {
-  const pts = latLngs.value;
-  if (!pts.length)
+  const allPoints = latLngs.value;
+  if (!allPoints.length)
     return undefined as unknown as [[number, number], [number, number]];
+
   let minLat = Infinity,
     minLng = Infinity,
     maxLat = -Infinity,
     maxLng = -Infinity;
-  for (const [lat, lng] of pts) {
+
+  for (const [lat, lng] of allPoints) {
     if (lat < minLat) minLat = lat;
     if (lng < minLng) minLng = lng;
     if (lat > maxLat) maxLat = lat;
     if (lng > maxLng) maxLng = lng;
   }
+
   const w = Math.max(1, maxLng - minLng);
   const h = Math.max(1, maxLat - minLat);
   const pad = 0.08 * Math.max(w, h);
+
   return [
     [minLat - pad, minLng - pad],
     [maxLat + pad, maxLng + pad],
   ] as [[number, number], [number, number]];
 });
 
-// center derived from bounds when fitting; no explicit center needed
+// Map bounds computed from all points with padding
+const parcelCentroids = computed(() => {
+  return parcelLatLngs.value.map((parcel) => {
+    const pts = parcel.points;
+    const n = pts.length;
 
-// Parcel label options and selection
-const selectedParcelName = ref<string>("");
-const parcelOptions = computed<string[]>(() => {
-  const opts: string[] = [];
-  const initial = (props.parcelName || "").trim();
-  if (initial) opts.push(initial);
-  if (Array.isArray(props.parcels)) {
-    for (const p of props.parcels) {
-      const n = (p?.name || "").trim();
-      if (n) opts.push(n);
+    if (!n) return { name: parcel.name, position: [0, 0] as [number, number] };
+    if (n < 3) {
+      const s = pts.reduce(
+        (acc, [lat, lng]) => [acc[0] + lat, acc[1] + lng] as [number, number],
+        [0, 0]
+      );
+      return {
+        name: parcel.name,
+        position: [s[0] / n, s[1] / n] as [number, number],
+      };
     }
-  }
-  // unique, keep order
-  return Array.from(new Set(opts));
-});
 
-watch(
-  () => parcelOptions.value,
-  (opts) => {
-    if (!selectedParcelName.value || !opts.includes(selectedParcelName.value)) {
-      selectedParcelName.value = opts[0] || "";
+    let area2 = 0;
+    let cx = 0;
+    let cy = 0;
+
+    for (let i = 0; i < n; i++) {
+      const [x0, y0] = [pts[i]![1], pts[i]![0]]; // treat lng=x, lat=y for centroid calc
+      const [x1, y1] = [pts[(i + 1) % n]![1], pts[(i + 1) % n]![0]];
+      const f = x0 * y1 - x1 * y0;
+      area2 += f;
+      cx += (x0 + x1) * f;
+      cy += (y0 + y1) * f;
     }
-  },
-  { immediate: true }
-);
 
-const parcelLabel = computed(() => selectedParcelName.value);
+    if (area2 === 0) {
+      const s = pts.reduce(
+        (acc, [lat, lng]) => [acc[0] + lat, acc[1] + lng] as [number, number],
+        [0, 0]
+      );
+      return {
+        name: parcel.name,
+        position: [s[0] / n, s[1] / n] as [number, number],
+      };
+    }
 
-// centroid of polygon (raw coords). If degenerate, fallback to average of points
-const centroid = computed(() => {
-  const pts = rawPoints.value;
-  const n = pts.length;
-  if (!n) return { x: 50, y: 50 };
-  if (n < 3) {
-    const sx = pts.reduce((s, p) => s + p.x, 0);
-    const sy = pts.reduce((s, p) => s + p.y, 0);
-    return { x: sx / n, y: sy / n };
-  }
-  let area2 = 0; // 2 * area (signed)
-  let cx = 0;
-  let cy = 0;
-  for (let i = 0; i < n; i++) {
-    const p0 = pts[i]!;
-    const p1 = pts[(i + 1) % n]!;
-    const f = p0.x * p1.y - p1.x * p0.y;
-    area2 += f;
-    cx += (p0.x + p1.x) * f;
-    cy += (p0.y + p1.y) * f;
-  }
-  if (area2 === 0) {
-    const sx = pts.reduce((s, p) => s + p.x, 0);
-    const sy = pts.reduce((s, p) => s + p.y, 0);
-    return { x: sx / n, y: sy / n };
-  }
-  return { x: cx / (3 * area2), y: cy / (3 * area2) };
+    return {
+      name: parcel.name,
+      position: [cy / (3 * area2), cx / (3 * area2)] as [number, number],
+    };
+  });
 });
 
-const centroidLatLng = computed<[number, number]>(() => {
-  const pts = latLngs.value;
-  const n = pts.length;
-  if (!n) return [0, 0];
-  if (n < 3) {
-    const s = pts.reduce(
-      (acc, [lat, lng]) => [acc[0] + lat, acc[1] + lng] as [number, number],
-      [0, 0]
-    );
-    return [s[0] / n, s[1] / n];
-  }
-  let area2 = 0;
-  let cx = 0;
-  let cy = 0;
-  for (let i = 0; i < n; i++) {
-    const [x0, y0] = [pts[i]![1], pts[i]![0]]; // treat lng=x, lat=y for centroid calc
-    const [x1, y1] = [pts[(i + 1) % n]![1], pts[(i + 1) % n]![0]];
-    const f = x0 * y1 - x1 * y0;
-    area2 += f;
-    cx += (x0 + x1) * f;
-    cy += (y0 + y1) * f;
-  }
-  if (area2 === 0) {
-    const s = pts.reduce(
-      (acc, [lat, lng]) => [acc[0] + lat, acc[1] + lng] as [number, number],
-      [0, 0]
-    );
-    return [s[0] / n, s[1] / n];
-  }
-  return [cy / (3 * area2), cx / (3 * area2)];
-});
+
+
+
 
 // Heuristic: detect if coords look geographic in either orientation
 const isGeographic = computed<boolean>(() => geoOrientation.value !== "none");
@@ -378,16 +366,20 @@ function renderLayers() {
   if (!L || !map) return;
 
   // Clear existing layers
-  if (polygonLayer) {
-    map.removeLayer(polygonLayer);
-    polygonLayer = null;
+  for (const layer of polygonLayers) {
+    map.removeLayer(layer);
   }
-  for (const l of pointLayers) map.removeLayer(l);
+  polygonLayers = [];
+
+  for (const layer of pointLayers) {
+    map.removeLayer(layer);
+  }
   pointLayers = [];
-  if (centroidMarker) {
-    map.removeLayer(centroidMarker);
-    centroidMarker = null;
+
+  for (const marker of centroidMarkers) {
+    map.removeLayer(marker);
   }
+  centroidMarkers = [];
 
   if (!latLngs.value.length) return;
 
@@ -395,29 +387,54 @@ function renderLayers() {
   const b = bounds.value as unknown as [[number, number], [number, number]];
   if (b) map.fitBounds(L.latLngBounds(b), { padding: [10, 10] });
 
-  // Polygon
-  polygonLayer = L.polygon(latLngs.value, {
-    color: "#000000",
-    weight: 2,
-    fill: false,
-  }).addTo(map);
+  // Draw each parcel polygon
+  for (const parcel of parcelLatLngs.value) {
+    if (parcel.points.length < 3) continue;
+
+    const polygonLayer = L.polygon(parcel.points, {
+      color: "#000000",
+      weight: 1,
+      fill: false,
+    }).addTo(map);
+
+    polygonLayers.push(polygonLayer);
+  }
 
   // Points + labels (respect orientation)
   for (const p of pointsLatLng.value) {
     const cm = L.circleMarker([p.lat, p.lng], {
-      radius: 4,
+      radius: 2,
       color: "#000000",
-      weight: 2,
-      fill: false,
+      weight: 1,
+      fill: true,
+      fillColor: "#000000",
+      fillOpacity: 1,
     })
       .addTo(map)
       .bindTooltip(p.label, {
         permanent: true,
         direction: "top",
         className: "leaflet-tooltip point-label",
-        offset: [10, -6],
+        offset: [-6, -10], // Position point labels directly above points
       });
     pointLayers.push(cm);
+  }
+
+  // Add parcel labels at centroids
+  for (const parcel of parcelCentroids.value) {
+    if (!parcel.name) continue;
+
+    const marker = L.marker(parcel.position, {
+      icon: L.divIcon({ className: "empty-icon", html: "", iconSize: [0, 0] }),
+    })
+      .addTo(map)
+      .bindTooltip(parcel.name, {
+        permanent: true,
+        direction: "center",
+        className: "leaflet-tooltip parcel-label",
+      });
+
+    centroidMarkers.push(marker);
   }
 
   // Dimension labels from legs (distance + bearing)
@@ -437,18 +454,18 @@ function renderLayers() {
       const midLat = (from.lat + to.lat) / 2;
       const midLng = (from.lng + to.lng) / 2;
       // compute bearing label (degrees + minutes) and distance label separately
-      const distTxt = `${Number(leg.distance).toFixed(3)} m`;
-      // format bearing as degrees and minutes with unit
+      const distTxt = `${Number(leg.distance).toFixed(2)}m`;
+      // format bearing as degrees and minutes with unit - exactly matching screenshot format
       const bd = leg.bearing;
       let bearingTxt = "";
       if (bd && typeof bd.decimal === "number") {
         const deg = Math.floor(bd.decimal);
         const minutes = Math.floor((bd.decimal - deg) * 60);
-        bearingTxt = `${deg}° ${minutes}'`;
+        bearingTxt = `${deg}°${minutes}'`;
       } else if (bd && typeof bd.degrees === "number") {
         const deg = bd.degrees;
         const minutes = bd.minutes ?? 0;
-        bearingTxt = `${deg}° ${minutes}'`;
+        bearingTxt = `${deg}°${minutes}'`;
       }
 
       // compute a small pixel offset so labels don't sit directly on the line
@@ -463,8 +480,8 @@ function renderLayers() {
       const segPixelLen = Math.sqrt(dx * dx + dy * dy);
       // offset scales with segment length but clamped to reasonable bounds
       const offsetPx = Math.min(
-        48,
-        Math.max(8, Math.floor(segPixelLen * 0.14))
+        24,
+        Math.max(6, Math.floor(segPixelLen * 0.08))
       );
       // perpendicular (normalized)
       const len = Math.max(1, segPixelLen);
@@ -480,30 +497,45 @@ function renderLayers() {
 
       // decide which side is inside (towards centroid) vs outside
       let bearingSign = 1;
+
+      // Find the closest parcel centroid for this line segment
+      let closestCentroid: [number, number] | null = null;
+      let minDistance = Infinity;
+
+      for (const parcel of parcelCentroids.value) {
+        if (parcel.position) {
+          const [centLat, centLng] = parcel.position;
+          const midPointDist = Math.hypot(centLat - midLat, centLng - midLng);
+          if (midPointDist < minDistance) {
+            minDistance = midPointDist;
+            closestCentroid = parcel.position;
+          }
+        }
+      }
+
       try {
-        const centroidLL = L.latLng(
-          centroidLatLng.value[0],
-          centroidLatLng.value[1]
-        );
-        const centroidLayer = map.latLngToLayerPoint(centroidLL);
-        const cx = centroidLayer.x - layerPoint.x;
-        const cy = centroidLayer.y - layerPoint.y;
-        const dot = cx * px + cy * py; // if positive, positive perp points toward centroid (inside)
-        // we want bearing outside (away from centroid)
-        bearingSign = dot > 0 ? -1 : 1;
+        if (closestCentroid) {
+          const centroidLL = L.latLng(closestCentroid[0], closestCentroid[1]);
+          const centroidLayer = map.latLngToLayerPoint(centroidLL);
+          const cx = centroidLayer.x - layerPoint.x;
+          const cy = centroidLayer.y - layerPoint.y;
+          const dot = cx * px + cy * py; // if positive, positive perp points toward centroid (inside)
+          // we want bearing outside (away from centroid)
+          bearingSign = dot > 0 ? -1 : 1;
+        }
       } catch (e) {
         bearingSign = 1;
       }
 
       // make bearing offset proportional but clamped so it never goes absurdly far
       const bearingOffset = Math.max(
-        8,
-        Math.min(Math.floor(segPixelLen * 0.7), offsetPx + 10)
+        12,
+        Math.min(Math.floor(segPixelLen * 0.25), offsetPx + 12)
       );
       // distance offset should be smaller and proportional to segment length
       const distOffset = Math.max(
         4,
-        Math.min(Math.floor(segPixelLen * 0.33), Math.floor(offsetPx / 2))
+        Math.min(Math.floor(segPixelLen * 0.1), Math.floor(offsetPx / 2))
       );
 
       // bearing label (outside)
@@ -513,7 +545,8 @@ function renderLayers() {
       );
       const bearingLatLng = map.layerPointToLatLng(bearingPt);
       // center rotated label so vertical/higher-angle labels align around marker point
-      const bearingHtml = `<div class="dim-box" style="transform: translate(-50%,-50%) rotate(${angleDeg}deg); transform-origin: center;">${bearingTxt}</div>`;
+      // Use horizontal alignment to better match the screenshot
+      const bearingHtml = `<div class="dim-box" style="transform: translate(-50%,-50%) rotate(${angleDeg}deg); transform-origin: center; text-align: center;">${bearingTxt}</div>`;
       const bearingIcon = L.divIcon({
         className: "dimension-label bearing-label",
         html: bearingHtml,
@@ -526,11 +559,11 @@ function renderLayers() {
 
       // distance label (inside)
       const distPt = L.point(
-        layerPoint.x - px * distOffset * bearingSign,
-        layerPoint.y - py * distOffset * bearingSign
+        layerPoint.x, // Place directly on the midpoint
+        layerPoint.y
       );
       const distLatLng = map.layerPointToLatLng(distPt);
-      const distHtml = `<div class="dim-box" style="transform: translate(-50%,-50%) rotate(${angleDeg}deg); transform-origin: center;">${distTxt}</div>`;
+      const distHtml = `<div class="dim-box" style="transform: translate(-50%,-50%) rotate(${angleDeg}deg); transform-origin: center; text-align: center;">${distTxt}</div>`;
       const distIcon = L.divIcon({
         className: "dimension-label distance-label",
         html: distHtml,
@@ -541,48 +574,39 @@ function renderLayers() {
         interactive: false,
       }).addTo(map);
 
-      // ensure distance label is closer to midpoint than bearing label; if not, pull it in
+      // Ensure proper placement of labels to avoid overlapping
       try {
+        // Place distance label exactly on the midpoint of the line
         const midLP = layerPoint;
-        const bLP = map.latLngToLayerPoint(bearingLatLng);
-        const dLP = map.latLngToLayerPoint(distLatLng);
-        const db = Math.hypot(bLP.x - midLP.x, bLP.y - midLP.y);
-        const dd = Math.hypot(dLP.x - midLP.x, dLP.y - midLP.y);
-        if (dd > db) {
-          // move distance to halfway between midpoint and bearing (but on inside side)
-          const halfOffset = Math.max(4, Math.floor(bearingOffset / 2));
-          const newDistPt = L.point(
-            layerPoint.x - px * halfOffset * bearingSign,
-            layerPoint.y - py * halfOffset * bearingSign
-          );
-          const newDistLatLng = map.layerPointToLatLng(newDistPt);
-          // update marker (no leader lines)
-          map.removeLayer(distMarker);
-          const newDistMarker = L.marker(newDistLatLng, {
-            icon: distIcon,
-            interactive: false,
-          }).addTo(map);
-          dimensionLayers.push(bearingMarker, newDistMarker);
-        } else {
-          dimensionLayers.push(bearingMarker, distMarker);
-        }
+        const onLineDistPt = L.point(midLP.x, midLP.y);
+        const onLineDistLatLng = map.layerPointToLatLng(onLineDistPt);
+
+        // Update distance marker position to be directly on the line
+        map.removeLayer(distMarker);
+        const newDistMarker = L.marker(onLineDistLatLng, {
+          icon: distIcon,
+          interactive: false,
+        }).addTo(map);
+
+        // Always place bearing label further outside to avoid overlap
+        const outsideBearingPt = L.point(
+          layerPoint.x + px * (bearingOffset * 1.2) * bearingSign,
+          layerPoint.y + py * (bearingOffset * 1.2) * bearingSign
+        );
+        const outsideBearingLatLng = map.layerPointToLatLng(outsideBearingPt);
+
+        // Update bearing marker position
+        map.removeLayer(bearingMarker);
+        const newBearingMarker = L.marker(outsideBearingLatLng, {
+          icon: bearingIcon,
+          interactive: false,
+        }).addTo(map);
+
+        dimensionLayers.push(newBearingMarker, newDistMarker);
       } catch (e) {
         dimensionLayers.push(bearingMarker, distMarker);
       }
     }
-  }
-
-  // Parcel label at centroid
-  if (parcelLabel.value) {
-    centroidMarker = L.marker(centroidLatLng.value, {
-      icon: L.divIcon({ className: "empty-icon", html: "", iconSize: [0, 0] }),
-    })
-      .addTo(map)
-      .bindTooltip(parcelLabel.value, {
-        permanent: true,
-        direction: "center",
-        className: "leaflet-tooltip parcel-label",
-      });
   }
 }
 
@@ -611,15 +635,18 @@ onBeforeUnmount(() => {
   if (map) map.remove();
   mapRef.value = null;
   LRef.value = null;
-  polygonLayer = null;
+  polygonLayers = [];
   pointLayers = [];
-  centroidMarker = null;
+  centroidMarkers = [];
   dimensionLayers = [];
 });
 
-watch([latLngs, parcelLabel], () => {
-  renderLayers();
-});
+watch(
+  () => latLngs.value,
+  () => {
+    renderLayers();
+  }
+);
 
 // Switch base layer when toggled
 watch(activeBaseKey, () => applyActiveBase());
@@ -663,7 +690,8 @@ function onComplete() {
   box-shadow: none;
   color: #000;
   padding: 0;
-  font-size: 14px;
+  font-size: 12px;
+  font-weight: 400;
 }
 :deep(.leaflet-tooltip.parcel-label) {
   background: transparent;
@@ -672,42 +700,45 @@ function onComplete() {
   color: #000;
   font-weight: 700;
   font-size: 14px;
+  text-shadow: 1px 1px 0 white, -1px -1px 0 white, 1px -1px 0 white,
+    -1px 1px 0 white;
 }
 
 :deep(.leaflet-tooltip-top:before) {
   border-top-color: #000 !important;
 }
 
+:deep(.dimension-label) {
+  margin: 0;
+  padding: 0;
+}
+
 :deep(.dimension-label .dim-box) {
-  background: rgba(255, 255, 255, 0.96);
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  font-size: 15px;
-  font-weight: 600;
-  color: #111;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  background: transparent;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: #000;
   white-space: nowrap;
   display: inline-block;
   line-height: 1;
 }
 
 :deep(.leaflet-interactive.leader-line) {
-  stroke: #333;
+  stroke: #000;
 }
 
 :deep(.bearing-label .dim-box) {
-  background: rgba(10, 132, 255, 0.95);
-  color: white;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  padding: 8px 12px;
-  font-size: 15px;
+  background: transparent;
+  color: #000;
+  padding: 0;
+  font-size: 12px;
 }
 
 :deep(.distance-label .dim-box) {
-  background: rgba(250, 250, 250, 0.98);
-  color: #111;
-  padding: 8px 12px;
-  font-size: 15px;
+  background: transparent;
+  color: #000;
+  padding: 0;
+  font-size: 12px;
 }
 </style>
