@@ -69,9 +69,8 @@
                 <tr class="text-xs text-gray-500 dark:text-gray-400 uppercase">
                   <th class="py-2 px-3">Project No.</th>
                   <th class="py-2 px-3">Name</th>
-                  <th class="py-2 px-3 hidden lg:table-cell">Type</th>
                   <th class="py-2 px-3">Status</th>
-                  <th class="py-2 px-3 hidden xl:table-cell">Created</th>
+                  <th class="py-2 px-3 hidden lg:table-cell">Created</th>
                   <th class="py-2 px-3">Actions</th>
                 </tr>
               </thead>
@@ -91,11 +90,6 @@
                   >
                     <div class="max-w-xs truncate">{{ project.name }}</div>
                   </td>
-                  <td
-                    class="py-3 px-3 text-gray-600 dark:text-gray-300 hidden lg:table-cell"
-                  >
-                    {{ project.type || "N/A" }}
-                  </td>
                   <td class="py-3 px-3">
                     <span
                       :class="statusClass(project.status)"
@@ -104,7 +98,7 @@
                     >
                   </td>
                   <td
-                    class="py-3 px-3 text-gray-600 dark:text-gray-300 hidden xl:table-cell text-xs"
+                    class="py-3 px-3 text-gray-600 dark:text-gray-300 hidden lg:table-cell text-xs"
                   >
                     {{ formatDate(project.created_at) }}
                   </td>
@@ -164,13 +158,6 @@
 
               <!-- Meta data rows -->
               <div class="mt-3 space-y-2 text-xs">
-                <div class="flex justify-between">
-                  <span class="text-gray-500 dark:text-gray-400">Type</span>
-                  <span
-                    class="text-gray-700 dark:text-gray-300 truncate max-w-[55%] text-right"
-                    >{{ project.type || "N/A" }}</span
-                  >
-                </div>
                 <div class="flex justify-between items-center">
                   <span class="text-gray-500 dark:text-gray-400">Status</span>
                   <span

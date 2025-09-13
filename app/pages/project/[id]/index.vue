@@ -83,9 +83,6 @@
                 <span v-if="project.number"
                   >Project No: {{ project.number }}</span
                 >
-                <span v-if="project.type" class="capitalize"
-                  >Type: {{ project.type }}</span
-                >
                 <span v-if="project.created_at"
                   >Created: {{ formatDate(project.created_at) }}</span
                 >
