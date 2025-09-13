@@ -139,7 +139,7 @@ async function onLogout() {
   const config = useRuntimeConfig();
   try {
     const url = (config?.public?.BASE_URL || "") + "/auth/logout";
-    await axios.post(url);
+    await axios.get(url);
   } catch (e) {
     // ignore errors but continue to clear local auth state
   }

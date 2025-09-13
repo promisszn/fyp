@@ -20,6 +20,84 @@
         </button>
       </div>
 
+      <!-- Filters Section -->
+      <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-4 mb-4">
+        <div class="flex flex-col sm:flex-row gap-4">
+          <!-- Search Input -->
+          <div class="flex-1">
+            <label
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
+              Search Projects
+            </label>
+            <div class="relative">
+              <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="Search by name..."
+                class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+              />
+              <!-- Loading indicator for search -->
+              <div
+                v-if="loading && searchQuery"
+                class="absolute right-3 top-1/2 transform -translate-y-1/2"
+              >
+                <div
+                  class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Status Filter -->
+          <div class="sm:w-48">
+            <label
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
+              Filter by Status
+            </label>
+            <select
+              v-model="statusFilter"
+              :disabled="loading"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value="">All Statuses</option>
+              <option value="draft">Draft</option>
+              <option value="in_progress">In Progress</option>
+              <option value="field_work_complete">Field Work Completed</option>
+              <option value="computed">Computed</option>
+              <option value="plan_prepared">Plan Prepared</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+
+          <!-- Clear Filters Button -->
+          <div class="flex items-end">
+            <button
+              @click="clearFilters"
+              :disabled="(!searchQuery && !statusFilter) || loading"
+              class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Clear Filters
+            </button>
+          </div>
+        </div>
+
+        <!-- Results Summary -->
+        <div
+          v-if="searchQuery || statusFilter"
+          class="mt-3 text-sm text-gray-600 dark:text-gray-400"
+        >
+          Showing {{ projects.length }} result{{
+            projects.length !== 1 ? "s" : ""
+          }}
+          <span v-if="searchQuery"> matching "{{ searchQuery }}"</span>
+          <span v-if="statusFilter">
+            with status "{{ getStatusDisplayName(statusFilter) }}"</span
+          >
+        </div>
+      </div>
+
       <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-4 sm:p-6">
         <!-- Loading skeleton -->
         <div v-if="loading" class="space-y-4">
@@ -76,7 +154,7 @@
               </thead>
               <tbody>
                 <tr
-                  v-for="project in projects"
+                  v-for="project in filteredProjects"
                   :key="project.id"
                   class="border-t border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50"
                 >
@@ -94,7 +172,7 @@
                     <span
                       :class="statusClass(project.status)"
                       class="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-slate-700"
-                      >{{ project.status || "N/A" }}</span
+                      >{{ getStatusDisplayName(project.status) || "N/A" }}</span
                     >
                   </td>
                   <td
@@ -115,12 +193,15 @@
                   </td>
                 </tr>
 
-                <tr v-if="projects.length === 0">
+                <tr v-if="filteredProjects.length === 0 && !loading">
                   <td
                     colspan="6"
                     class="py-6 text-center text-gray-500 dark:text-gray-400"
                   >
-                    No projects found.
+                    <span v-if="searchQuery || statusFilter">
+                      No projects match your current filters.
+                    </span>
+                    <span v-else> No projects found. </span>
                   </td>
                 </tr>
               </tbody>
@@ -130,7 +211,7 @@
           <!-- Mobile Card View -->
           <div class="md:hidden space-y-4">
             <div
-              v-for="project in projects"
+              v-for="project in filteredProjects"
               :key="project.id"
               class="p-4 border border-gray-200 dark:border-slate-600 rounded-lg hover:shadow-md transition-shadow"
             >
@@ -163,7 +244,7 @@
                   <span
                     :class="statusClass(project.status)"
                     class="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-700 text-[10px] font-medium max-w-[55%] text-right truncate"
-                    >{{ project.status || "N/A" }}</span
+                    >{{ getStatusDisplayName(project.status) || "N/A" }}</span
                   >
                 </div>
                 <div class="flex justify-between">
@@ -177,10 +258,13 @@
             </div>
 
             <div
-              v-if="projects.length === 0"
+              v-if="filteredProjects.length === 0 && !loading"
               class="py-8 text-center text-gray-500 dark:text-gray-400"
             >
-              No projects found.
+              <span v-if="searchQuery || statusFilter">
+                No projects match your current filters.
+              </span>
+              <span v-else> No projects found. </span>
             </div>
           </div>
         </div>
@@ -251,7 +335,14 @@ definePageMeta({
   middleware: ["auth"],
 });
 
-import { ref, onMounted, onBeforeUnmount, computed, nextTick } from "vue";
+import {
+  ref,
+  onMounted,
+  onBeforeUnmount,
+  computed,
+  nextTick,
+  watch,
+} from "vue";
 import axios from "axios";
 import { useRuntimeConfig, navigateTo } from "#imports";
 
@@ -260,6 +351,10 @@ const toast = useToast();
 
 const projects = ref<any[]>([]);
 const loading = ref(true);
+
+// Filter variables
+const searchQuery = ref("");
+const statusFilter = ref("");
 
 const showCreateModal = ref(false);
 
@@ -277,7 +372,23 @@ const confirmMessage = ref(
 const fetchProjects = async () => {
   loading.value = true;
   try {
-    const res = await axios.get(`${config.public.BASE_URL}/project/list`);
+    // Build query parameters
+    const params = new URLSearchParams();
+
+    if (searchQuery.value.trim()) {
+      params.append("search", searchQuery.value.trim());
+    }
+
+    if (statusFilter.value) {
+      params.append("status", statusFilter.value);
+    }
+
+    const queryString = params.toString();
+    const url = `${config.public.BASE_URL}/project/list${
+      queryString ? `?${queryString}` : ""
+    }`;
+
+    const res = await axios.get(url);
     projects.value = res.data?.data ?? res.data ?? [];
   } catch (e: any) {
     toast.add({ title: "Failed to load projects.", color: "error" });
@@ -285,6 +396,51 @@ const fetchProjects = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+// Use projects directly since filtering is done on backend
+const filteredProjects = computed(() => projects.value);
+
+// Watch for filter changes and refetch data
+
+// Debounce function to avoid too many API calls
+let debounceTimeout: ReturnType<typeof setTimeout> | null = null;
+
+const debouncedFetch = () => {
+  if (debounceTimeout) {
+    clearTimeout(debounceTimeout);
+  }
+  debounceTimeout = setTimeout(() => {
+    fetchProjects();
+  }, 300); // 300ms delay
+};
+
+// Watch search query changes
+watch(searchQuery, () => {
+  debouncedFetch();
+});
+
+// Watch status filter changes
+watch(statusFilter, () => {
+  fetchProjects(); // No debounce needed for dropdown changes
+});
+
+const clearFilters = () => {
+  searchQuery.value = "";
+  statusFilter.value = "";
+  // fetchProjects will be called automatically by watchers
+};
+
+const getStatusDisplayName = (status: string) => {
+  const statusMap: Record<string, string> = {
+    draft: "Draft",
+    in_progress: "In Progress",
+    field_work_complete: "Field Work Completed",
+    computed: "Computed",
+    plan_prepared: "Plan Prepared",
+    completed: "Completed",
+  };
+  return statusMap[status] || status;
 };
 
 // Teleported dropdown state & logic
@@ -408,11 +564,11 @@ function statusClass(status: string | null | undefined) {
 
   const map: Record<string, string> = {
     draft: "text-gray-600 dark:text-gray-400",
-    in_progress: "text-yellow-600 font-semibold",
-    field_work_complete: "text-blue-600 font-semibold",
-    computed: "text-indigo-600 font-semibold",
-    plan_prepared: "text-green-600 font-semibold",
-    completed: "text-green-600 font-semibold",
+    in_progress: "text-yellow-600 dark:text-yellow-400 font-semibold",
+    field_work_complete: "text-blue-600 dark:text-blue-400 font-semibold",
+    computed: "text-indigo-600 dark:text-indigo-400 font-semibold",
+    plan_prepared: "text-green-600 dark:text-green-400 font-semibold",
+    completed: "text-emerald-600 dark:text-emerald-400 font-semibold",
   };
 
   return map[raw] ?? "text-gray-600 dark:text-gray-400";

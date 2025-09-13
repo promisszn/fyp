@@ -23,7 +23,7 @@
       </div>
 
       <form @submit.prevent="submit" class="p-4 space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label class="text-sm font-medium text-gray-800 dark:text-gray-200"
               >Name</label
@@ -43,7 +43,23 @@
               class="mt-1 w-full border border-gray-300 dark:border-slate-600 rounded px-3 py-2 bg-white dark:bg-slate-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
-          <div class="md:col-span-2">
+          <div>
+            <label class="text-sm font-medium text-gray-800 dark:text-gray-200"
+              >Status</label
+            >
+            <select
+              v-model="localForm.status"
+              class="mt-1 w-full border border-gray-300 dark:border-slate-600 rounded px-3 py-2 bg-white dark:bg-slate-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="draft">Draft</option>
+              <option value="in_progress">In Progress</option>
+              <option value="field_work_complete">Field Work Complete</option>
+              <option value="computed">Computed</option>
+              <option value="plan_prepared">Plan Prepared</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+          <div class="md:col-span-3">
             <label class="text-sm font-medium text-gray-800 dark:text-gray-200"
               >Description</label
             >
@@ -202,6 +218,7 @@ const defaultForm = (src: any) => ({
   name: src?.name ?? "",
   description: src?.description ?? "",
   number: src?.number ?? "",
+  status: src?.status ?? "draft",
   location: {
     address: src?.location?.address ?? "",
     city: src?.location?.city ?? "",
