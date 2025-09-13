@@ -6,7 +6,7 @@
       aria-label="Home"
       class="w-12 h-12 flex items-center justify-center rounded-xl bg-white/95 dark:bg-slate-800/95 border border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition"
     >
-      <img src="/favicon.ico" alt="Logo" class="w-7 h-7 object-contain" />
+      <img src="/logo.svg" alt="Logo" class="w-7 h-7 object-contain" />
     </button>
   </div>
 
