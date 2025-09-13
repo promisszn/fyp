@@ -31,8 +31,8 @@
             <thead>
               <tr class="text-left">
                 <th class="px-2 py-1">From</th>
-                <th class="px-2 py-1">Δ Northing</th>
-                <th class="px-2 py-1">Δ Easting</th>
+                <th class="px-2 py-1">Latitude</th>
+                <th class="px-2 py-1">Departure</th>
                 <th class="px-2 py-1">Distance (m)</th>
                 <th class="px-2 py-1">Bearing (°)</th>
                 <th class="px-2 py-1">To</th>
@@ -44,7 +44,7 @@
                 <td class="px-2 py-1">{{ leg.delta_northing }}</td>
                 <td class="px-2 py-1">{{ leg.delta_easting }}</td>
                 <td class="px-2 py-1">{{ leg.distance }}</td>
-                <td class="px-2 py-1">{{ leg.bearing?.decimal ?? "" }}</td>
+                <td class="px-2 py-1">{{ formatBearing(leg.bearing?.decimal) }}</td>
                 <td class="px-2 py-1">{{ leg.to.id }}</td>
               </tr>
             </tbody>
@@ -143,6 +143,30 @@ function buildPayloadForParcel(parcel: any) {
   }
 
   return { points };
+}
+
+function formatBearing(decimalDeg: number | null | undefined) {
+  if (decimalDeg === null || decimalDeg === undefined || Number.isNaN(decimalDeg)) return "";
+  const absDeg = Math.abs(decimalDeg);
+  let deg = Math.floor(absDeg);
+  const minutesFloat = (absDeg - deg) * 60;
+  let minutes = Math.floor(minutesFloat);
+  let secondsFloat = (minutesFloat - minutes) * 60;
+  const sign = decimalDeg < 0 ? "-" : "";
+
+  // Handle rare precision edge where secondsFloat rounds to 60.0
+  if (secondsFloat >= 59.9999999999) {
+    secondsFloat = 0;
+    minutes += 1;
+  }
+  if (minutes >= 60) {
+    minutes = 0;
+    deg += 1;
+  }
+
+  // Format seconds with up to 6 decimal places, trim trailing zeros and optional trailing dot
+  let secondsStr = secondsFloat.toFixed(6).replace(/\.?(0+)$/,'');
+  return `${sign}${deg}° ${minutes}' ${secondsStr}\"`;
 }
 
 async function fetchComputation() {
