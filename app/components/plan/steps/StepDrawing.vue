@@ -159,8 +159,6 @@ const allRawPoints = computed(() => {
   return points;
 });
 
-
-
 // Leaflet map state (client-only)
 const LRef = shallowRef<any>(null);
 const mapEl = ref<HTMLElement | null>(null);
@@ -300,10 +298,6 @@ const parcelCentroids = computed(() => {
     };
   });
 });
-
-
-
-
 
 // Heuristic: detect if coords look geographic in either orientation
 const isGeographic = computed<boolean>(() => geoOrientation.value !== "none");
@@ -451,10 +445,13 @@ function renderLayers() {
         (pp) => pp.label === leg.to.id || pp.key === leg.to.id
       );
       if (!from || !to) continue;
+      
       const midLat = (from.lat + to.lat) / 2;
       const midLng = (from.lng + to.lng) / 2;
+      
       // compute bearing label (degrees + minutes) and distance label separately
       const distTxt = `${Number(leg.distance).toFixed(2)}m`;
+      
       // format bearing as degrees and minutes with unit - exactly matching screenshot format
       const bd = leg.bearing;
       let bearingTxt = "";
@@ -468,36 +465,35 @@ function renderLayers() {
         bearingTxt = `${deg}°${minutes}'`;
       }
 
-      // compute a small pixel offset so labels don't sit directly on the line
-      const midPoint = L.latLng(midLat, midLng);
-      // offset direction perpendicular to the segment in pixel space
+      // Get the map's pixel coordinates for the line endpoints
       const fromPt = map.latLngToLayerPoint(L.latLng(from.lat, from.lng));
       const toPt = map.latLngToLayerPoint(L.latLng(to.lat, to.lng));
+      
+      // Calculate the line's angle in degrees
       const dx = toPt.x - fromPt.x;
       const dy = toPt.y - fromPt.y;
-      const layerPoint = map.latLngToLayerPoint(midPoint);
-      // dynamic offset based on segment pixel length so short segments get smaller offsets
-      const segPixelLen = Math.sqrt(dx * dx + dy * dy);
-      // offset scales with segment length but clamped to reasonable bounds
-      const offsetPx = Math.min(
-        24,
-        Math.max(6, Math.floor(segPixelLen * 0.08))
-      );
-      // perpendicular (normalized)
-      const len = Math.max(1, segPixelLen);
-      const px = -dy / len;
-      const py = dx / len;
-
-      // compute angle of the segment in screen (layer) coordinates
       const angleRad = Math.atan2(dy, dx);
-      let angleDeg = (angleRad * 180) / Math.PI;
-      // keep text upright: rotate into range [-90,90]
-      if (angleDeg > 90) angleDeg -= 180;
-      if (angleDeg < -90) angleDeg += 180;
-
-      // decide which side is inside (towards centroid) vs outside
-      let bearingSign = 1;
-
+      const angleDeg = (angleRad * 180) / Math.PI;
+      
+      // Calculate perpendicular offset direction
+      const perpX = -dy;
+      const perpY = dx;
+      const perpLength = Math.sqrt(perpX * perpX + perpY * perpY);
+      const normalizedPerpX = perpX / perpLength;
+      const normalizedPerpY = perpY / perpLength;
+      
+      // Calculate the midpoint in pixel coordinates
+      const midPoint = L.latLng(midLat, midLng);
+      const midLayerPoint = map.latLngToLayerPoint(midPoint);
+      
+      // Calculate offset distance based on line length
+      const lineLength = Math.sqrt(dx * dx + dy * dy);
+      const offsetDistance = Math.max(15, Math.min(30, lineLength * 0.1));
+      
+      // Determine which side is inside (toward centroid) and which is outside
+      let insideDirection = 1;
+      let outsideDirection = -1;
+      
       // Find the closest parcel centroid for this line segment
       let closestCentroid: [number, number] | null = null;
       let minDistance = Infinity;
@@ -513,99 +509,66 @@ function renderLayers() {
         }
       }
 
-      try {
-        if (closestCentroid) {
-          const centroidLL = L.latLng(closestCentroid[0], closestCentroid[1]);
-          const centroidLayer = map.latLngToLayerPoint(centroidLL);
-          const cx = centroidLayer.x - layerPoint.x;
-          const cy = centroidLayer.y - layerPoint.y;
-          const dot = cx * px + cy * py; // if positive, positive perp points toward centroid (inside)
-          // we want bearing outside (away from centroid)
-          bearingSign = dot > 0 ? -1 : 1;
+      if (closestCentroid) {
+        const centroidLL = L.latLng(closestCentroid[0], closestCentroid[1]);
+        const centroidLayer = map.latLngToLayerPoint(centroidLL);
+        
+        // Vector from midpoint to centroid
+        const toCentroidX = centroidLayer.x - midLayerPoint.x;
+        const toCentroidY = centroidLayer.y - midLayerPoint.y;
+        
+        // Dot product with perpendicular vector
+        const dotProduct = toCentroidX * normalizedPerpX + toCentroidY * normalizedPerpY;
+        
+        // If dot product is positive, the centroid is in the direction of the perpendicular vector
+        if (dotProduct > 0) {
+          insideDirection = 1;
+          outsideDirection = -1;
+        } else {
+          insideDirection = -1;
+          outsideDirection = 1;
         }
-      } catch (e) {
-        bearingSign = 1;
       }
-
-      // make bearing offset proportional but clamped so it never goes absurdly far
-      const bearingOffset = Math.max(
-        12,
-        Math.min(Math.floor(segPixelLen * 0.25), offsetPx + 12)
-      );
-      // distance offset should be smaller and proportional to segment length
-      const distOffset = Math.max(
-        4,
-        Math.min(Math.floor(segPixelLen * 0.1), Math.floor(offsetPx / 2))
-      );
-
-      // bearing label (outside)
-      const bearingPt = L.point(
-        layerPoint.x + px * bearingOffset * bearingSign,
-        layerPoint.y + py * bearingOffset * bearingSign
-      );
-      const bearingLatLng = map.layerPointToLatLng(bearingPt);
-      // center rotated label so vertical/higher-angle labels align around marker point
-      // Use horizontal alignment to better match the screenshot
+      
+      // Position distance label on the inside of the line
+      const distanceOffsetX = midLayerPoint.x + normalizedPerpX * offsetDistance * insideDirection;
+      const distanceOffsetY = midLayerPoint.y + normalizedPerpY * offsetDistance * insideDirection;
+      const distanceLatLng = map.layerPointToLatLng(L.point(distanceOffsetX, distanceOffsetY));
+      
+      // Position bearing label on the outside of the line
+      const bearingOffsetX = midLayerPoint.x + normalizedPerpX * offsetDistance * outsideDirection;
+      const bearingOffsetY = midLayerPoint.y + normalizedPerpY * offsetDistance * outsideDirection;
+      const bearingLatLng = map.layerPointToLatLng(L.point(bearingOffsetX, bearingOffsetY));
+      
+      // Create HTML for labels with proper rotation
+      const distanceHtml = `<div class="dim-box" style="transform: translate(-50%,-50%) rotate(${angleDeg}deg); transform-origin: center; text-align: center;">${distTxt}</div>`;
       const bearingHtml = `<div class="dim-box" style="transform: translate(-50%,-50%) rotate(${angleDeg}deg); transform-origin: center; text-align: center;">${bearingTxt}</div>`;
+      
+      // Create icons for labels
+      const distanceIcon = L.divIcon({
+        className: "dimension-label distance-label",
+        html: distanceHtml,
+        iconAnchor: [0, 0],
+      });
+      
       const bearingIcon = L.divIcon({
         className: "dimension-label bearing-label",
         html: bearingHtml,
         iconAnchor: [0, 0],
       });
+      
+      // Add markers for labels
+      const distanceMarker = L.marker(distanceLatLng, {
+        icon: distanceIcon,
+        interactive: false,
+      }).addTo(map);
+      
       const bearingMarker = L.marker(bearingLatLng, {
         icon: bearingIcon,
         interactive: false,
       }).addTo(map);
-
-      // distance label (inside)
-      const distPt = L.point(
-        layerPoint.x, // Place directly on the midpoint
-        layerPoint.y
-      );
-      const distLatLng = map.layerPointToLatLng(distPt);
-      const distHtml = `<div class="dim-box" style="transform: translate(-50%,-50%) rotate(${angleDeg}deg); transform-origin: center; text-align: center;">${distTxt}</div>`;
-      const distIcon = L.divIcon({
-        className: "dimension-label distance-label",
-        html: distHtml,
-        iconAnchor: [0, 0],
-      });
-      const distMarker = L.marker(distLatLng, {
-        icon: distIcon,
-        interactive: false,
-      }).addTo(map);
-
-      // Ensure proper placement of labels to avoid overlapping
-      try {
-        // Place distance label exactly on the midpoint of the line
-        const midLP = layerPoint;
-        const onLineDistPt = L.point(midLP.x, midLP.y);
-        const onLineDistLatLng = map.layerPointToLatLng(onLineDistPt);
-
-        // Update distance marker position to be directly on the line
-        map.removeLayer(distMarker);
-        const newDistMarker = L.marker(onLineDistLatLng, {
-          icon: distIcon,
-          interactive: false,
-        }).addTo(map);
-
-        // Always place bearing label further outside to avoid overlap
-        const outsideBearingPt = L.point(
-          layerPoint.x + px * (bearingOffset * 1.2) * bearingSign,
-          layerPoint.y + py * (bearingOffset * 1.2) * bearingSign
-        );
-        const outsideBearingLatLng = map.layerPointToLatLng(outsideBearingPt);
-
-        // Update bearing marker position
-        map.removeLayer(bearingMarker);
-        const newBearingMarker = L.marker(outsideBearingLatLng, {
-          icon: bearingIcon,
-          interactive: false,
-        }).addTo(map);
-
-        dimensionLayers.push(newBearingMarker, newDistMarker);
-      } catch (e) {
-        dimensionLayers.push(bearingMarker, distMarker);
-      }
+      
+      dimensionLayers.push(distanceMarker, bearingMarker);
     }
   }
 }
