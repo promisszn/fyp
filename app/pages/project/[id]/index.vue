@@ -92,9 +92,9 @@
               <div v-if="project.status">
                 <span
                   :class="getStatusClass(project.status)"
-                  class="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-slate-700 capitalize"
+                  class="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-slate-700"
                 >
-                  {{ project.status }}
+                  {{ getStatusDisplayName(project.status) }}
                 </span>
               </div>
               <!-- Action buttons -->
@@ -404,13 +404,25 @@ const getStatusClass = (status: string) => {
   const raw = (status || "").toLowerCase();
   const statusClasses: Record<string, string> = {
     draft: "text-gray-600 dark:text-gray-400",
-    in_progress: "text-yellow-600 font-semibold",
-    field_work_complete: "text-blue-600 font-semibold",
-    computed: "text-indigo-600 font-semibold",
-    plan_prepared: "text-green-600 font-semibold",
-    completed: "text-green-600 font-semibold",
+    in_progress: "text-yellow-600 dark:text-yellow-400 font-semibold",
+    field_work_complete: "text-blue-600 dark:text-blue-400 font-semibold",
+    computed: "text-indigo-600 dark:text-indigo-400 font-semibold",
+    plan_prepared: "text-green-600 dark:text-green-400 font-semibold",
+    completed: "text-emerald-600 dark:text-emerald-400 font-semibold",
   };
   return statusClasses[raw] ?? "text-gray-600 dark:text-gray-400";
+};
+
+const getStatusDisplayName = (status: string) => {
+  const statusMap: Record<string, string> = {
+    draft: "Draft",
+    in_progress: "In Progress",
+    field_work_complete: "Field Work Completed",
+    computed: "Computed",
+    plan_prepared: "Plan Prepared",
+    completed: "Completed",
+  };
+  return statusMap[status] || status;
 };
 
 const getLocationText = () => {
