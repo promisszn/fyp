@@ -36,7 +36,7 @@
             Import coordinates (CSV or TXT)
           </div>
           <div class="text-[11px] text-gray-600 dark:text-gray-400">
-            Columns: GCP_Name, Easting, Northing, Elevation
+            Columns: GCP_Name, Easting, Northing
           </div>
         </div>
       </div>
@@ -76,7 +76,6 @@
             <th class="px-3 py-2 text-left">GCP_Name</th>
             <th class="px-3 py-2 text-left">Easting</th>
             <th class="px-3 py-2 text-left">Northing</th>
-            <th class="px-3 py-2 text-left">Elevation</th>
             <th class="px-3 py-2"></th>
           </tr>
         </thead>
@@ -109,15 +108,6 @@
                 class="w-28 px-2 py-1 text-xs rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:outline-none"
               />
             </td>
-            <td class="px-3 py-1">
-              <input
-                v-model.number="row.elevation"
-                type="number"
-                step="0.01"
-                class="w-24 px-2 py-1 text-xs rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:outline-none"
-              />
-            </td>
-
             <td class="px-3 py-1 text-right">
               <button
                 @click="removeRow(idx)"
@@ -187,7 +177,6 @@ interface CoordRow {
   point: string;
   northing: number | null;
   easting: number | null;
-  elevation: number | null;
 }
 
 const props = withDefaults(
@@ -203,28 +192,31 @@ const route = useRoute();
 const toast = useToast();
 
 // Initialize coordinate transfer composable
-const { getTransferredCoordinates, clearTransferredCoordinates, hasTransferredCoordinates } = useCoordinateTransfer();
+const {
+  getTransferredCoordinates,
+  clearTransferredCoordinates,
+  hasTransferredCoordinates,
+} = useCoordinateTransfer();
 
 // Check for transferred coordinates when component mounts
 onMounted(() => {
   if (hasTransferredCoordinates.value) {
     const transferredCoords = getTransferredCoordinates();
-    
+
     // Convert transferred coordinates to the format expected by this component
-    const convertedCoords = transferredCoords.map(coord => ({
+    const convertedCoords = transferredCoords.map((coord) => ({
       _key: crypto.randomUUID(),
       point: coord.point,
       northing: coord.northing,
       easting: coord.easting,
-      elevation: coord.elevation,
     }));
-    
+
     // Populate the local coordinates
     local.coordinates = convertedCoords;
-    
+
     // Clear the transferred coordinates since we've used them
     clearTransferredCoordinates();
-    
+
     // Show success message
     toast.add({
       title: `Successfully loaded ${convertedCoords.length} coordinates from forward computation!`,
@@ -261,7 +253,6 @@ function addRow() {
     point: "",
     northing: null,
     easting: null,
-    elevation: null,
   });
 }
 function removeRow(idx: number) {
@@ -304,14 +295,12 @@ function parseCSV(text: string): CoordRow[] {
 
     const northing = nRaw ? Number(nRaw) : null;
     const easting = eRaw ? Number(eRaw) : null;
-    const elevation = elevRaw ? Number(elevRaw) : null;
 
     rows.push({
       _key: crypto.randomUUID(),
       point,
       northing,
       easting,
-      elevation,
     });
   }
   return rows;
@@ -335,11 +324,11 @@ function onFile(ev: Event) {
 
 function downloadTemplate() {
   const csv = [
-    "GCP_Name,Easting,Northing,Elevation",
-    "P1,603781.688,869484.989,296.355",
-    "P2,603926.144,869448.531,293.543",
-    "P3,603852.11,869547.157,297.874",
-    "P4,603786.856,869608.297,299.454",
+    "GCP_Name,Easting,Northing",
+    "P1,603781.688,869484.989",
+    "P2,603926.144,869448.531",
+    "P3,603852.11,869547.157",
+    "P4,603786.856,869608.297",
   ].join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
