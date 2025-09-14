@@ -28,14 +28,28 @@
           </h2>
           <button
             @click="addCoordinate"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            :disabled="isLoading"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
           >
             Add Point
           </button>
         </div>
 
         <div class="overflow-x-auto">
-          <table class="w-full border-collapse">
+          <!-- Loading Skeleton -->
+          <div v-if="isLoading" class="space-y-4">
+            <div class="animate-pulse">
+              <div class="h-4 bg-gray-200 dark:bg-slate-600 rounded mb-2"></div>
+              <div class="space-y-2">
+                <div class="h-12 bg-gray-200 dark:bg-slate-600 rounded"></div>
+                <div class="h-12 bg-gray-200 dark:bg-slate-600 rounded"></div>
+                <div class="h-12 bg-gray-200 dark:bg-slate-600 rounded"></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Actual Table -->
+          <table v-else class="w-full border-collapse">
             <thead>
               <tr class="border-b border-gray-200 dark:border-slate-700">
                 <th
@@ -139,14 +153,28 @@
           </h2>
           <button
             @click="addLeg"
-            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            :disabled="isLoading"
+            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
           >
             Add Leg
           </button>
         </div>
 
         <div class="overflow-x-auto">
-          <table class="w-full border-collapse">
+          <!-- Loading Skeleton -->
+          <div v-if="isLoading" class="space-y-4">
+            <div class="animate-pulse">
+              <div class="h-4 bg-gray-200 dark:bg-slate-600 rounded mb-2"></div>
+              <div class="space-y-2">
+                <div class="h-12 bg-gray-200 dark:bg-slate-600 rounded"></div>
+                <div class="h-12 bg-gray-200 dark:bg-slate-600 rounded"></div>
+                <div class="h-12 bg-gray-200 dark:bg-slate-600 rounded"></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Actual Table -->
+          <table v-else class="w-full border-collapse">
             <thead>
               <tr class="border-b border-gray-200 dark:border-slate-700">
                 <th
@@ -290,32 +318,26 @@
           <div class="flex space-x-3">
             <button
               @click="loadSampleData"
-              class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              :disabled="isLoading || isComputing"
+              class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
             >
               Load Sample Data
             </button>
             <button
               @click="performComputation"
-              :disabled="!canCompute"
+              :disabled="!canCompute || isComputing"
               class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
             >
-              Compute
+              <span v-if="isComputing" class="flex items-center space-x-2">
+                <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Computing...</span>
+              </span>
+              <span v-else>Compute</span>
             </button>
           </div>
-        </div>
-
-        <!-- Results Section -->
-        <div
-          v-if="computationResults"
-          class="mt-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
-        >
-          <h3 class="font-semibold text-green-800 dark:text-green-300 mb-2">
-            Computation Results
-          </h3>
-          <pre
-            class="text-sm text-green-700 dark:text-green-300 overflow-x-auto"
-            >{{ JSON.stringify(computationResults, null, 2) }}</pre
-          >
         </div>
 
         <!-- Error Section -->
@@ -333,13 +355,21 @@
       </div>
     </div>
   </div>
+
+  <!-- Results Modal -->
+  <ForwardComputationResultsModal 
+    :show="showResultsModal" 
+    :results="computationResults?.data || null"
+    @close="closeModal" 
+  />
 </template>
 
 <script lang="ts" setup>
 import { RiArrowLeftLine, RiDeleteBinLine } from "@remixicon/vue";
 import { useRoute } from "vue-router";
 import { navigateTo } from "#imports";
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
+import ForwardComputationResultsModal from "~/components/ForwardComputationResultsModal.vue";
 
 definePageMeta({ middleware: ["auth"] });
 
@@ -371,8 +401,11 @@ const legs = ref([
 
 const selectedStartPoint = ref<string | null>(null);
 const misclosureCorrection = ref(true);
-const computationResults = ref(null);
+const computationResults = ref<any>(null);
 const computationError = ref("");
+const showResultsModal = ref(false);
+const isLoading = ref(true);
+const isComputing = ref(false);
 
 // Computed properties
 const canCompute = computed(() => {
@@ -388,6 +421,60 @@ const canCompute = computed(() => {
     coordinates.value.some((coord) => coord.id === selectedStartPoint.value);
 
   return hasValidCoordinates && hasValidLegs && hasValidStartPoint;
+});
+
+// Fetch plan data on component mount
+const fetchPlanData = async () => {
+  try {
+    isLoading.value = true;
+    const { $axios } = useNuxtApp();
+    const response = await $axios.get(`/plan/fetch/${planId}`);
+    
+    if (response.data?.data?.forward_computation_data) {
+      const forwardData = response.data.data.forward_computation_data;
+      
+      // Populate coordinates
+      if (forwardData.coordinates && forwardData.coordinates.length > 0) {
+        coordinates.value = forwardData.coordinates.map((coord: any) => ({
+          id: coord.id,
+          northing: coord.northing,
+          easting: coord.easting
+        }));
+      }
+      
+      // Populate legs
+      if (forwardData.legs && forwardData.legs.length > 0) {
+        legs.value = forwardData.legs.map((leg: any) => ({
+          from: { id: leg.from.id },
+          to: { id: leg.to.id },
+          bearing: {
+            degrees: leg.bearing.degrees,
+            minutes: leg.bearing.minutes,
+            seconds: leg.bearing.seconds
+          },
+          distance: leg.distance
+        }));
+      }
+      
+      // Set start point
+      if (forwardData.start) {
+        selectedStartPoint.value = forwardData.start.id;
+      }
+      
+      // Set misclosure correction
+      if (typeof forwardData.misclosure_correction === 'boolean') {
+        misclosureCorrection.value = forwardData.misclosure_correction;
+      }
+    }
+  } catch (error) {
+    console.error('Failed to fetch plan data:', error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+onMounted(() => {
+  fetchPlanData();
 });
 
 // Methods
@@ -417,8 +504,11 @@ const removeCoordinate = (index: number) => {
 };
 
 const addLeg = () => {
+  const previousLeg = legs.value[legs.value.length - 1];
+  const fromId = previousLeg && previousLeg.to.id ? previousLeg.to.id : "";
+  
   legs.value.push({
-    from: { id: "" },
+    from: { id: fromId },
     to: { id: "" },
     bearing: {
       degrees: 0,
@@ -492,8 +582,13 @@ const loadSampleData = () => {
   misclosureCorrection.value = true;
 };
 
+const closeModal = () => {
+  showResultsModal.value = false;
+};
+
 const performComputation = async () => {
   try {
+    isComputing.value = true;
     computationError.value = "";
     computationResults.value = null;
 
@@ -525,12 +620,26 @@ const performComputation = async () => {
     );
 
     computationResults.value = response.data;
+    
+    // Save the forward computation data to the plan
+    try {
+      await $axios.put(`/plan/forward-data/edit/${planId}`, payload);
+      console.log("Forward computation data saved successfully");
+    } catch (saveError: any) {
+      console.error("Failed to save forward computation data:", saveError);
+      // Note: We don't show this error to the user as the computation was successful
+      // The data is just not saved to the plan, but the results are still shown
+    }
+    
+    showResultsModal.value = true; // Show the modal instead of just storing results
   } catch (error: any) {
     console.error("Forward computation error:", error);
     computationError.value =
       error.response?.data?.message ||
       error.message ||
       "An error occurred during computation";
+  } finally {
+    isComputing.value = false;
   }
 };
 </script>
