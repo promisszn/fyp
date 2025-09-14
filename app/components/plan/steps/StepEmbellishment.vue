@@ -129,6 +129,8 @@
             class="w-full text-sm rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="utm_zone_31">U.T.M. Zone 31</option>
+            <option value="utm_zone_32">U.T.M. Zone 32</option>
+            <option value="utm_zone_33">U.T.M. Zone 33</option>
           </select>
         </div>
       </div>

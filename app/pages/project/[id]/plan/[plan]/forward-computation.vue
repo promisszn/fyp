@@ -47,7 +47,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Actual Table -->
           <table v-else class="w-full border-collapse">
             <thead>
@@ -172,7 +172,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Actual Table -->
           <table v-else class="w-full border-collapse">
             <thead>
@@ -329,9 +329,24 @@
               class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
             >
               <span v-if="isComputing" class="flex items-center space-x-2">
-                <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <svg
+                  class="animate-spin h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
                 </svg>
                 <span>Computing...</span>
               </span>
@@ -357,10 +372,11 @@
   </div>
 
   <!-- Results Modal -->
-  <ForwardComputationResultsModal 
-    :show="showResultsModal" 
+  <ForwardComputationResultsModal
+    :show="showResultsModal"
     :results="computationResults?.data || null"
-    @close="closeModal" 
+    @close="closeModal"
+    @save-coordinates="handleSaveCoordinates"
   />
 </template>
 
@@ -370,9 +386,11 @@ import { useRoute } from "vue-router";
 import { navigateTo } from "#imports";
 import { ref, computed, onMounted } from "vue";
 import ForwardComputationResultsModal from "~/components/ForwardComputationResultsModal.vue";
+import { useCoordinateTransfer } from "~/composables/useCoordinateTransfer";
 
 definePageMeta({ middleware: ["auth"] });
 
+const toast = useToast();
 const route = useRoute();
 const projectId = route.params.id as string;
 const planId = route.params.plan as string;
@@ -429,19 +447,19 @@ const fetchPlanData = async () => {
     isLoading.value = true;
     const { $axios } = useNuxtApp();
     const response = await $axios.get(`/plan/fetch/${planId}`);
-    
+
     if (response.data?.data?.forward_computation_data) {
       const forwardData = response.data.data.forward_computation_data;
-      
+
       // Populate coordinates
       if (forwardData.coordinates && forwardData.coordinates.length > 0) {
         coordinates.value = forwardData.coordinates.map((coord: any) => ({
           id: coord.id,
           northing: coord.northing,
-          easting: coord.easting
+          easting: coord.easting,
         }));
       }
-      
+
       // Populate legs
       if (forwardData.legs && forwardData.legs.length > 0) {
         legs.value = forwardData.legs.map((leg: any) => ({
@@ -450,24 +468,24 @@ const fetchPlanData = async () => {
           bearing: {
             degrees: leg.bearing.degrees,
             minutes: leg.bearing.minutes,
-            seconds: leg.bearing.seconds
+            seconds: leg.bearing.seconds,
           },
-          distance: leg.distance
+          distance: leg.distance,
         }));
       }
-      
+
       // Set start point
       if (forwardData.start) {
         selectedStartPoint.value = forwardData.start.id;
       }
-      
+
       // Set misclosure correction
-      if (typeof forwardData.misclosure_correction === 'boolean') {
+      if (typeof forwardData.misclosure_correction === "boolean") {
         misclosureCorrection.value = forwardData.misclosure_correction;
       }
     }
   } catch (error) {
-    console.error('Failed to fetch plan data:', error);
+    console.error("Failed to fetch plan data:", error);
   } finally {
     isLoading.value = false;
   }
@@ -506,7 +524,7 @@ const removeCoordinate = (index: number) => {
 const addLeg = () => {
   const previousLeg = legs.value[legs.value.length - 1];
   const fromId = previousLeg && previousLeg.to.id ? previousLeg.to.id : "";
-  
+
   legs.value.push({
     from: { id: fromId },
     to: { id: "" },
@@ -586,6 +604,33 @@ const closeModal = () => {
   showResultsModal.value = false;
 };
 
+const handleSaveCoordinates = async (
+  coordinates: {
+    point: string;
+    easting: number;
+    northing: number;
+    elevation: number | null;
+  }[]
+) => {
+  try {
+    const { setTransferredCoordinates } = useCoordinateTransfer();
+
+    // Store coordinates in the composable
+    setTransferredCoordinates(coordinates);
+
+    // Redirect to the edit page with coordinates step
+    await navigateTo(
+      `/project/${projectId}/plan/${planId}/edit?step=coordinates`
+    );
+  } catch (error: any) {
+    console.error("Failed to prepare coordinate transfer:", error);
+    toast.add({
+      title: "Failed to prepare coordinate transfer. Please try again.",
+      color: "error",
+    });
+  }
+};
+
 const performComputation = async () => {
   try {
     isComputing.value = true;
@@ -620,7 +665,7 @@ const performComputation = async () => {
     );
 
     computationResults.value = response.data;
-    
+
     // Save the forward computation data to the plan
     try {
       await $axios.put(`/plan/forward-data/edit/${planId}`, payload);
@@ -630,7 +675,7 @@ const performComputation = async () => {
       // Note: We don't show this error to the user as the computation was successful
       // The data is just not saved to the plan, but the results are still shown
     }
-    
+
     showResultsModal.value = true; // Show the modal instead of just storing results
   } catch (error: any) {
     console.error("Forward computation error:", error);

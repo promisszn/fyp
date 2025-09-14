@@ -17,6 +17,36 @@
         </h2>
         <div class="flex items-center space-x-3">
           <button
+            @click="saveToCoordinates"
+            :disabled="isSaving"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+          >
+            <span v-if="isSaving" class="flex items-center space-x-2">
+              <svg
+                class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              <span>Saving...</span>
+            </span>
+            <span v-else>Save to Coordinates</span>
+          </button>
+          <button
             @click="downloadResults"
             class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
           >
@@ -231,7 +261,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 
 interface BearingData {
   degrees: number;
@@ -281,7 +311,18 @@ const props = defineProps<Props>();
 
 const emit = defineEmits<{
   close: [];
+  saveCoordinates: [
+    coordinates: {
+      point: string;
+      easting: number;
+      northing: number;
+      elevation: number | null;
+    }[]
+  ];
 }>();
+
+// Loading state for save operation
+const isSaving = ref(false);
 
 // Computed properties
 const formattedResults = computed(() => {
@@ -339,6 +380,57 @@ const formatBearing = (bearing: BearingData): string => {
 };
 
 const closeModal = () => {
+  emit("close");
+};
+
+const saveToCoordinates = () => {
+  if (!props.results) return;
+
+  isSaving.value = true;
+
+  // Extract all unique coordinates from the results
+  const coordinates: {
+    point: string;
+    easting: number;
+    northing: number;
+    elevation: number | null;
+  }[] = [];
+
+  // Add start point
+  if (props.results.start) {
+    coordinates.push({
+      point: props.results.start.id,
+      easting: props.results.start.easting,
+      northing: props.results.start.northing,
+      elevation: null, // Forward computation doesn't provide elevation
+    });
+  }
+
+  // Add all computed points (to stations)
+  if (props.results.computed_legs) {
+    props.results.computed_legs.forEach((leg) => {
+      // Check if this point already exists
+      const existingPoint = coordinates.find(
+        (coord) => coord.point === leg.to.id
+      );
+      if (!existingPoint) {
+        coordinates.push({
+          point: leg.to.id,
+          easting: leg.to.easting,
+          northing: leg.to.northing,
+          elevation: null, // Forward computation doesn't provide elevation
+        });
+      }
+    });
+  }
+
+  // Emit the coordinates to the parent
+  emit("saveCoordinates", coordinates);
+
+  // Reset saving state
+  isSaving.value = false;
+
+  // Close the modal
   emit("close");
 };
 

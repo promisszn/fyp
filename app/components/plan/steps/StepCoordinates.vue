@@ -177,9 +177,10 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch, ref } from "vue";
+import { reactive, watch, ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { navigateTo } from "#imports";
+import { useCoordinateTransfer } from "~/composables/useCoordinateTransfer";
 
 interface CoordRow {
   _key: string;
@@ -199,6 +200,38 @@ const local = reactive<{ coordinates: CoordRow[] }>({ coordinates: [] });
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const showClearConfirm = ref(false);
 const route = useRoute();
+const toast = useToast();
+
+// Initialize coordinate transfer composable
+const { getTransferredCoordinates, clearTransferredCoordinates, hasTransferredCoordinates } = useCoordinateTransfer();
+
+// Check for transferred coordinates when component mounts
+onMounted(() => {
+  if (hasTransferredCoordinates.value) {
+    const transferredCoords = getTransferredCoordinates();
+    
+    // Convert transferred coordinates to the format expected by this component
+    const convertedCoords = transferredCoords.map(coord => ({
+      _key: crypto.randomUUID(),
+      point: coord.point,
+      northing: coord.northing,
+      easting: coord.easting,
+      elevation: coord.elevation,
+    }));
+    
+    // Populate the local coordinates
+    local.coordinates = convertedCoords;
+    
+    // Clear the transferred coordinates since we've used them
+    clearTransferredCoordinates();
+    
+    // Show success message
+    toast.add({
+      title: `Successfully loaded ${convertedCoords.length} coordinates from forward computation!`,
+      color: "success",
+    });
+  }
+});
 
 function goToForwardComputation() {
   const projectId = route.params.id as string;
