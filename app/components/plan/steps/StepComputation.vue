@@ -56,7 +56,13 @@
           <div>
             <strong>Total distance:</strong> {{ traverse.total_distance }} m
           </div>
-          <div class="mt-1">
+          <div v-if="traverse.area" class="mt-1">
+            <strong>Area:</strong> {{ formatArea(traverse.area) }}
+          </div>
+          <div class="mt-3">
+            <strong>Bounding Box:</strong>
+          </div>
+          <div class="mt-1 ml-4">
             <span class="mr-4"
               ><strong>Min Northing:</strong>
               {{ traverse.bounding_box?.min_northing }}</span
@@ -175,6 +181,17 @@ function formatBearing(decimalDeg: number | null | undefined) {
   // Format seconds with up to 6 decimal places, trim trailing zeros and optional trailing dot
   let secondsStr = secondsFloat.toFixed(6).replace(/\.?(0+)$/, "");
   return `${sign}${deg}° ${minutes}' ${secondsStr}\"`;
+}
+
+function formatArea(area: number | null | undefined) {
+  if (area === null || area === undefined || Number.isNaN(area)) return "";
+  
+  if (area >= 10000) {
+    const hectares = area / 10000;
+    return `${area.toFixed(3)} sqm (${hectares.toFixed(3)} hectares)`;
+  }
+  
+  return `${area.toFixed(3)} sqm`;
 }
 
 async function fetchComputation() {

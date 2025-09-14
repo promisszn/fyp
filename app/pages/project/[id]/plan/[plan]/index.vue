@@ -228,7 +228,7 @@
               <div>
                 <div class="text-gray-500 dark:text-gray-400">Origin</div>
                 <div class="text-gray-800 dark:text-gray-100">
-                  {{ planData.embellishment.origin || "—" }}
+                  {{ formatOrigin(planData.embellishment.origin) }}
                 </div>
               </div>
               <div>
@@ -390,6 +390,11 @@ function formatNumber(v: number | string | null | undefined) {
   return new Intl.NumberFormat(undefined, { maximumFractionDigits: 4 }).format(
     n
   );
+}
+
+function formatOrigin(origin: string | null | undefined) {
+  if (!origin) return "—";
+  return origin.replace(/_/g, " ");
 }
 
 async function confirmDelete() {
