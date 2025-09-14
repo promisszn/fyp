@@ -115,9 +115,8 @@
                     class="text-left text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-slate-700"
                   >
                     <th class="py-2 pr-4">Point ID</th>
-                    <th class="py-2 pr-4">Northing</th>
-                    <th class="py-2 pr-4">Easting</th>
-                    <th class="py-2 pr-4">Elevation</th>
+                    <th class="py-2 pr-4">Northing(mN)</th>
+                    <th class="py-2 pr-4">Easting(mE)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -134,9 +133,6 @@
                     </td>
                     <td class="py-2 pr-4 text-gray-800 dark:text-gray-100">
                       {{ formatNumber(c.easting) }}
-                    </td>
-                    <td class="py-2 pr-4 text-gray-800 dark:text-gray-100">
-                      {{ formatNumber(c.elevation) }}
                     </td>
                   </tr>
                 </tbody>

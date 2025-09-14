@@ -74,8 +74,8 @@
         >
           <tr>
             <th class="px-3 py-2 text-left">GCP_Name</th>
-            <th class="px-3 py-2 text-left">Easting</th>
-            <th class="px-3 py-2 text-left">Northing</th>
+            <th class="px-3 py-2 text-left">Easting(mE)</th>
+            <th class="px-3 py-2 text-left">Northing(mN)</th>
             <th class="px-3 py-2"></th>
           </tr>
         </thead>

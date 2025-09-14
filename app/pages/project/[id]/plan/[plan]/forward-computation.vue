@@ -65,12 +65,12 @@
                 <th
                   class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
                 >
-                  Northing(nM)
+                  Northing(mN)
                 </th>
                 <th
                   class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
                 >
-                  Easting(eM)
+                  Easting(mE)
                 </th>
                 <th
                   class="text-center py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
@@ -151,13 +151,72 @@
           <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
             Bearing and Distance
           </h2>
-          <button
-            @click="addLeg"
-            :disabled="isLoading"
-            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-          >
-            Add Leg
-          </button>
+          <div class="flex items-center space-x-3">
+            <button
+              @click="addLeg"
+              :disabled="isLoading"
+              class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            >
+              Add Leg
+            </button>
+          </div>
+        </div>
+
+        <!-- File Upload Section -->
+        <div
+          class="flex items-center justify-between gap-3 p-3 rounded-md border border-green-200 dark:border-slate-700 bg-green-50/70 dark:bg-slate-800/50 mb-4"
+        >
+          <div class="flex items-center gap-3">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              class="w-5 h-5 text-green-600 dark:text-green-400"
+            >
+              <path
+                d="M12 3a1 1 0 0 1 1 1v8.586l2.293-2.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4A1 1 0 0 1 8.707 10.293L11 12.586V4a1 1 0 0 1 1-1z"
+              />
+              <path
+                d="M4 15a1 1 0 0 1 1-1h2a1 1 0 1 1 0 2H6v3h12v-3h-1a1 1 0 1 1 0-2h2a1 1 0 0 1 1 1v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4z"
+              />
+            </svg>
+            <div>
+              <div class="text-xs font-medium text-gray-800 dark:text-gray-200">
+                Import bearing & distance data (CSV or TXT)
+              </div>
+              <div class="text-[11px] text-gray-600 dark:text-gray-400">
+                Columns: From, To, Degrees, Minutes, Seconds, Distance(m)
+              </div>
+              <div class="text-[10px] text-gray-500 dark:text-gray-500 mt-0.5">
+                Supports comma, tab, or space separated files with optional
+                headers
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <input
+              ref="bearingFileInputRef"
+              type="file"
+              accept=".csv,.txt"
+              @change="onBearingFile"
+              class="hidden"
+            />
+            <button
+              type="button"
+              @click="triggerBearingFile"
+              :disabled="isLoading"
+              class="px-3 py-1.5 text-xs rounded bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              Upload File
+            </button>
+            <button
+              type="button"
+              class="px-3 py-1.5 text-xs rounded border border-green-300 text-green-700 hover:bg-green-50 dark:border-slate-600 dark:text-gray-200 dark:hover:bg-slate-700/60"
+              @click="downloadBearingTemplate"
+            >
+              Download Template
+            </button>
+          </div>
         </div>
 
         <div class="overflow-x-auto">
@@ -424,6 +483,7 @@ const computationError = ref("");
 const showResultsModal = ref(false);
 const isLoading = ref(true);
 const isComputing = ref(false);
+const bearingFileInputRef = ref<HTMLInputElement | null>(null);
 
 // Computed properties
 const canCompute = computed(() => {
@@ -686,5 +746,149 @@ const performComputation = async () => {
   } finally {
     isComputing.value = false;
   }
+};
+
+// File upload methods for bearing and distance data
+const triggerBearingFile = () => {
+  bearingFileInputRef.value?.click();
+};
+
+const parseBearingCSV = (text: string) => {
+  // Handle both comma and whitespace separated values, including tabs
+  const lines = text
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => l && !/^#/.test(l)); // Filter out comments starting with #
+
+  if (!lines.length) return [];
+
+  // Detect header - check if first line contains typical column names
+  const header = (lines[0] ?? "").toLowerCase();
+  const hasHeader = /from|to|deg|min|sec|dist|bear|point/i.test(header);
+  const dataLines = hasHeader ? lines.slice(1) : lines;
+
+  const parsedLegs = [];
+  for (const line of dataLines) {
+    // Split by comma first, then by whitespace/tabs if no commas
+    let cols;
+    if (line.includes(",")) {
+      cols = line.split(",").map((c) => c.trim());
+    } else if (line.includes("\t")) {
+      cols = line.split("\t").map((c) => c.trim());
+    } else {
+      cols = line.split(/\s+/).filter((c) => c.length > 0);
+    }
+
+    if (cols.length < 6) continue;
+
+    const fromId = String(cols[0]).trim();
+    const toId = String(cols[1]).trim();
+
+    // Parse and validate degrees (0-359)
+    const degrees = parseInt(String(cols[2]).trim()) || 0;
+    const validDegrees = Math.max(0, Math.min(359, degrees));
+
+    // Parse and validate minutes (0-59)
+    const minutes = parseInt(String(cols[3]).trim()) || 0;
+    const validMinutes = Math.max(0, Math.min(59, minutes));
+
+    // Parse and validate seconds (0-59.999999)
+    const seconds = parseFloat(String(cols[4]).trim()) || 0;
+    const validSeconds = Math.max(0, Math.min(59.999999, seconds));
+
+    // Parse distance (must be positive)
+    const distance = parseFloat(String(cols[5]).trim()) || 0;
+    const validDistance = Math.max(0, distance);
+
+    // Only add if we have valid data
+    if (fromId && toId && validDistance > 0) {
+      parsedLegs.push({
+        from: { id: fromId },
+        to: { id: toId },
+        bearing: {
+          degrees: validDegrees,
+          minutes: validMinutes,
+          seconds: validSeconds,
+        },
+        distance: validDistance,
+      });
+    }
+  }
+  return parsedLegs;
+};
+
+const onBearingFile = (ev: Event) => {
+  const input = ev.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  // Check file type
+  const allowedTypes = [".csv", ".txt"];
+  const fileExtension = "." + file.name.split(".").pop()?.toLowerCase();
+  if (!allowedTypes.includes(fileExtension)) {
+    toast.add({
+      title: "Invalid file type. Please upload CSV, TXT",
+      color: "error",
+    });
+    if (bearingFileInputRef.value) bearingFileInputRef.value.value = "";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const text = String(reader.result || "");
+      const parsedLegs = parseBearingCSV(text);
+
+      if (parsedLegs.length) {
+        legs.value = parsedLegs;
+        toast.add({
+          title: `Successfully imported ${parsedLegs.length} bearing and distance entries`,
+          color: "success",
+        });
+      } else {
+        toast.add({
+          title:
+            "No valid data found in the file. Please check the format and try again.",
+          color: "warning",
+        });
+      }
+    } catch (error) {
+      toast.add({
+        title:
+          "Error reading file. Please check the file format and try again.",
+        color: "error",
+      });
+    }
+
+    if (bearingFileInputRef.value) bearingFileInputRef.value.value = "";
+  };
+
+  reader.onerror = () => {
+    toast.add({
+      title: "Failed to read the file. Please try again.",
+      color: "error",
+    });
+    if (bearingFileInputRef.value) bearingFileInputRef.value.value = "";
+  };
+
+  reader.readAsText(file);
+};
+
+const downloadBearingTemplate = () => {
+  const csv = [
+    "From,To,Degrees,Minutes,Seconds,Distance",
+    "A,B,357,41,0,17.18",
+    "B,C,88,30,0,39.51",
+    "C,D,179,17,0,17.16",
+    "D,A,268,28,0,39.03",
+  ].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "bearing_distance_template.csv";
+  a.click();
+  URL.revokeObjectURL(url);
 };
 </script>

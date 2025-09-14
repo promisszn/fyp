@@ -109,12 +109,12 @@
                 <th
                   class="border border-gray-300 dark:border-slate-600 px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-300"
                 >
-                  Northing(m)
+                  Northing(mN)
                 </th>
                 <th
                   class="border border-gray-300 dark:border-slate-600 px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-300"
                 >
-                  Easting(m)
+                  Easting(mE)
                 </th>
                 <th
                   class="border border-gray-300 dark:border-slate-600 px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-300"
@@ -446,8 +446,8 @@ const downloadResults = () => {
     "Distance (m)",
     "Latitude (m)",
     "Departure (m)",
-    "Northing (m)",
-    "Easting (m)",
+    "Northing (mN)",
+    "Easting (mE)",
     "To Station",
   ];
 
