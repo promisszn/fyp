@@ -44,7 +44,9 @@
                 <td class="px-2 py-1">{{ leg.delta_northing }}</td>
                 <td class="px-2 py-1">{{ leg.delta_easting }}</td>
                 <td class="px-2 py-1">{{ leg.distance }}</td>
-                <td class="px-2 py-1">{{ formatBearing(leg.bearing?.decimal) }}</td>
+                <td class="px-2 py-1">
+                  {{ formatBearing(leg.bearing?.decimal) }}
+                </td>
                 <td class="px-2 py-1">{{ leg.to.id }}</td>
               </tr>
             </tbody>
@@ -78,7 +80,7 @@
 
       <div class="flex justify-end mt-4">
         <button
-          class="px-4 py-2 bg-blue-600 text-white rounded"
+          class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
           @click="emitComplete"
         >
           Continue to Drawing
@@ -95,6 +97,7 @@ const emit = defineEmits(["complete"]);
 function emitComplete() {
   emit("complete", { legs: legs.value, traverse: traverse.value });
 }
+
 import axios from "axios";
 
 const props = defineProps({
@@ -146,7 +149,12 @@ function buildPayloadForParcel(parcel: any) {
 }
 
 function formatBearing(decimalDeg: number | null | undefined) {
-  if (decimalDeg === null || decimalDeg === undefined || Number.isNaN(decimalDeg)) return "";
+  if (
+    decimalDeg === null ||
+    decimalDeg === undefined ||
+    Number.isNaN(decimalDeg)
+  )
+    return "";
   const absDeg = Math.abs(decimalDeg);
   let deg = Math.floor(absDeg);
   const minutesFloat = (absDeg - deg) * 60;
@@ -165,7 +173,7 @@ function formatBearing(decimalDeg: number | null | undefined) {
   }
 
   // Format seconds with up to 6 decimal places, trim trailing zeros and optional trailing dot
-  let secondsStr = secondsFloat.toFixed(6).replace(/\.?(0+)$/,'');
+  let secondsStr = secondsFloat.toFixed(6).replace(/\.?(0+)$/, "");
   return `${sign}${deg}° ${minutes}' ${secondsStr}\"`;
 }
 

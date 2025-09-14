@@ -1,8 +1,19 @@
 <template>
   <div class="space-y-6">
-    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
-      Coordinate Table
-    </h2>
+    <div class="flex justify-between items-center">
+      <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+        Coordinate Table
+      </h2>
+      <div>
+        <button
+          @click="goToForwardComputation"
+          class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+        >
+          Compute Coordinates
+        </button>
+      </div>
+    </div>
+
     <div
       class="flex items-center justify-between gap-3 p-3 rounded-md border border-blue-200 dark:border-slate-700 bg-blue-50/70 dark:bg-slate-800/50"
     >
@@ -53,6 +64,7 @@
         </button>
       </div>
     </div>
+
     <div class="overflow-x-auto">
       <table
         class="min-w-full text-sm border border-gray-200 dark:border-slate-600 rounded-md overflow-hidden"
@@ -166,6 +178,8 @@
 
 <script setup lang="ts">
 import { reactive, watch, ref } from "vue";
+import { useRoute } from "vue-router";
+import { navigateTo } from "#imports";
 
 interface CoordRow {
   _key: string;
@@ -184,6 +198,14 @@ const emit = defineEmits(["update:modelValue", "complete"]);
 const local = reactive<{ coordinates: CoordRow[] }>({ coordinates: [] });
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const showClearConfirm = ref(false);
+const route = useRoute();
+
+function goToForwardComputation() {
+  const projectId = route.params.id as string;
+  const planId = route.params.plan as string;
+  navigateTo(`/project/${projectId}/plan/${planId}/forward-computation`);
+}
+
 function triggerFile() {
   fileInputRef.value?.click();
 }
