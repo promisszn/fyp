@@ -578,7 +578,7 @@ const loadSampleData = () => {
     {
       id: "KG|22",
       northing: 860181.523,
-      easting: 600000.160,
+      easting: 600000.16,
     },
     {
       id: "KG|23",
@@ -606,7 +606,7 @@ const loadSampleData = () => {
         minutes: 20,
         seconds: 43,
       },
-      distance: 119.950,
+      distance: 119.95,
     },
     {
       from: { id: "PT2" },
@@ -709,7 +709,6 @@ const performComputation = async () => {
     // Save the traverse computation data to the plan
     try {
       await $axios.put(`/plan/traverse-data/edit/${planId}`, payload);
-      console.log("Traverse computation data saved successfully");
     } catch (saveError: any) {
       console.error("Failed to save traverse computation data:", saveError);
       // Note: We don't show this error to the user as the computation was successful

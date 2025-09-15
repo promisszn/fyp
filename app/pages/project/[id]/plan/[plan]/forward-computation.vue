@@ -729,7 +729,6 @@ const performComputation = async () => {
     // Save the forward computation data to the plan
     try {
       await $axios.put(`/plan/forward-data/edit/${planId}`, payload);
-      console.log("Forward computation data saved successfully");
     } catch (saveError: any) {
       console.error("Failed to save forward computation data:", saveError);
       // Note: We don't show this error to the user as the computation was successful
