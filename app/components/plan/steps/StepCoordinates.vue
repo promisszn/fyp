@@ -6,7 +6,7 @@
       </h2>
       <div>
         <button
-          @click="goToForwardComputation"
+          @click="showComputationModal = true"
           class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
         >
           Compute Coordinates
@@ -164,6 +164,12 @@
     message="This will remove all coordinate rows from the table. This action cannot be undone."
     @confirmed="confirmClear"
   />
+
+  <!-- Computation Type Selection Modal -->
+  <ComputationTypeModal
+    v-model="showComputationModal"
+    @select="onComputationTypeSelected"
+  />
 </template>
 
 <script setup lang="ts">
@@ -188,6 +194,7 @@ const emit = defineEmits(["update:modelValue", "complete"]);
 const local = reactive<{ coordinates: CoordRow[] }>({ coordinates: [] });
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const showClearConfirm = ref(false);
+const showComputationModal = ref(false);
 const route = useRoute();
 const toast = useToast();
 
@@ -229,6 +236,20 @@ function goToForwardComputation() {
   const projectId = route.params.id as string;
   const planId = route.params.plan as string;
   navigateTo(`/project/${projectId}/plan/${planId}/forward-computation`);
+}
+
+function goToTraverseComputation() {
+  const projectId = route.params.id as string;
+  const planId = route.params.plan as string;
+  navigateTo(`/project/${projectId}/plan/${planId}/traverse-computation`);
+}
+
+function onComputationTypeSelected(type: 'forward' | 'traverse') {
+  if (type === 'forward') {
+    goToForwardComputation();
+  } else if (type === 'traverse') {
+    goToTraverseComputation();
+  }
 }
 
 function triggerFile() {
