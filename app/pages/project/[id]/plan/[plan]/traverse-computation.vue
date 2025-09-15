@@ -361,13 +361,6 @@
 
           <div class="flex space-x-3">
             <button
-              @click="loadSampleData"
-              :disabled="isLoading || isComputing"
-              class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-            >
-              Load Sample Data
-            </button>
-            <button
               @click="performComputation"
               :disabled="!canCompute || isComputing"
               class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
@@ -566,91 +559,6 @@ const removeLeg = (index: number) => {
   if (legs.value.length > 1) {
     legs.value.splice(index, 1);
   }
-};
-
-const loadSampleData = () => {
-  coordinates.value = [
-    {
-      id: "KG|21",
-      northing: 860071.644,
-      easting: 599935.185,
-    },
-    {
-      id: "KG|22",
-      northing: 860181.523,
-      easting: 600000.16,
-    },
-    {
-      id: "KG|23",
-      northing: 860272.927,
-      easting: 599983.698,
-    },
-  ];
-
-  legs.value = [
-    {
-      from: { id: "KG|22" },
-      to: { id: "PT1" },
-      observed_angle: {
-        degrees: 232,
-        minutes: 41,
-        seconds: 7,
-      },
-      distance: 204.192,
-    },
-    {
-      from: { id: "PT1" },
-      to: { id: "PT2" },
-      observed_angle: {
-        degrees: 165,
-        minutes: 20,
-        seconds: 43,
-      },
-      distance: 119.95,
-    },
-    {
-      from: { id: "PT2" },
-      to: { id: "PT3" },
-      observed_angle: {
-        degrees: 280,
-        minutes: 0,
-        seconds: 47,
-      },
-      distance: 208.951,
-    },
-    {
-      from: { id: "PT3" },
-      to: { id: "PT4" },
-      observed_angle: {
-        degrees: 281,
-        minutes: 30,
-        seconds: 31,
-      },
-      distance: 249.537,
-    },
-    {
-      from: { id: "PT4" },
-      to: { id: "KG|21" },
-      observed_angle: {
-        degrees: 188,
-        minutes: 43,
-        seconds: 49,
-      },
-      distance: 173.164,
-    },
-    {
-      from: { id: "KG|21" },
-      to: { id: "KG|22" },
-      observed_angle: {
-        degrees: 291,
-        minutes: 42,
-        seconds: 51,
-      },
-      distance: 0, // No distance for the last leg as per sample
-    },
-  ];
-
-  misclosureCorrection.value = true;
 };
 
 const closeModal = () => {

@@ -376,13 +376,6 @@
 
           <div class="flex space-x-3">
             <button
-              @click="loadSampleData"
-              :disabled="isLoading || isComputing"
-              class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-            >
-              Load Sample Data
-            </button>
-            <button
               @click="performComputation"
               :disabled="!canCompute || isComputing"
               class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
@@ -601,63 +594,6 @@ const removeLeg = (index: number) => {
   if (legs.value.length > 1) {
     legs.value.splice(index, 1);
   }
-};
-
-const loadSampleData = () => {
-  coordinates.value = [
-    {
-      id: "A",
-      northing: 713275.432,
-      easting: 559945.971,
-    },
-  ];
-
-  selectedStartPoint.value = "A";
-
-  legs.value = [
-    {
-      from: { id: "A" },
-      to: { id: "B" },
-      bearing: {
-        degrees: 357,
-        minutes: 41,
-        seconds: 0,
-      },
-      distance: 17.18,
-    },
-    {
-      from: { id: "B" },
-      to: { id: "C" },
-      bearing: {
-        degrees: 88,
-        minutes: 30,
-        seconds: 0,
-      },
-      distance: 39.51,
-    },
-    {
-      from: { id: "C" },
-      to: { id: "D" },
-      bearing: {
-        degrees: 179,
-        minutes: 17,
-        seconds: 0,
-      },
-      distance: 17.16,
-    },
-    {
-      from: { id: "D" },
-      to: { id: "A" },
-      bearing: {
-        degrees: 268,
-        minutes: 28,
-        seconds: 0,
-      },
-      distance: 39.03,
-    },
-  ];
-
-  misclosureCorrection.value = true;
 };
 
 const closeModal = () => {
