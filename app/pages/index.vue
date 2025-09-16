@@ -2,68 +2,6 @@
   <div
     class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-all duration-300"
   >
-    <!-- Header -->
-    <header
-      class="relative z-10 border-b border-gray-200/50 dark:border-gray-700/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl"
-    >
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-16 md:h-20">
-          <!-- Brand -->
-          <div class="flex items-center space-x-3">
-            <div class="relative">
-              <img
-                src="/logo.svg"
-                alt="AutoPlan logo"
-                class="w-10 h-10 md:w-12 md:h-12 transition-transform duration-300 hover:scale-110"
-              />
-              <div
-                class="absolute inset-0 rounded-full bg-blue-500/20 dark:bg-blue-400/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-              ></div>
-            </div>
-            <h1
-              class="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent"
-            >
-              AutoPlan
-            </h1>
-          </div>
-
-          <!-- Navigation -->
-          <div class="flex items-center space-x-4">
-            <!-- Theme Toggle -->
-            <ClientOnly>
-              <button
-                @click="toggleColorMode"
-                class="flex p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-all duration-300 hover:scale-105"
-                :title="
-                  colorMode.value === 'dark'
-                    ? 'Switch to light mode'
-                    : 'Switch to dark mode'
-                "
-              >
-                <RiSunFill
-                  v-if="colorMode.value === 'dark'"
-                  class="w-5 h-5 text-gray-200"
-                />
-                <RiMoonFill v-else class="w-5 h-5 text-yellow-500" />
-              </button>
-              <template #fallback>
-                <div
-                  class="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 w-9 h-9"
-                ></div>
-              </template>
-            </ClientOnly>
-
-            <NuxtLink
-              to="/login"
-              class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-slate-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
-            >
-              Sign in
-            </NuxtLink>
-          </div>
-        </div>
-      </div>
-    </header>
-
     <!-- Hero Section -->
     <main class="relative overflow-hidden">
       <!-- Background Elements -->
@@ -219,9 +157,7 @@
             <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">
               Supports File Uploads
             </h3>
-            <p class="text-gray-600 dark:text-gray-400">
-              CSV . XLSX . TXT
-            </p>
+            <p class="text-gray-600 dark:text-gray-400">CSV . XLSX . TXT</p>
           </div>
 
           <div
@@ -505,131 +441,29 @@
         </div>
       </div>
     </section>
-
-    <!-- Footer -->
-    <footer class="bg-gray-900 dark:bg-black text-white">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          <!-- Brand -->
-          <div class="lg:col-span-2">
-            <div class="flex items-center space-x-3 mb-4">
-              <img src="/logo.svg" alt="AutoPlan logo" class="w-8 h-8" />
-              <h3
-                class="text-xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent"
-              >
-                AutoPlan
-              </h3>
-            </div>
-            <p class="text-gray-400 mb-6 max-w-md">
-              Fast parcel planning for surveyors and engineers. Modern cadastral
-              & topographic plan automation platform.
-            </p>
-            <div class="flex space-x-4">
-              <a
-                href="#"
-                class="text-gray-400 hover:text-white transition-colors duration-300"
-              >
-                <Icon name="heroicons:envelope-20-solid" class="w-5 h-5" />
-              </a>
-              <a
-                href="#"
-                class="text-gray-400 hover:text-white transition-colors duration-300"
-              >
-                <span class="sr-only">Twitter</span>
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    d="M6.29 18.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0020 3.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.073 4.073 0 01.8 7.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 010 16.407a11.616 11.616 0 006.29 1.84"
-                  />
-                </svg>
-              </a>
-              <a
-                href="#"
-                class="text-gray-400 hover:text-white transition-colors duration-300"
-              >
-                <Icon name="heroicons:globe-alt-20-solid" class="w-5 h-5" />
-              </a>
-            </div>
-          </div>
-
-          <!-- Links -->
-          <div>
-            <h4 class="font-semibold mb-4">Product</h4>
-            <ul class="space-y-2">
-              <li>
-                <NuxtLink
-                  to="/dashboard"
-                  class="text-gray-400 hover:text-white transition-colors duration-300"
-                  >Dashboard</NuxtLink
-                >
-              </li>
-              <li>
-                <a
-                  href="#"
-                  class="text-gray-400 hover:text-white transition-colors duration-300"
-                  >Features</a
-                >
-              </li>
-              <li>
-                <a
-                  href="#"
-                  class="text-gray-400 hover:text-white transition-colors duration-300"
-                  >Pricing</a
-                >
-              </li>
-              <li>
-                <a
-                  href="#"
-                  class="text-gray-400 hover:text-white transition-colors duration-300"
-                  >Documentation</a
-                >
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 class="font-semibold mb-4">Account</h4>
-            <ul class="space-y-2">
-              <li>
-                <NuxtLink
-                  to="/login"
-                  class="text-gray-400 hover:text-white transition-colors duration-300"
-                  >Sign in</NuxtLink
-                >
-              </li>
-              <li>
-                <a
-                  href="#"
-                  class="text-gray-400 hover:text-white transition-colors duration-300"
-                  >Contact</a
-                >
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="border-t border-gray-800 mt-12 pt-8 text-center">
-          <p class="text-gray-400">
-            © <span id="year"></span> AutoPlan. All rights reserved.
-          </p>
-        </div>
-      </div>
-    </footer>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { onMounted } from "vue";
-import { RiSunFill, RiMoonFill } from "@remixicon/vue";
-
-const colorMode = useColorMode();
-
-const toggleColorMode = () => {
-  colorMode.preference = colorMode.value === "dark" ? "light" : "dark";
-};
-
-onMounted(() => {
-  const y = document.getElementById("year");
-  if (y) y.textContent = new Date().getFullYear().toString();
+// Set page metadata
+useHead({
+  title: "AutoPlan - Modern Cadastral & Topographic Plan Automation",
+  meta: [
+    {
+      name: "description",
+      content:
+        "AutoPlan is a web-based geospatial platform for cadastral and engineering surveys. Import coordinates, compute areas and bearings, transform coordinate systems, and export submission-ready plans.",
+    },
+    {
+      property: "og:title",
+      content: "AutoPlan - Modern Cadastral & Topographic Plan Automation",
+    },
+    {
+      property: "og:description",
+      content:
+        "Speed up cadastral and engineering surveys with automated boundary detection, area computation, and export-ready PDF reports.",
+    },
+  ],
 });
 </script>
 
