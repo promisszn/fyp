@@ -39,7 +39,7 @@
                 <span
                   class="text-gray-700 dark:text-gray-300 text-3xl md:text-4xl lg:text-5xl"
                 >
-                  Cadastral & topographic automation
+                  Cadastral & engineering automation
                 </span>
               </h1>
 
@@ -450,7 +450,7 @@ definePageMeta({
 });
 
 useHead({
-  title: "AutoPlan - Modern Cadastral & Topographic Plan Automation",
+  title: "AutoPlan - Modern Cadastral & Engineering Plan Automation",
   meta: [
     {
       name: "description",
@@ -459,7 +459,7 @@ useHead({
     },
     {
       property: "og:title",
-      content: "AutoPlan - Modern Cadastral & Topographic Plan Automation",
+      content: "AutoPlan - Modern Cadastral & Engineering Plan Automation",
     },
     {
       property: "og:description",
