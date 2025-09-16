@@ -445,7 +445,10 @@
 </template>
 
 <script lang="ts" setup>
-// Set page metadata
+definePageMeta({
+  layout: "website",
+});
+
 useHead({
   title: "AutoPlan - Modern Cadastral & Topographic Plan Automation",
   meta: [

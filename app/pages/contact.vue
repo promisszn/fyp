@@ -357,6 +357,10 @@
 <script lang="ts" setup>
 import { ref } from "vue";
 
+definePageMeta({
+  layout: "website",
+});
+
 // Form data
 const form = ref({
   firstName: "",
