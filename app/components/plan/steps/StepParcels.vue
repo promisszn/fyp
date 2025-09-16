@@ -1,8 +1,30 @@
 <template>
   <div class="space-y-6">
-    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
-      Parcel Table
-    </h2>
+    <div class="flex items-center justify-between">
+      <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+        Parcel Table
+      </h2>
+      <button
+        @click="addAllPoints"
+        :disabled="!props.coordinateIds.length"
+        class="px-4 py-2 text-sm rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+      >
+        <svg
+          class="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 4v16m8-8H4"
+          />
+        </svg>
+        Add All Points
+      </button>
+    </div>
     <div class="overflow-x-auto">
       <table
         class="min-w-full text-sm border border-gray-200 dark:border-slate-600 rounded-md overflow-hidden"
@@ -173,6 +195,31 @@ function removeRow(idx: number) {
 }
 function addIdSlot(parcel: ParcelRow) {
   parcel.ids.push("");
+}
+
+function addAllPoints() {
+  if (!props.coordinateIds.length) return;
+
+  // Create a new parcel
+  const newParcel: ParcelRow = {
+    _key: crypto.randomUUID(),
+    name: `Parcel ${local.parcels.length + 1}`,
+    ids: [],
+  };
+
+  // Add all coordinates from first to last
+  props.coordinateIds.forEach((id) => {
+    newParcel.ids.push(id);
+  });
+
+  // Add first coordinate again at the end to close the polygon
+  const firstId = props.coordinateIds[0];
+  if (firstId) {
+    newParcel.ids.push(firstId);
+  }
+
+  // Add the new parcel to the list
+  local.parcels.push(newParcel);
 }
 
 function clearAll() {
