@@ -40,7 +40,10 @@
                     : 'Switch to dark mode'
                 "
               >
-                <RiSunFill v-if="colorMode.value === 'dark'" class="w-5 h-5 text-gray-200" />
+                <RiSunFill
+                  v-if="colorMode.value === 'dark'"
+                  class="w-5 h-5 text-gray-200"
+                />
                 <RiMoonFill v-else class="w-5 h-5 text-yellow-500" />
               </button>
               <template #fallback>
@@ -214,10 +217,10 @@
               />
             </div>
             <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">
-              Supports Geo
+              Supports File Uploads
             </h3>
             <p class="text-gray-600 dark:text-gray-400">
-              GeoJSON · Shp · DXF · CAD
+              CSV . XLSX . TXT
             </p>
           </div>
 
@@ -320,7 +323,7 @@
           <div class="group relative text-center">
             <!-- Step connector line -->
             <div
-              class="hidden md:block absolute top-6 left-1/2 w-full h-0.5 bg-gradient-to-r from-blue-500 to-indigo-500 transform translate-x-1/2 -translate-y-1/2 opacity-30"
+              class="hidden md:block absolute top-1/2 left-1/2 w-full h-0.5 bg-gradient-to-r from-blue-500 to-indigo-500 transform translate-x-1/2 -translate-y-1/2 opacity-30"
             ></div>
 
             <div
@@ -343,7 +346,7 @@
           <div class="group relative text-center">
             <!-- Step connector line -->
             <div
-              class="hidden md:block absolute top-6 left-1/2 w-full h-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 transform translate-x-1/2 -translate-y-1/2 opacity-30"
+              class="hidden md:block absolute top-1/2 left-1/2 w-full h-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 transform translate-x-1/2 -translate-y-1/2 opacity-30"
             ></div>
 
             <div
@@ -591,20 +594,6 @@
                   to="/login"
                   class="text-gray-400 hover:text-white transition-colors duration-300"
                   >Sign in</NuxtLink
-                >
-              </li>
-              <li>
-                <NuxtLink
-                  to="/set-profile"
-                  class="text-gray-400 hover:text-white transition-colors duration-300"
-                  >Set up profile</NuxtLink
-                >
-              </li>
-              <li>
-                <a
-                  href="#"
-                  class="text-gray-400 hover:text-white transition-colors duration-300"
-                  >Support</a
                 >
               </li>
               <li>
