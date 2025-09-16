@@ -10,7 +10,7 @@
         id="planName"
         v-model.trim="local.basic.name"
         type="text"
-        placeholder="e.g. Topographic Survey"
+        placeholder="e.g. Cadastral Survey"
         class="w-full rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         :class="{
           'border-red-500 focus:ring-red-500': submitted && !local.basic.name,

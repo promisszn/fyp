@@ -14,7 +14,7 @@
           </NuxtLink>
           <p class="text-gray-400 mb-6 max-w-md leading-relaxed">
             Fast parcel planning for surveyors and engineers. Modern cadastral &
-            topographic plan automation platform.
+            engineering plan automation platform.
           </p>
           <div class="flex space-x-4">
             <a

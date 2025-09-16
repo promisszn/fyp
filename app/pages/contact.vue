@@ -33,7 +33,7 @@
           class="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto leading-relaxed"
         >
           Have questions about AutoPlan? Need help with your surveying projects?
-          We're here to assist you with all your cadastral and topographic
+          We're here to assist you with all your cadastral and engineering
           automation needs.
         </p>
       </div>
@@ -408,7 +408,7 @@ useHead({
     {
       name: "description",
       content:
-        "Get in touch with AutoPlan for support, sales inquiries, or general questions about our cadastral and topographic plan automation platform.",
+        "Get in touch with AutoPlan for support, sales inquiries, or general questions about our cadastral and engineering plan automation platform.",
     },
     {
       property: "og:title",
