@@ -177,12 +177,12 @@
             class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1"
             >Scale</label
           >
-          <input
-            v-model.number="local.embellishment.scale"
-            type="number"
-            min="1"
-            class="w-full text-sm rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+         <select name="scale" id="scale" v-model="local.embellishment.scale" class="w-full text-sm rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+           <option value="500">1:500</option>
+           <option value="1000">1:1000</option>
+           <option value="1500">1:1500</option>
+           <option value="2000">1:2000</option>
+         </select>
         </div>
         <div class="sm:col-span-3">
           <label
