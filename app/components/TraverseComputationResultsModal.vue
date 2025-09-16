@@ -92,9 +92,12 @@
                   From Stn
                 </th>
                 <th
+                  rowspan="3"
                   class="px-2 py-3 text-center font-medium text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-slate-600"
                 >
-                  Back Bearing
+                  Back Bearing <br />
+                  Observed Angle <br />
+                  Forward Bearing
                 </th>
                 <th
                   rowspan="3"
@@ -122,10 +125,12 @@
                 </th>
                 <th
                   colspan="2"
+                  rowspan="2"
                   class="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-slate-600"
                 >
                   Uncorrected Co-ordinates<br />
-                  Corrections to Co-ordinates
+                  Corrections to Co-ordinates <br />
+                  Final Co-ordinates
                 </th>
                 <th
                   rowspan="3"
@@ -135,11 +140,6 @@
                 </th>
               </tr>
               <tr class="border-b border-gray-200 dark:border-slate-600">
-                <th
-                  class="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-slate-600"
-                >
-                  Observed Angle
-                </th>
                 <th
                   colspan="2"
                   class="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-slate-600"
@@ -165,19 +165,8 @@
                 >
                   Arith<br />Sum
                 </th>
-                <th
-                  colspan="2"
-                  class="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-slate-600"
-                >
-                  Final Coordinates
-                </th>
               </tr>
               <tr class="border-b border-gray-200 dark:border-slate-600">
-                <th
-                  class="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-slate-600"
-                >
-                  Forward Bearing
-                </th>
                 <th
                   class="px-2 py-2 text-center font-medium text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-slate-600"
                 >
@@ -211,157 +200,230 @@
               </tr>
             </thead>
             <tbody>
-              <tr
-                v-for="(leg, index) in computationData"
-                :key="index"
-                class="border-b border-gray-100 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700"
-              >
-                <!-- From Station -->
-                <td
-                  class="px-2 py-2 text-center font-medium border-r border-gray-200 dark:border-slate-600"
+              <template v-for="(leg, index) in computationData" :key="index">
+                <!-- First sub-row -->
+                <tr
+                  class="border-b border-gray-100 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700"
                 >
-                  {{ leg.from.id }}
-                </td>
+                  <!-- From Station -->
+                  <td
+                    rowspan="3"
+                    class="px-2 py-2 text-center font-medium border-r border-gray-200 dark:border-slate-600"
+                  >
+                    {{ leg.from.id }}
+                  </td>
 
-                <!-- Observed Angle (Combined) -->
-                <td
-                  class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
-                >
-                  {{
-                    leg.observed_angle
-                      ? `${leg.observed_angle.degrees}°${leg.observed_angle.minutes}'${leg.observed_angle.seconds}"`
-                      : "-"
-                  }}
-                </td>
+                  <!-- Back Bearing -->
+                  <td
+                    class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
+                  >
+                    {{
+                      leg.back_bearing
+                        ? `${leg.back_bearing.degrees}°${leg.back_bearing.minutes}'${leg.back_bearing.seconds}"`
+                        : "-"
+                    }}
+                  </td>
 
-                <!-- Bearing Correction (Combined) -->
-                <td
-                  class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
-                >
-                  {{
-                    leg.bearing_correction
-                      ? `${leg.bearing_correction.degrees}°${leg.bearing_correction.minutes}'${leg.bearing_correction.seconds}"`
-                      : "-"
-                  }}
-                </td>
+                  <!-- Bearing Correction -->
+                  <td
+                    rowspan="3"
+                    class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
+                  >
+                    {{
+                      leg.bearing_correction
+                        ? `${leg.bearing_correction.degrees}°${leg.bearing_correction.minutes}'${leg.bearing_correction.seconds}"`
+                        : "-"
+                    }}
+                  </td>
 
-                <!-- Corrected Bearing (Combined) -->
-                <td
-                  class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
-                >
-                  {{
-                    leg.forward_bearing
-                      ? `${leg.forward_bearing.degrees}°${leg.forward_bearing.minutes}'${leg.forward_bearing.seconds}"`
-                      : `${leg.bearing.degrees}°${leg.bearing.minutes}'${leg.bearing.seconds}"`
-                  }}
-                </td>
+                  <!-- Corrected Bearing -->
+                  <td
+                    rowspan="3"
+                    class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
+                  >
+                    {{
+                      leg.forward_bearing
+                        ? `${leg.forward_bearing.degrees}°${leg.forward_bearing.minutes}'${leg.forward_bearing.seconds}"`
+                        : `${leg.bearing.degrees}°${leg.bearing.minutes}'${leg.bearing.seconds}"`
+                    }}
+                  </td>
 
-                <!-- Distance -->
-                <td
-                  class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
-                >
-                  {{ leg.distance.toFixed(3) }}
-                </td>
+                  <!-- Distance -->
+                  <td
+                    rowspan="3"
+                    class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
+                  >
+                    {{ leg.distance.toFixed(3) }}
+                  </td>
 
-                <!-- Length x Cos Brg (N) -->
-                <td
-                  class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
-                >
-                  {{
-                    leg.delta_northing > 0 ? leg.delta_northing.toFixed(3) : ""
-                  }}
-                </td>
+                  <!-- Length x Cos Brg (N) -->
+                  <td
+                    rowspan="3"
+                    class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
+                  >
+                    {{
+                      leg.delta_northing > 0
+                        ? leg.delta_northing.toFixed(3)
+                        : ""
+                    }}
+                  </td>
 
-                <!-- Length x Cos Brg (S) -->
-                <td
-                  class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
-                >
-                  {{
-                    leg.delta_northing < 0
-                      ? Math.abs(leg.delta_northing).toFixed(3)
-                      : ""
-                  }}
-                </td>
+                  <!-- Length x Cos Brg (S) -->
+                  <td
+                    rowspan="3"
+                    class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
+                  >
+                    {{
+                      leg.delta_northing < 0
+                        ? Math.abs(leg.delta_northing).toFixed(3)
+                        : ""
+                    }}
+                  </td>
 
-                <!-- Length x Sin Brg (E) -->
-                <td
-                  class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
-                >
-                  {{
-                    leg.delta_easting > 0 ? leg.delta_easting.toFixed(3) : ""
-                  }}
-                </td>
+                  <!-- Arithmetic Sum (N/S) -->
+                  <td
+                    rowspan="3"
+                    class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
+                  >
+                    {{
+                      leg.arithmetic_sum_northing
+                        ? leg.arithmetic_sum_northing.toFixed(3)
+                        : leg.delta_northing > 0
+                        ? leg.delta_northing.toFixed(3)
+                        : leg.delta_northing < 0
+                        ? Math.abs(leg.delta_northing).toFixed(3)
+                        : ""
+                    }}
+                  </td>
 
-                <!-- Length x Sin Brg (W) -->
-                <td
-                  class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
-                >
-                  {{
-                    leg.delta_easting < 0
-                      ? Math.abs(leg.delta_easting).toFixed(3)
-                      : ""
-                  }}
-                </td>
+                  <!-- Length x Sin Brg (E) -->
+                  <td
+                    rowspan="3"
+                    class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
+                  >
+                    {{
+                      leg.delta_easting > 0 ? leg.delta_easting.toFixed(3) : ""
+                    }}
+                  </td>
 
-                <!-- Arithmetic Sum N -->
-                <td
-                  class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
-                >
-                  {{
-                    leg.arithmetic_sum_northing
-                      ? leg.arithmetic_sum_northing.toFixed(3)
-                      : leg.delta_northing > 0
-                      ? leg.delta_northing.toFixed(3)
-                      : ""
-                  }}
-                </td>
+                  <!-- Length x Sin Brg (W) -->
+                  <td
+                    rowspan="3"
+                    class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
+                  >
+                    {{
+                      leg.delta_easting < 0
+                        ? Math.abs(leg.delta_easting).toFixed(3)
+                        : ""
+                    }}
+                  </td>
 
-                <!-- Arithmetic Sum S -->
-                <td
-                  class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
-                >
-                  {{
-                    leg.arithmetic_sum_northing
-                      ? ""
-                      : leg.delta_northing < 0
-                      ? Math.abs(leg.delta_northing).toFixed(3)
-                      : ""
-                  }}
-                </td>
+                  <!-- Arithmetic Sum (E/W) -->
+                  <td
+                    rowspan="3"
+                    class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
+                  >
+                    {{
+                      leg.arithmetic_sum_easting
+                        ? leg.arithmetic_sum_easting.toFixed(3)
+                        : leg.delta_easting > 0
+                        ? leg.delta_easting.toFixed(3)
+                        : leg.delta_easting < 0
+                        ? Math.abs(leg.delta_easting).toFixed(3)
+                        : ""
+                    }}
+                  </td>
 
-                <!-- Arithmetic Sum E -->
-                <td
-                  class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
-                >
-                  {{
-                    leg.arithmetic_sum_easting
-                      ? leg.arithmetic_sum_easting.toFixed(3)
-                      : leg.delta_easting > 0
-                      ? leg.delta_easting.toFixed(3)
-                      : ""
-                  }}
-                </td>
+                  <!-- Uncorrected Northing -->
+                  <td
+                    class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
+                  >
+                    {{ (leg.from.northing + leg.delta_northing).toFixed(3) }}
+                  </td>
 
-                <!-- Arithmetic Sum W -->
-                <td
-                  class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
-                >
-                  {{
-                    leg.arithmetic_sum_easting
-                      ? ""
-                      : leg.delta_easting < 0
-                      ? Math.abs(leg.delta_easting).toFixed(3)
-                      : ""
-                  }}
-                </td>
+                  <!-- Uncorrected Easting -->
+                  <td
+                    class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
+                  >
+                    {{ (leg.from.easting + leg.delta_easting).toFixed(3) }}
+                  </td>
 
-                <!-- Uncorrected Northing -->
-                <td
-                  class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
+                  <!-- To Station -->
+                  <td rowspan="3" class="px-2 py-2 text-center font-medium">
+                    {{ leg.to.id }}
+                  </td>
+                </tr>
+
+                <!-- Second sub-row -->
+                <tr
+                  class="border-b border-gray-100 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700"
                 >
-                  {{ (leg.from.northing + leg.delta_northing).toFixed(3) }}
-                </td>
-              </tr>
+                  <!-- Observed Angle -->
+                  <td
+                    class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
+                  >
+                    {{
+                      leg.observed_angle
+                        ? `${leg.observed_angle.degrees}°${leg.observed_angle.minutes}'${leg.observed_angle.seconds}"`
+                        : "-"
+                    }}
+                  </td>
+
+                  <!-- L sin θ (E) - empty for second row -->
+
+                  <!-- Correction dN -->
+                  <td
+                    class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
+                  >
+                    {{
+                      leg.northing_misclosure
+                        ? leg.northing_misclosure.toFixed(6)
+                        : "0.000000"
+                    }}
+                  </td>
+
+                  <!-- Correction dE -->
+                  <td
+                    class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
+                  >
+                    {{
+                      leg.easting_misclosure
+                        ? leg.easting_misclosure.toFixed(6)
+                        : "0.000000"
+                    }}
+                  </td>
+                </tr>
+
+                <!-- Third sub-row -->
+                <tr
+                  class="border-b border-gray-100 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700"
+                >
+                  <!-- Forward Bearing -->
+                  <td
+                    class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
+                  >
+                    {{
+                      leg.forward_bearing
+                        ? `${leg.forward_bearing.degrees}°${leg.forward_bearing.minutes}'${leg.forward_bearing.seconds}"`
+                        : `${leg.bearing.degrees}°${leg.bearing.minutes}'${leg.bearing.seconds}"`
+                    }}
+                  </td>
+
+                  <!-- Final Northing -->
+                  <td
+                    class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
+                  >
+                    {{ leg.to.northing.toFixed(3) }}
+                  </td>
+
+                  <!-- Final Easting -->
+                  <td
+                    class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
+                  >
+                    {{ leg.to.easting.toFixed(3) }}
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </table>
         </div>
