@@ -40,14 +40,8 @@
                     : 'Switch to dark mode'
                 "
               >
-                <Icon
-                  :name="
-                    colorMode.value === 'dark'
-                      ? 'heroicons:sun'
-                      : 'heroicons:moon'
-                  "
-                  class="w-5 h-5"
-                />
+                <RiSunFill v-if="colorMode.value === 'dark'" class="w-5 h-5 text-gray-200" />
+                <RiMoonFill v-else class="w-5 h-5 text-yellow-500" />
               </button>
               <template #fallback>
                 <div
@@ -636,6 +630,7 @@
 
 <script lang="ts" setup>
 import { onMounted } from "vue";
+import { RiSunFill, RiMoonFill } from "@remixicon/vue";
 
 const colorMode = useColorMode();
 
