@@ -4,11 +4,26 @@
       class="bg-white dark:bg-slate-800 p-12 rounded-xl shadow-lg min-w-[400px] max-w-md w-full flex flex-col items-center"
     >
       <div class="flex flex-col items-center text-center mb-6 w-full">
-        <div
-          class="flex justify-center items-center w-12 h-12 mx-auto mb-2 bg-blue-100 dark:bg-blue-900/30 rounded-full"
+        <!-- App Logo and Name - clickable to go to homepage -->
+        <button
+          @click="goToHomepage"
+          class="flex items-center gap-3 px-4 py-3 mb-4 bg-white dark:bg-slate-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer border border-gray-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-500"
+          aria-label="Go to homepage"
         >
-          <RiLock2Fill class="text-2xl text-blue-600 dark:text-blue-400" />
-        </div>
+          <div class="flex items-center justify-center w-10 h-10 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+            <img
+              src="/logo.svg"
+              alt="App Logo"
+              class="w-6 h-6 object-contain"
+            />
+          </div>
+          <h1
+            class="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent"
+          >
+            AutoPlan
+          </h1>
+        </button>
+
         <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-1">
           Welcome back
         </h2>
@@ -21,6 +36,29 @@
         v-if="step === 'email'"
         class="w-full flex flex-col gap-1"
       >
+        <!-- Google Sign-In Button -->
+        <div class="mb-4">
+          <GoogleSignInButton
+            @success="handleGoogleSuccess"
+            @error="handleGoogleError"
+          />
+        </div>
+
+        <!-- Divider -->
+        <div class="relative my-4">
+          <div class="absolute inset-0 flex items-center">
+            <div
+              class="w-full border-t border-gray-300 dark:border-slate-600"
+            ></div>
+          </div>
+          <div class="relative flex justify-center text-sm">
+            <span
+              class="px-2 bg-white dark:bg-slate-800 text-gray-500 dark:text-gray-400"
+              >Or continue with email</span
+            >
+          </div>
+        </div>
+
         <label class="font-semibold text-gray-800 dark:text-gray-200"
           >Email<span class="text-red-600">*</span></label
         >
@@ -112,6 +150,8 @@ import { RiLock2Fill } from "@remixicon/vue";
 import { ref, onMounted } from "vue";
 import axios from "axios";
 import { navigateTo } from "nuxt/app";
+import GoogleSignInButton from "~/components/GoogleSignInButton.vue";
+
 const config = useRuntimeConfig();
 
 const toast = useToast();
@@ -131,7 +171,8 @@ const user = useCookie("user");
 onMounted(() => {
   if (apiToken.value && user.value) {
     try {
-      if (user && user.profile_set === false) {
+      const userObj = JSON.parse(user.value);
+      if (userObj && userObj.profile_set === false) {
         navigateTo("/set-profile");
       } else {
         navigateTo("/dashboard");
@@ -145,6 +186,50 @@ onMounted(() => {
     }
   }
 });
+
+const goToHomepage = () => {
+  navigateTo("/");
+};
+
+const handleGoogleSuccess = async (credential: string) => {
+  loading.value = true;
+  error.value = "";
+
+  try {
+    const response = await axios.post(`${config.public.BASE_URL}/auth/google`, {
+      credential: credential,
+    });
+
+    apiToken.value = response.data.data.api_token;
+    refreshToken.value = response.data.data.refresh_token;
+    token.value = response.data.data.token;
+    user.value = JSON.stringify(response.data.data.user);
+
+    const userObj = response.data.data.user;
+    if (userObj && userObj.profile_set === false) {
+      navigateTo("/set-profile");
+    } else {
+      navigateTo("/dashboard");
+    }
+  } catch (e: any) {
+    error.value = e?.response?.data?.message || "Google sign-in failed.";
+    toast.add({
+      title: "Google sign-in failed.",
+      color: "error",
+    });
+  } finally {
+    loading.value = false;
+  }
+};
+
+const handleGoogleError = (errorMessage: string) => {
+  error.value = errorMessage;
+  toast.add({
+    title: "Google sign-in error",
+    description: errorMessage,
+    color: "error",
+  });
+};
 
 const startResendCooldown = () => {
   resendCooldown.value = 60;
