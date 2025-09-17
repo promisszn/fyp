@@ -114,6 +114,7 @@
           v-else-if="currentStep === 3"
           :parcels="planData.basic.type === 'route' ? [] : planData.parcels"
           :coordinates="planData.coordinates"
+          :plan-type="planData.basic.type"
           @complete="onComputationComplete"
         />
 
@@ -124,6 +125,7 @@
           :coordinates="planData.coordinates"
           :parcel-name="planData.basic.type === 'route' ? planData.basic.name : (planData.parcels[0]?.name || planData.basic.name)"
           :parcels="planData.basic.type === 'route' ? [] : planData.parcels"
+          :plan-type="planData.basic.type"
           :legs="computationResult?.legs || []"
           @update:model-value="onDrawingUpdate"
           @complete="completeDrawing"

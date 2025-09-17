@@ -2,7 +2,7 @@
   <div>
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-semibold">Back Computation</h2>
-      <div>
+      <div v-if="props.planType !== 'route'">
         <label class="text-sm mr-2">Parcel:</label>
         <select v-model="selectedIndex" class="border rounded px-2 py-1">
           <option
@@ -13,6 +13,9 @@
             {{ p.name || `Parcel ${idx + 1}` }}
           </option>
         </select>
+      </div>
+      <div v-else class="text-sm text-gray-600">
+        Route Survey Computation
       </div>
     </div>
 
@@ -56,7 +59,7 @@
           <div>
             <strong>Total distance:</strong> {{ traverse.total_distance }} m
           </div>
-          <div v-if="traverse.area" class="mt-1">
+          <div v-if="traverse.area && !isRouteType" class="mt-1">
             <strong>Area:</strong> {{ formatArea(traverse.area) }}
           </div>
           <div class="mt-3">
@@ -109,6 +112,7 @@ import axios from "axios";
 const props = defineProps({
   parcels: { type: Array as () => any[], required: true },
   coordinates: { type: Array as () => any[], required: true },
+  planType: { type: String, default: "cadastral" }, // Add plan type prop
 });
 
 const selectedIndex = ref(0);
@@ -119,7 +123,21 @@ const traverse = ref<any | null>(null);
 
 const parcelsWithIndex = computed(() => props.parcels || []);
 
+// Computed property to determine if we should use coordinates directly (for route surveys)
+const isRouteType = computed(() => props.planType === 'route');
+
 function buildPayloadForParcel(parcel: any) {
+  // For route surveys, use coordinates directly
+  if (isRouteType.value) {
+    return {
+      points: props.coordinates.map((c: any) => ({
+        id: c.point,
+        northing: Number(c.northing),
+        easting: Number(c.easting),
+      })),
+    };
+  }
+
   // Find points by ids in parcel.ids and map to {id, northing, easting}
   const ids = Array.isArray(parcel.ids) ? parcel.ids.filter(Boolean) : [];
   const points = ids
@@ -146,7 +164,7 @@ function buildPayloadForParcel(parcel: any) {
     };
   }
 
-  // Ensure closed polygon: repeat first point at end
+  // Ensure closed polygon: repeat first point at end (only for cadastral surveys)
   if (points.length && points[0].id !== points[points.length - 1].id) {
     points.push({ ...points[0] });
   }
@@ -198,8 +216,17 @@ async function fetchComputation() {
   error.value = false;
   legs.value = [];
   traverse.value = null;
-  const parcel = parcelsWithIndex.value[selectedIndex.value] || { ids: [] };
-  const payload = buildPayloadForParcel(parcel);
+  
+  let payload;
+  if (isRouteType.value) {
+    // For route surveys, use coordinates directly
+    payload = buildPayloadForParcel(null);
+  } else {
+    // For cadastral surveys, use selected parcel
+    const parcel = parcelsWithIndex.value[selectedIndex.value] || { ids: [] };
+    payload = buildPayloadForParcel(parcel);
+  }
+  
   if (!payload.points || !payload.points.length) {
     error.value = true;
     return;
@@ -219,14 +246,22 @@ async function fetchComputation() {
 }
 
 watch(selectedIndex, () => {
-  fetchComputation();
+  // Only watch selectedIndex for cadastral surveys
+  if (!isRouteType.value) {
+    fetchComputation();
+  }
 });
 
 onMounted(() => {
-  // auto-select first parcel and fetch
-  if (parcelsWithIndex.value.length) {
-    selectedIndex.value = 0;
+  if (isRouteType.value) {
+    // For route surveys, fetch computation directly
     fetchComputation();
+  } else {
+    // For cadastral surveys, auto-select first parcel and fetch
+    if (parcelsWithIndex.value.length) {
+      selectedIndex.value = 0;
+      fetchComputation();
+    }
   }
 });
 </script>
