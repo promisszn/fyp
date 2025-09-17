@@ -286,13 +286,9 @@
                     class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
                   >
                     {{
-                      leg.arithmetic_sum_northing
+                      leg.arithmetic_sum_northing !== undefined
                         ? leg.arithmetic_sum_northing.toFixed(3)
-                        : leg.delta_northing > 0
-                        ? leg.delta_northing.toFixed(3)
-                        : leg.delta_northing < 0
-                        ? Math.abs(leg.delta_northing).toFixed(3)
-                        : ""
+                        : Math.abs(leg.delta_northing).toFixed(3)
                     }}
                   </td>
 
@@ -324,13 +320,9 @@
                     class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
                   >
                     {{
-                      leg.arithmetic_sum_easting
+                      leg.arithmetic_sum_easting !== undefined
                         ? leg.arithmetic_sum_easting.toFixed(3)
-                        : leg.delta_easting > 0
-                        ? leg.delta_easting.toFixed(3)
-                        : leg.delta_easting < 0
-                        ? Math.abs(leg.delta_easting).toFixed(3)
-                        : ""
+                        : Math.abs(leg.delta_easting).toFixed(3)
                     }}
                   </td>
 
@@ -369,14 +361,12 @@
                     }}
                   </td>
 
-                  <!-- L sin θ (E) - empty for second row -->
-
                   <!-- Correction dN -->
                   <td
                     class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
                   >
                     {{
-                      leg.northing_misclosure
+                      leg.northing_misclosure !== undefined
                         ? leg.northing_misclosure.toFixed(6)
                         : "0.000000"
                     }}
@@ -387,7 +377,7 @@
                     class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
                   >
                     {{
-                      leg.easting_misclosure
+                      leg.easting_misclosure !== undefined
                         ? leg.easting_misclosure.toFixed(6)
                         : "0.000000"
                     }}
@@ -587,13 +577,13 @@ const traverseInfo = computed(() => {
 
   const legs = props.results.traverse_legs;
   const totalDistance = legs.reduce((sum, leg) => sum + leg.distance, 0);
-  const lastLeg = legs[legs.length - 1];
-  const closureError = lastLeg
-    ? Math.sqrt(
-        Math.pow(lastLeg.northing_misclosure || 0, 2) +
-          Math.pow(lastLeg.easting_misclosure || 0, 2)
-      )
-    : 0;
+
+  // Calculate closure error from sum of all delta values
+  const sumNorthings = legs.reduce((sum, leg) => sum + leg.delta_northing, 0);
+  const sumEastings = legs.reduce((sum, leg) => sum + leg.delta_easting, 0);
+  const closureError = Math.sqrt(
+    Math.pow(sumNorthings, 2) + Math.pow(sumEastings, 2)
+  );
 
   return {
     totalDistance: totalDistance.toFixed(3),
@@ -606,25 +596,26 @@ const closureInfo = computed(() => {
   if (!props.results?.traverse_legs) return null;
 
   const legs = props.results.traverse_legs;
-  const lastLeg = legs[legs.length - 1];
 
-  if (!lastLeg || !lastLeg.northing_misclosure || !lastLeg.easting_misclosure)
-    return null;
+  // Calculate sum of all delta northings and eastings
+  const sumNorthings = legs.reduce((sum, leg) => sum + leg.delta_northing, 0);
+  const sumEastings = legs.reduce((sum, leg) => sum + leg.delta_easting, 0);
 
   const totalDistance = legs.reduce((sum, leg) => sum + leg.distance, 0);
   const linearError = Math.sqrt(
-    Math.pow(lastLeg.northing_misclosure, 2) +
-      Math.pow(lastLeg.easting_misclosure, 2)
+    Math.pow(sumNorthings, 2) + Math.pow(sumEastings, 2)
   );
 
-  const relativePrecision = Math.round(totalDistance / linearError);
+  const relativePrecision =
+    linearError > 0 ? Math.round(totalDistance / linearError) : 0;
   const bearingOfError =
-    Math.atan2(lastLeg.easting_misclosure, lastLeg.northing_misclosure) *
-    (180 / Math.PI);
+    linearError > 0
+      ? Math.atan2(sumEastings, sumNorthings) * (180 / Math.PI)
+      : 0;
 
   return {
-    sumNorthings: lastLeg.northing_misclosure,
-    sumEastings: lastLeg.easting_misclosure,
+    sumNorthings: sumNorthings,
+    sumEastings: sumEastings,
     linearError: linearError,
     relativePrecision: relativePrecision.toString(),
     bearingOfError: bearingOfError.toFixed(2),
