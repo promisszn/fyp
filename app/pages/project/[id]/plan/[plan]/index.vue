@@ -193,9 +193,10 @@
               </div>
               <div>
                 <div class="text-gray-500 dark:text-gray-400">Title</div>
-                <div class="text-gray-800 dark:text-gray-100">
-                  {{ planData.embellishment.title || "—" }}
-                </div>
+                <div
+                  class="text-gray-800 dark:text-gray-100"
+                  v-html="planData.embellishment.title || '—'"
+                ></div>
               </div>
               <div>
                 <div class="text-gray-500 dark:text-gray-400">Address</div>

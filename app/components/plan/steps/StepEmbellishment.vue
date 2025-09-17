@@ -238,7 +238,7 @@
               <input
                 type="radio"
                 class="accent-blue-600"
-                value="square"
+                value="box"
                 v-model="local.embellishment.beacon_type"
               />
               <SvgsBox class="w-15 h-15" />

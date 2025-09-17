@@ -362,7 +362,9 @@ function completeComputation() {
   currentStep.value = 4;
 }
 
-function onComputationComplete(payload: { legs?: any[]; traverse?: any } | null) {
+function onComputationComplete(
+  payload: { legs?: any[]; traverse?: any } | null
+) {
   computationResult.value = payload || null;
   // mark and move to drawing
   completeComputation();
@@ -390,9 +392,9 @@ async function completeEmbellishment() {
       surveyor_name: e.surveyor_name,
     };
     await axios.put(`/plan/edit/${planId}`, payload);
-  // embellishment is step 5
-  markCompleted(5);
-  currentStep.value = 6;
+    // embellishment is step 5
+    markCompleted(5);
+    currentStep.value = 6;
     toast.add({ title: "Embellishment saved", color: "success" });
   } catch (error) {
     toast.add({ title: "Failed to save embellishment", color: "error" });
@@ -403,12 +405,8 @@ async function completeEmbellishment() {
 
 // Final Step
 function finishPlan() {
-  // report is step 6
   markCompleted(6);
-  toast.add({ title: "Plan data ready (not yet submitted)", color: "success" });
   navigateTo(`/project/${projectId}/plan/${planId}`);
-  // TODO: Submit aggregated planData to API.
-  // After success: navigateTo(`/project/${projectId}`)
 }
 
 // Update handlers to avoid implicit any in template
