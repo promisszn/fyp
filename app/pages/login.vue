@@ -9,7 +9,9 @@
         >
           <RiLock2Fill class="text-2xl text-blue-600 dark:text-blue-400" />
         </div>
-        <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-1">Welcome back</h2>
+        <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-1">
+          Welcome back
+        </h2>
         <p class="text-gray-700 dark:text-gray-300 text-sm">
           Sign in securely with your email and otp.
         </p>
@@ -82,15 +84,18 @@
           </p>
           <p
             class="text-blue-600 dark:text-blue-400 hover:underline text-sm font-semibold cursor-pointer"
-            :class="{ 'opacity-50 cursor-not-allowed': resendLoading || resendCooldown > 0 }"
+            :class="{
+              'opacity-50 cursor-not-allowed':
+                resendLoading || resendCooldown > 0,
+            }"
             @click="handleResendOtp"
           >
-            {{ 
-              resendLoading 
-                ? 'Sending...' 
-                : resendCooldown > 0 
-                  ? `Resend in ${resendCooldown}s` 
-                  : 'Resend OTP' 
+            {{
+              resendLoading
+                ? "Sending..."
+                : resendCooldown > 0
+                ? `Resend in ${resendCooldown}s`
+                : "Resend OTP"
             }}
           </p>
         </div>
@@ -104,7 +109,7 @@ definePageMeta({
   middleware: ["auth"],
 });
 import { RiLock2Fill } from "@remixicon/vue";
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import axios from "axios";
 import { navigateTo } from "nuxt/app";
 const config = useRuntimeConfig();
@@ -121,6 +126,25 @@ const apiToken = useCookie("api_token");
 const refreshToken = useCookie("refresh_token");
 const token = useCookie("token");
 const user = useCookie("user");
+
+// Check if user is already logged in and redirect to dashboard
+onMounted(() => {
+  if (apiToken.value && user.value) {
+    try {
+      if (user && user.profile_set === false) {
+        navigateTo("/set-profile");
+      } else {
+        navigateTo("/dashboard");
+      }
+    } catch (e) {
+      // If there's an error parsing user data, clear the cookies and stay on login
+      apiToken.value = null;
+      refreshToken.value = null;
+      token.value = null;
+      user.value = null;
+    }
+  }
+});
 
 const startResendCooldown = () => {
   resendCooldown.value = 60;
@@ -197,7 +221,7 @@ const handleOtpSubmit = async () => {
 
 const handleResendOtp = async () => {
   if (resendLoading.value || resendCooldown.value > 0) return;
-  
+
   error.value = "";
   resendLoading.value = true;
   try {
