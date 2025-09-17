@@ -100,11 +100,11 @@
               </div>
 
               <!-- Screenshot -->
-              <div class="aspect-[9/4] overflow-hidden">
+              <div class="aspect-[16/10] overflow-hidden">
                 <img
                   src="@/assets/img/screenshot.png"
                   alt="AutoPlan dashboard screenshot"
-                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700"
                 />
               </div>
 
