@@ -64,6 +64,12 @@
               Profile
             </button>
             <button
+              class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-slate-700"
+              @click="onDocumentation"
+            >
+              Documentation
+            </button>
+            <button
               class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-slate-700"
               @click="onLogout"
             >
@@ -132,6 +138,11 @@ function toggleMenu() {
 function onProfile() {
   menuOpen.value = false;
     navigateTo("/set-profile");
+}
+
+function onDocumentation() {
+  menuOpen.value = false;
+  navigateTo("/documentation");
 }
 
 async function onLogout() {

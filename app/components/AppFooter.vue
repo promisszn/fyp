@@ -62,12 +62,12 @@
           <h4 class="font-semibold mb-4 text-white">Product</h4>
           <ul class="space-y-2">
             <li>
-              <a
-                href="#"
+              <NuxtLink
+                to="/documentation"
                 class="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transform inline-block"
               >
                 Documentation
-              </a>
+              </NuxtLink>
             </li>
             <li>
               <a
