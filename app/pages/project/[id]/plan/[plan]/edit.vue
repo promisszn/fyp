@@ -85,8 +85,21 @@
           @complete="completeCoordinates"
         />
 
+        <!-- Route Survey: Elevation Step -->
+        <StepElevation
+          v-else-if="currentStep === 2 && planData.basic.type === 'route'"
+          :model-value="{ elevations: planData.elevations }"
+          :coordinate-ids="
+            planData.coordinates.map((c) => c.point).filter(Boolean)
+          "
+          :loading="submittingElevation"
+          @update:model-value="onElevationUpdate"
+          @complete="completeElevation"
+        />
+
+        <!-- Cadastral Survey: Parcels Step -->
         <StepParcels
-          v-else-if="currentStep === 2"
+          v-else-if="currentStep === 2 && planData.basic.type !== 'route'"
           :model-value="{ parcels: planData.parcels }"
           :coordinate-ids="
             planData.coordinates.map((c) => c.point).filter(Boolean)
@@ -96,24 +109,27 @@
           @complete="completeParcels"
         />
 
+        <!-- Computation Step (step 3 for route, step 3 for cadastral) -->
         <StepComputation
           v-else-if="currentStep === 3"
-          :parcels="planData.parcels"
+          :parcels="planData.basic.type === 'route' ? [] : planData.parcels"
           :coordinates="planData.coordinates"
           @complete="onComputationComplete"
         />
 
+        <!-- Drawing Step (step 4 for both types) -->
         <StepDrawing
           v-else-if="currentStep === 4"
           :model-value="{ drawing: planData.drawing }"
           :coordinates="planData.coordinates"
-          :parcel-name="planData.parcels[0]?.name || planData.basic.name"
-          :parcels="planData.parcels"
+          :parcel-name="planData.basic.type === 'route' ? planData.basic.name : (planData.parcels[0]?.name || planData.basic.name)"
+          :parcels="planData.basic.type === 'route' ? [] : planData.parcels"
           :legs="computationResult?.legs || []"
           @update:model-value="onDrawingUpdate"
           @complete="completeDrawing"
         />
 
+        <!-- Embellishment Step (step 5 for both types) -->
         <StepEmbellishment
           v-else-if="currentStep === 5"
           :model-value="{ embellishment: planData.embellishment }"
@@ -122,6 +138,7 @@
           @complete="completeEmbellishment"
         />
 
+        <!-- Report Step (step 6 for both types) -->
         <StepReport
           v-else-if="currentStep === 6"
           :model-value="{
@@ -130,7 +147,7 @@
           }"
           :basic="planData.basic"
           :coordinates-count="planData.coordinates.length"
-          :parcels-count="planData.parcels.length"
+          :parcels-count="planData.basic.type === 'route' ? 0 : planData.parcels.length"
           @update:model-value="onReportUpdate"
           @cancel="navigateTo(`/project/${projectId}`)"
           @finish="finishPlan"
@@ -144,6 +161,7 @@
 import { RiArrowLeftLine } from "@remixicon/vue";
 import StepCoordinates from "~/components/plan/steps/StepCoordinates.vue";
 import StepParcels from "~/components/plan/steps/StepParcels.vue";
+import StepElevation from "~/components/plan/steps/StepElevation.vue";
 import StepComputation from "~/components/plan/steps/StepComputation.vue";
 import StepDrawing from "~/components/plan/steps/StepDrawing.vue";
 import StepEmbellishment from "~/components/plan/steps/StepEmbellishment.vue";
@@ -163,17 +181,32 @@ const projectId = route.params.id as string;
 const planId = route.params.plan as string;
 const submittingCoordinates = ref(false);
 const submittingParcels = ref(false);
+const submittingElevation = ref(false);
 const submittingEmbellishment = ref(false);
 const initialLoading = ref(true);
 
-const steps = [
-  { key: "coordinates", title: "Coordinate Table" },
-  { key: "parcels", title: "Parcel Table" },
-  { key: "computation", title: "Computations" },
-  { key: "drawing", title: "Drawing" },
-  { key: "embellishment", title: "Plan Embellishment" },
-  { key: "report", title: "Report" },
-];
+// Dynamic steps based on plan type
+const steps = computed(() => {
+  if (planData.basic.type === "route") {
+    return [
+      { key: "coordinates", title: "Coordinate Table" },
+      { key: "elevation", title: "Elevation Data" },
+      { key: "computation", title: "Computations" },
+      { key: "drawing", title: "Drawing" },
+      { key: "embellishment", title: "Plan Embellishment" },
+      { key: "report", title: "Report" },
+    ];
+  } else {
+    return [
+      { key: "coordinates", title: "Coordinate Table" },
+      { key: "parcels", title: "Parcel Table" },
+      { key: "computation", title: "Computations" },
+      { key: "drawing", title: "Drawing" },
+      { key: "embellishment", title: "Plan Embellishment" },
+      { key: "report", title: "Report" },
+    ];
+  }
+});
 
 const currentStep = ref(1);
 const completed = ref<Set<number>>(new Set());
@@ -183,6 +216,7 @@ const planData = reactive({
   basic: { name: "", type: "" },
   coordinates: [] as any[],
   parcels: [] as any[],
+  elevations: [] as any[],
   drawing: { file: null as File | null, fileName: "" },
   embellishment: {
     name: "",
@@ -225,6 +259,16 @@ onMounted(async () => {
         }));
       }
 
+      // Elevations: map API -> component shape  
+      if (Array.isArray(data.elevations)) {
+        planData.elevations = data.elevations.map((e: any) => ({
+          _key: crypto.randomUUID(),
+          point: e.id ?? "",
+          elevation: e.elevation ?? null,
+          chainage: e.chainage ?? "",
+        }));
+      }
+
       // Parcels: API uses name + ids[]; map to component shape
       if (Array.isArray(data.parcels)) {
         planData.parcels = data.parcels.map((p: any) => ({
@@ -260,19 +304,36 @@ onMounted(async () => {
       // Auto-progress steps if data exists
       const hasCoords = planData.coordinates.length > 0;
       const hasParcels = planData.parcels.length > 0;
+      const hasElevations = planData.elevations.length > 0;
+      
       if (hasCoords) {
         completed.value.add(1);
       }
-      if (hasParcels) {
-        completed.value.add(2);
-      }
-      // If coords and parcels exist, move to computation step before drawing
-      if (hasCoords && hasParcels) {
-        currentStep.value = 3;
-      } else if (hasCoords) {
-        currentStep.value = 2;
+      
+      if (planData.basic.type === "route") {
+        // Route survey flow: coordinates -> elevation -> computation
+        if (hasElevations) {
+          completed.value.add(2);
+        }
+        if (hasCoords && hasElevations) {
+          currentStep.value = 3; // computation
+        } else if (hasCoords) {
+          currentStep.value = 2; // elevation
+        } else {
+          currentStep.value = 1; // coordinates
+        }
       } else {
-        currentStep.value = 1;
+        // Cadastral survey flow: coordinates -> parcels -> computation
+        if (hasParcels) {
+          completed.value.add(2);
+        }
+        if (hasCoords && hasParcels) {
+          currentStep.value = 3; // computation
+        } else if (hasCoords) {
+          currentStep.value = 2; // parcels
+        } else {
+          currentStep.value = 1; // coordinates
+        }
       }
     }
   } catch (error) {
@@ -322,6 +383,32 @@ async function completeCoordinates() {
     toast.add({ title: "Failed to save coordinates", color: "error" });
   } finally {
     submittingCoordinates.value = false;
+  }
+}
+
+// Elevation handling (for route surveys)
+async function completeElevation() {
+  if (submittingElevation.value) return;
+  if (!planData.elevations.length) return;
+  try {
+    submittingElevation.value = true;
+    const payload = {
+      elevations: planData.elevations
+        .filter((e: any) => e.point && e.elevation != null)
+        .map((e: any) => ({
+          id: e.point,
+          elevation: e.elevation != null ? Number(e.elevation) : 0,
+          chainage: e.chainage || "",
+        })),
+    };
+    await axios.put(`/plan/elevations/edit/${planId}`, payload);
+    markCompleted(2);
+    currentStep.value = 3;
+    toast.add({ title: "Elevation data saved", color: "success" });
+  } catch (error) {
+    toast.add({ title: "Failed to save elevation data", color: "error" });
+  } finally {
+    submittingElevation.value = false;
   }
 }
 
@@ -412,6 +499,7 @@ function finishPlan() {
 // Update handlers to avoid implicit any in template
 type CoordinatesUpdate = { coordinates: any[] };
 type ParcelsUpdate = { parcels: any[] };
+type ElevationUpdate = { elevations: any[] };
 type DrawingUpdate = { drawing: Record<string, any> };
 type EmbellishmentUpdate = {
   embellishment: {
@@ -454,6 +542,9 @@ function onCoordinatesUpdate(v: CoordinatesUpdate) {
 }
 function onParcelsUpdate(v: ParcelsUpdate) {
   planData.parcels = v.parcels;
+}
+function onElevationUpdate(v: ElevationUpdate) {
+  planData.elevations = v.elevations;
 }
 function onDrawingUpdate(v: DrawingUpdate) {
   Object.assign(planData.drawing, v.drawing);
