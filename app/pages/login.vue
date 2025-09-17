@@ -73,12 +73,27 @@
         >
           Continue
         </button>
-        <p
-          class="text-blue-600 dark:text-blue-400 hover:underline text-right text-sm font-semibold cursor-pointer mt-1"
-          @click="step = 'email'"
-        >
-          Back
-        </p>
+        <div class="flex justify-between items-center mt-1">
+          <p
+            class="text-blue-600 dark:text-blue-400 hover:underline text-sm font-semibold cursor-pointer"
+            @click="step = 'email'"
+          >
+            Back
+          </p>
+          <p
+            class="text-blue-600 dark:text-blue-400 hover:underline text-sm font-semibold cursor-pointer"
+            :class="{ 'opacity-50 cursor-not-allowed': resendLoading || resendCooldown > 0 }"
+            @click="handleResendOtp"
+          >
+            {{ 
+              resendLoading 
+                ? 'Sending...' 
+                : resendCooldown > 0 
+                  ? `Resend in ${resendCooldown}s` 
+                  : 'Resend OTP' 
+            }}
+          </p>
+        </div>
       </form>
     </div>
   </div>
@@ -99,11 +114,23 @@ const email = ref("");
 const otp = ref("");
 const step = ref<"email" | "otp">("email");
 const loading = ref(false);
+const resendLoading = ref(false);
+const resendCooldown = ref(0);
 const error = ref("");
 const apiToken = useCookie("api_token");
 const refreshToken = useCookie("refresh_token");
 const token = useCookie("token");
 const user = useCookie("user");
+
+const startResendCooldown = () => {
+  resendCooldown.value = 60;
+  const timer = setInterval(() => {
+    resendCooldown.value--;
+    if (resendCooldown.value <= 0) {
+      clearInterval(timer);
+    }
+  }, 1000);
+};
 
 const handleEmailSubmit = async () => {
   error.value = "";
@@ -117,6 +144,7 @@ const handleEmailSubmit = async () => {
       email: email.value,
     });
     step.value = "otp";
+    startResendCooldown();
     toast.add({
       title: "OTP sent to your email.",
       color: "success",
@@ -164,6 +192,33 @@ const handleOtpSubmit = async () => {
     });
   } finally {
     loading.value = false;
+  }
+};
+
+const handleResendOtp = async () => {
+  if (resendLoading.value || resendCooldown.value > 0) return;
+  
+  error.value = "";
+  resendLoading.value = true;
+  try {
+    await axios.post(`${config.public.BASE_URL}/auth/login/otp`, {
+      email: email.value,
+    });
+    startResendCooldown();
+    toast.add({
+      title: "OTP resent to your email.",
+      color: "success",
+    });
+    // Clear the current OTP input
+    otp.value = "";
+  } catch (e: any) {
+    error.value = e?.response?.data?.message || "Failed to resend OTP.";
+    toast.add({
+      title: "Failed to resend OTP.",
+      color: "error",
+    });
+  } finally {
+    resendLoading.value = false;
   }
 };
 </script>
