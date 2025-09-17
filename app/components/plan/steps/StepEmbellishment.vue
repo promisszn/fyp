@@ -58,19 +58,28 @@
       <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">
         Parcel's Information
       </h3>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <!-- Title field - Full width -->
+      <div class="space-y-4">
         <div>
           <label
             class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1"
             >Title</label
           >
-          <input
-            v-model="local.embellishment.title"
-            type="text"
-            class="w-full text-sm rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Survey Plan Title"
-          />
+          <ClientOnly>
+            <QuillEditorClient
+              v-model="local.embellishment.title"
+              placeholder="Survey Plan Title"
+            />
+            <template #fallback>
+              <div class="w-full h-[140px] rounded-md border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 flex items-center justify-center">
+                <span class="text-gray-500 dark:text-gray-400 text-sm">Loading editor...</span>
+              </div>
+            </template>
+          </ClientOnly>
         </div>
+      </div>
+      <!-- Other fields in grid layout -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label
             class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1"
