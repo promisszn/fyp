@@ -253,7 +253,7 @@
                     rowspan="3"
                     class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
                   >
-                    {{ leg.distance.toFixed(3) }}
+                    {{ safeFixed(leg.distance, 3) }}
                   </td>
 
                   <!-- Length x Cos Brg (N) -->
@@ -263,7 +263,7 @@
                   >
                     {{
                       leg.delta_northing > 0
-                        ? leg.delta_northing.toFixed(3)
+                        ? safeFixed(leg.delta_northing, 3)
                         : ""
                     }}
                   </td>
@@ -275,7 +275,7 @@
                   >
                     {{
                       leg.delta_northing < 0
-                        ? Math.abs(leg.delta_northing).toFixed(3)
+                        ? safeFixed(Math.abs(leg.delta_northing), 3)
                         : ""
                     }}
                   </td>
@@ -287,8 +287,8 @@
                   >
                     {{
                       leg.arithmetic_sum_northing !== undefined
-                        ? leg.arithmetic_sum_northing.toFixed(3)
-                        : Math.abs(leg.delta_northing).toFixed(3)
+                        ? safeFixed(leg.arithmetic_sum_northing, 3)
+                        : safeFixed(Math.abs(leg.delta_northing), 3)
                     }}
                   </td>
 
@@ -298,7 +298,9 @@
                     class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
                   >
                     {{
-                      leg.delta_easting > 0 ? leg.delta_easting.toFixed(3) : ""
+                      leg.delta_easting > 0
+                        ? safeFixed(leg.delta_easting, 3)
+                        : ""
                     }}
                   </td>
 
@@ -309,7 +311,7 @@
                   >
                     {{
                       leg.delta_easting < 0
-                        ? Math.abs(leg.delta_easting).toFixed(3)
+                        ? safeFixed(Math.abs(leg.delta_easting), 3)
                         : ""
                     }}
                   </td>
@@ -321,8 +323,8 @@
                   >
                     {{
                       leg.arithmetic_sum_easting !== undefined
-                        ? leg.arithmetic_sum_easting.toFixed(3)
-                        : Math.abs(leg.delta_easting).toFixed(3)
+                        ? safeFixed(leg.arithmetic_sum_easting, 3)
+                        : safeFixed(Math.abs(leg.delta_easting), 3)
                     }}
                   </td>
 
@@ -330,14 +332,26 @@
                   <td
                     class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
                   >
-                    {{ (leg.from.northing + leg.delta_northing).toFixed(3) }}
+                    {{
+                      safeCoordinateFixed(
+                        leg.from.northing,
+                        leg.delta_northing,
+                        3
+                      )
+                    }}
                   </td>
 
                   <!-- Uncorrected Easting -->
                   <td
                     class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
                   >
-                    {{ (leg.from.easting + leg.delta_easting).toFixed(3) }}
+                    {{
+                      safeCoordinateFixed(
+                        leg.from.easting,
+                        leg.delta_easting,
+                        3
+                      )
+                    }}
                   </td>
 
                   <!-- To Station -->
@@ -367,8 +381,8 @@
                   >
                     {{
                       leg.northing_misclosure !== undefined
-                        ? leg.northing_misclosure.toFixed(6)
-                        : "0.000000"
+                        ? safeFixed(leg.northing_misclosure, 6)
+                        : ""
                     }}
                   </td>
 
@@ -378,8 +392,8 @@
                   >
                     {{
                       leg.easting_misclosure !== undefined
-                        ? leg.easting_misclosure.toFixed(6)
-                        : "0.000000"
+                        ? safeFixed(leg.easting_misclosure, 6)
+                        : ""
                     }}
                   </td>
                 </tr>
@@ -403,75 +417,19 @@
                   <td
                     class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
                   >
-                    {{ leg.to.northing.toFixed(3) }}
+                    {{ safeFixed(leg.to.northing, 3) }}
                   </td>
 
                   <!-- Final Easting -->
                   <td
                     class="px-2 py-2 text-center border-r border-gray-200 dark:border-slate-600"
                   >
-                    {{ leg.to.easting.toFixed(3) }}
+                    {{ safeFixed(leg.to.easting, 3) }}
                   </td>
                 </tr>
               </template>
             </tbody>
           </table>
-        </div>
-
-        <!-- Closure Information -->
-        <div
-          v-if="closureInfo"
-          class="mt-6 bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg"
-        >
-          <h3 class="font-semibold text-amber-800 dark:text-amber-200 mb-3">
-            Traverse Closure Analysis
-          </h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <div class="flex justify-between">
-                <span class="text-amber-700 dark:text-amber-300"
-                  >Sum of Northings:</span
-                >
-                <span class="font-medium">{{
-                  closureInfo.sumNorthings.toFixed(6)
-                }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-amber-700 dark:text-amber-300"
-                  >Sum of Eastings:</span
-                >
-                <span class="font-medium">{{
-                  closureInfo.sumEastings.toFixed(6)
-                }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-amber-700 dark:text-amber-300"
-                  >Linear Closure Error:</span
-                >
-                <span class="font-medium"
-                  >{{ closureInfo.linearError.toFixed(6) }} m</span
-                >
-              </div>
-            </div>
-            <div>
-              <div class="flex justify-between">
-                <span class="text-amber-700 dark:text-amber-300"
-                  >Relative Precision:</span
-                >
-                <span class="font-medium"
-                  >1:{{ closureInfo.relativePrecision }}</span
-                >
-              </div>
-              <div class="flex justify-between">
-                <span class="text-amber-700 dark:text-amber-300"
-                  >Bearing of Error:</span
-                >
-                <span class="font-medium"
-                  >{{ closureInfo.bearingOfError }}°</span
-                >
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -498,6 +456,30 @@
 
 <script lang="ts" setup>
 import { computed } from "vue";
+
+// Helper function to safely format numbers and handle NaN/undefined values
+function safeFixed(
+  value: number | undefined | null,
+  decimals: number = 3
+): string {
+  if (value === undefined || value === null || isNaN(value)) {
+    return "";
+  }
+  return value.toFixed(decimals);
+}
+
+// Helper function to safely format coordinates
+function safeCoordinateFixed(
+  value1: number,
+  value2: number,
+  decimals: number = 3
+): string {
+  const result = value1 + value2;
+  if (isNaN(result)) {
+    return "";
+  }
+  return result.toFixed(decimals);
+}
 
 interface TraverseResults {
   traverse_legs: Array<{
@@ -576,49 +558,30 @@ const traverseInfo = computed(() => {
   if (!props.results?.traverse_legs) return null;
 
   const legs = props.results.traverse_legs;
-  const totalDistance = legs.reduce((sum, leg) => sum + leg.distance, 0);
+  const totalDistance = legs.reduce((sum, leg) => {
+    const distance = leg.distance;
+    return sum + (isNaN(distance) ? 0 : distance);
+  }, 0);
 
   // Calculate closure error from sum of all delta values
-  const sumNorthings = legs.reduce((sum, leg) => sum + leg.delta_northing, 0);
-  const sumEastings = legs.reduce((sum, leg) => sum + leg.delta_easting, 0);
+  const sumNorthings = legs.reduce((sum, leg) => {
+    const delta = leg.delta_northing;
+    return sum + (isNaN(delta) ? 0 : delta);
+  }, 0);
+
+  const sumEastings = legs.reduce((sum, leg) => {
+    const delta = leg.delta_easting;
+    return sum + (isNaN(delta) ? 0 : delta);
+  }, 0);
+
   const closureError = Math.sqrt(
     Math.pow(sumNorthings, 2) + Math.pow(sumEastings, 2)
   );
 
   return {
-    totalDistance: totalDistance.toFixed(3),
+    totalDistance: safeFixed(totalDistance, 3),
     stations: legs.length,
-    closureError: closureError.toFixed(6),
-  };
-});
-
-const closureInfo = computed(() => {
-  if (!props.results?.traverse_legs) return null;
-
-  const legs = props.results.traverse_legs;
-
-  // Calculate sum of all delta northings and eastings
-  const sumNorthings = legs.reduce((sum, leg) => sum + leg.delta_northing, 0);
-  const sumEastings = legs.reduce((sum, leg) => sum + leg.delta_easting, 0);
-
-  const totalDistance = legs.reduce((sum, leg) => sum + leg.distance, 0);
-  const linearError = Math.sqrt(
-    Math.pow(sumNorthings, 2) + Math.pow(sumEastings, 2)
-  );
-
-  const relativePrecision =
-    linearError > 0 ? Math.round(totalDistance / linearError) : 0;
-  const bearingOfError =
-    linearError > 0
-      ? Math.atan2(sumEastings, sumNorthings) * (180 / Math.PI)
-      : 0;
-
-  return {
-    sumNorthings: sumNorthings,
-    sumEastings: sumEastings,
-    linearError: linearError,
-    relativePrecision: relativePrecision.toString(),
-    bearingOfError: bearingOfError.toFixed(2),
+    closureError: safeFixed(closureError, 6),
   };
 });
 
@@ -627,49 +590,143 @@ function exportToCSV() {
 
   const headers = [
     "From_Station",
-    "To_Station",
+    "Back_Bearing_Deg",
+    "Back_Bearing_Min", 
+    "Back_Bearing_Sec",
     "Observed_Angle_Deg",
     "Observed_Angle_Min",
     "Observed_Angle_Sec",
-    "Bearing_Correction_Deg",
-    "Bearing_Correction_Min",
-    "Bearing_Correction_Sec",
     "Forward_Bearing_Deg",
     "Forward_Bearing_Min",
     "Forward_Bearing_Sec",
-    "Distance",
-    "Delta_Northing",
-    "Delta_Easting",
+    "Bearing_Correction_Deg",
+    "Bearing_Correction_Min",
+    "Bearing_Correction_Sec",
+    "Corrected_Bearing_Deg",
+    "Corrected_Bearing_Min",
+    "Corrected_Bearing_Sec",
+    "Distance_m",
+    "L_cos_theta_N",
+    "L_cos_theta_S",
+    "Arith_Sum_N_S",
+    "L_sin_theta_E",
+    "L_sin_theta_W", 
+    "Arith_Sum_E_W",
     "Uncorrected_Northing",
     "Uncorrected_Easting",
-    "Northing_Misclosure",
-    "Easting_Misclosure",
+    "Correction_dN",
+    "Correction_dE",
     "Final_Northing",
     "Final_Easting",
+    "To_Station",
   ];
 
-  const rows = props.results.traverse_legs.map((leg) => [
-    leg.from.id,
-    leg.to.id,
-    leg.observed_angle?.degrees || "",
-    leg.observed_angle?.minutes || "",
-    leg.observed_angle?.seconds || "",
-    leg.bearing_correction?.degrees || "",
-    leg.bearing_correction?.minutes || "",
-    leg.bearing_correction?.seconds || "",
-    leg.forward_bearing?.degrees || leg.bearing.degrees,
-    leg.forward_bearing?.minutes || leg.bearing.minutes,
-    leg.forward_bearing?.seconds || leg.bearing.seconds,
-    leg.distance.toFixed(3),
-    leg.delta_northing.toFixed(3),
-    leg.delta_easting.toFixed(3),
-    (leg.from.northing + leg.delta_northing).toFixed(3),
-    (leg.from.easting + leg.delta_easting).toFixed(3),
-    leg.northing_misclosure?.toFixed(6) || "0.000000",
-    leg.easting_misclosure?.toFixed(6) || "0.000000",
-    leg.to.northing.toFixed(3),
-    leg.to.easting.toFixed(3),
-  ]);
+  // Create rows for each leg with 3 sub-rows to match table structure
+  const rows: string[][] = [];
+  
+  props.results.traverse_legs.forEach((leg) => {
+    // First sub-row (Back Bearing)
+    rows.push([
+      leg.from.id,
+      leg.back_bearing?.degrees?.toString() || "",
+      leg.back_bearing?.minutes?.toString() || "",
+      leg.back_bearing?.seconds?.toString() || "",
+      "", // Observed angle empty in first row
+      "",
+      "",
+      "", // Forward bearing empty in first row
+      "",
+      "",
+      leg.bearing_correction?.degrees?.toString() || "",
+      leg.bearing_correction?.minutes?.toString() || "",
+      leg.bearing_correction?.seconds?.toString() || "",
+      leg.forward_bearing?.degrees?.toString() || leg.bearing.degrees.toString(),
+      leg.forward_bearing?.minutes?.toString() || leg.bearing.minutes.toString(),
+      leg.forward_bearing?.seconds?.toString() || leg.bearing.seconds.toString(),
+      safeFixed(leg.distance, 3),
+      leg.delta_northing > 0 ? safeFixed(leg.delta_northing, 3) : "",
+      leg.delta_northing < 0 ? safeFixed(Math.abs(leg.delta_northing), 3) : "",
+      leg.arithmetic_sum_northing !== undefined ? safeFixed(leg.arithmetic_sum_northing, 3) : safeFixed(Math.abs(leg.delta_northing), 3),
+      leg.delta_easting > 0 ? safeFixed(leg.delta_easting, 3) : "",
+      leg.delta_easting < 0 ? safeFixed(Math.abs(leg.delta_easting), 3) : "",
+      leg.arithmetic_sum_easting !== undefined ? safeFixed(leg.arithmetic_sum_easting, 3) : safeFixed(Math.abs(leg.delta_easting), 3),
+      safeCoordinateFixed(leg.from.northing, leg.delta_northing, 3),
+      safeCoordinateFixed(leg.from.easting, leg.delta_easting, 3),
+      "", // Correction dN empty in first row
+      "", // Correction dE empty in first row  
+      "", // Final northing empty in first row
+      "", // Final easting empty in first row
+      leg.to.id,
+    ]);
+
+    // Second sub-row (Observed Angle + Corrections)
+    rows.push([
+      "", // From station spans 3 rows
+      "", // Back bearing empty in second row
+      "",
+      "",
+      leg.observed_angle?.degrees?.toString() || "",
+      leg.observed_angle?.minutes?.toString() || "",
+      leg.observed_angle?.seconds?.toString() || "",
+      "", // Forward bearing empty in second row
+      "",
+      "",
+      "", // Bearing correction spans 3 rows
+      "",
+      "",
+      "", // Corrected bearing spans 3 rows
+      "",
+      "",
+      "", // Distance spans 3 rows
+      "", // L cos theta spans 3 rows
+      "",
+      "", // Arith sum spans 3 rows
+      "", // L sin theta spans 3 rows
+      "",
+      "", // Arith sum spans 3 rows
+      "", // Uncorrected coords empty in second row
+      "",
+      leg.northing_misclosure !== undefined ? safeFixed(leg.northing_misclosure, 6) : "",
+      leg.easting_misclosure !== undefined ? safeFixed(leg.easting_misclosure, 6) : "",
+      "", // Final coords empty in second row
+      "",
+      "", // To station spans 3 rows
+    ]);
+
+    // Third sub-row (Forward Bearing + Final Coordinates)
+    rows.push([
+      "", // From station spans 3 rows
+      "", // Back bearing empty in third row
+      "",
+      "",
+      "", // Observed angle empty in third row
+      "",
+      "",
+      leg.forward_bearing?.degrees?.toString() || leg.bearing.degrees.toString(),
+      leg.forward_bearing?.minutes?.toString() || leg.bearing.minutes.toString(),
+      leg.forward_bearing?.seconds?.toString() || leg.bearing.seconds.toString(),
+      "", // Bearing correction spans 3 rows
+      "",
+      "",
+      "", // Corrected bearing spans 3 rows
+      "",
+      "",
+      "", // Distance spans 3 rows
+      "", // L cos theta spans 3 rows
+      "",
+      "", // Arith sum spans 3 rows
+      "", // L sin theta spans 3 rows
+      "",
+      "", // Arith sum spans 3 rows
+      "", // Uncorrected coords empty in third row
+      "",
+      "", // Corrections empty in third row
+      "",
+      safeFixed(leg.to.northing, 3),
+      safeFixed(leg.to.easting, 3),
+      "", // To station spans 3 rows
+    ]);
+  });
 
   const csvContent = [
     headers.join(","),
