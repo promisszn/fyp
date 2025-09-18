@@ -4,21 +4,6 @@
       Report
     </h2>
     <div class="space-y-4">
-      <div class="flex items-center gap-2">
-        <input
-          id="includeReport"
-          type="checkbox"
-          v-model="local.report.generate"
-          @change="emitUpdate"
-          class="rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
-        />
-        <label
-          for="includeReport"
-          class="text-sm text-gray-700 dark:text-gray-300"
-          >Generate summary report</label
-        >
-      </div>
-
       <!-- Plan Summary Section -->
       <div
         class="border border-gray-200 dark:border-slate-700 rounded-md p-4 bg-white dark:bg-slate-800"
@@ -293,7 +278,7 @@ const props = defineProps<{
   coordinatesCount: number;
   parcelsCount: number;
 }>();
-const emit = defineEmits(["update:modelValue", "cancel", "finish"]);
+const emit = defineEmits(["cancel", "finish"]);
 
 const route = useRoute();
 const toast = useToast();
@@ -325,13 +310,6 @@ watch(
   },
   { immediate: true }
 );
-
-function emitUpdate() {
-  emit("update:modelValue", {
-    report: { ...local.report },
-    embellishment: { notes: local.embellishment.notes },
-  });
-}
 
 async function generatePlan() {
   if (generationState.loading) return;

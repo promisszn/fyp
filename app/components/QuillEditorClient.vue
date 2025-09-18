@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { shallowRef, onMounted } from "vue";
 
 interface Props {
   modelValue: string;
@@ -38,7 +38,7 @@ const emit = defineEmits<{
 }>();
 
 // Dynamic import of QuillEditor
-const QuillEditor = ref<any>(null);
+const QuillEditor = shallowRef<any>(null);
 
 onMounted(async () => {
   try {
@@ -58,14 +58,7 @@ function handleContentChange(value: string) {
 // Quill editor options
 const quillOptions = {
   modules: {
-    toolbar: [
-      ["bold", "italic", "underline"],
-      [{ list: "ordered" }, { list: "bullet" }],
-      [{ size: ["small", false, "large", "huge"] }],
-      [{ color: [] }, { background: [] }],
-      [{ align: [] }],
-      ["clean"],
-    ],
+    toolbar: [["bold", "italic", "underline"], ["clean"]],
   },
   theme: "snow",
 };

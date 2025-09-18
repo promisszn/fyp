@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6">
     <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
-      Drawing
+      {{ props.planType === 'route' ? 'Route Drawing' : 'Drawing' }}
     </h2>
 
     <!-- Leaflet map with base-layer switch (auto: WebMercator tiles if geographic, else CRS.Simple) -->
@@ -97,6 +97,7 @@ const props = defineProps<{
   coordinates?: CoordInput[];
   parcelName?: string;
   parcels?: Array<{ name?: string; ids?: string[] }>;
+  planType?: string; // Add plan type prop
   legs?: Array<{
     from: { id: string; northing: number; easting: number };
     to: { id: string; northing: number; easting: number };
@@ -111,8 +112,29 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(["complete"]);
 
-// Prepare parcel data for rendering all parcels together
+// Prepare parcel data for rendering all parcels together (for cadastral) or route data (for route surveys)
 const allParcels = computed(() => {
+  if (props.planType === 'route') {
+    // For route surveys, create a single "route" using all coordinates in sequence
+    if (!Array.isArray(props.coordinates)) return [];
+    
+    const filtered = props.coordinates.filter((r) => 
+      r.point && r.northing != null && r.easting != null
+    );
+    
+    if (!filtered.length) return [];
+    
+    const points = filtered.map((r) => ({
+      key: r.point || `${r.easting},${r.northing}`,
+      label: r.point || "",
+      x: Number(r.easting),
+      y: Number(r.northing),
+    }));
+    
+    return [{ name: props.parcelName || "Route", points, isRoute: true }];
+  }
+  
+  // Existing cadastral survey logic
   if (!Array.isArray(props.parcels) || !Array.isArray(props.coordinates)) {
     return [];
   }
@@ -146,6 +168,7 @@ const allParcels = computed(() => {
     .filter(Boolean) as Array<{
     name: string;
     points: Array<{ key: string; label: string; x: number; y: number }>;
+    isRoute?: boolean;
   }>;
 });
 
@@ -187,9 +210,9 @@ const geoOrientation = computed<"lonlat" | "latlon" | "none">(() => {
   return lonlat >= latlon ? "lonlat" : "latlon";
 });
 
-// Generate arrays of [lat, lng] pairs for each parcel's polygon
+// Generate arrays of [lat, lng] pairs for each parcel's polygon or route's polyline
 const parcelLatLngs = computed<
-  Array<{ name: string; points: [number, number][] }>
+  Array<{ name: string; points: [number, number][]; isRoute?: boolean }>
 >(() => {
   const orient = geoOrientation.value;
   return allParcels.value.map((parcel) => {
@@ -197,7 +220,11 @@ const parcelLatLngs = computed<
       if (orient === "latlon") return [p.x, p.y] as [number, number]; // x=lat, y=lng
       return [p.y, p.x] as [number, number]; // y=lat, x=lng (default)
     });
-    return { name: parcel.name, points };
+    return { 
+      name: parcel.name, 
+      points,
+      isRoute: (parcel as any).isRoute 
+    };
   });
 });
 
@@ -257,6 +284,17 @@ const parcelCentroids = computed(() => {
     const n = pts.length;
 
     if (!n) return { name: parcel.name, position: [0, 0] as [number, number] };
+    
+    // For route surveys, use the midpoint of the route
+    if (parcel.isRoute) {
+      const midIndex = Math.floor(n / 2);
+      return {
+        name: parcel.name,
+        position: pts[midIndex] as [number, number],
+      };
+    }
+    
+    // For cadastral surveys, use polygon centroid calculation
     if (n < 3) {
       const s = pts.reduce(
         (acc, [lat, lng]) => [acc[0] + lat, acc[1] + lng] as [number, number],
@@ -381,17 +419,30 @@ function renderLayers() {
   const b = bounds.value as unknown as [[number, number], [number, number]];
   if (b) map.fitBounds(L.latLngBounds(b), { padding: [10, 10] });
 
-  // Draw each parcel polygon
+  // Draw each parcel polygon or route line
   for (const parcel of parcelLatLngs.value) {
-    if (parcel.points.length < 3) continue;
+    if (parcel.points.length < 2) continue;
 
-    const polygonLayer = L.polygon(parcel.points, {
-      color: "#000000",
-      weight: 1,
-      fill: false,
-    }).addTo(map);
+    let geometryLayer;
+    if ((parcel as any).isRoute) {
+      // For route surveys, draw a polyline with different styling
+      geometryLayer = L.polyline(parcel.points, {
+        color: "#0066cc",
+        weight: 3,
+        opacity: 0.8,
+        fill: false,
+      }).addTo(map);
+    } else {
+      // For cadastral surveys, draw a polygon (only if we have at least 3 points)
+      if (parcel.points.length < 3) continue;
+      geometryLayer = L.polygon(parcel.points, {
+        color: "#000000",
+        weight: 1,
+        fill: false,
+      }).addTo(map);
+    }
 
-    polygonLayers.push(polygonLayer);
+    polygonLayers.push(geometryLayer);
   }
 
   // Points + labels (respect orientation)

@@ -38,7 +38,13 @@
         }"
       >
         <option disabled value="">Select a type</option>
-        <option v-for="opt in planTypes" :key="opt.value" :value="opt.value">
+        <option 
+          v-for="opt in planTypes" 
+          :key="opt.value" 
+          :value="opt.value"
+          :disabled="opt.disabled"
+          :class="{ 'text-gray-400': opt.disabled }"
+        >
           {{ opt.label }}
         </option>
       </select>
@@ -81,6 +87,7 @@ interface BasicData {
 interface PlanType {
   value: string;
   label: string;
+  disabled?: boolean;
 }
 const props = withDefaults(
   defineProps<{
