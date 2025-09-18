@@ -37,15 +37,15 @@
         class="w-full flex flex-col gap-1"
       >
         <!-- Google Sign-In Button -->
-        <div class="mb-4">
+        <!-- <div class="mb-4">
           <GoogleSignInButton
             @success="handleGoogleSuccess"
             @error="handleGoogleError"
           />
-        </div>
+        </div> -->
 
         <!-- Divider -->
-        <div class="relative my-4">
+        <!-- <div class="relative my-4">
           <div class="absolute inset-0 flex items-center">
             <div
               class="w-full border-t border-gray-300 dark:border-slate-600"
@@ -57,7 +57,7 @@
               >Or continue with email</span
             >
           </div>
-        </div>
+        </div> -->
 
         <label class="font-semibold text-gray-800 dark:text-gray-200"
           >Email<span class="text-red-600">*</span></label
