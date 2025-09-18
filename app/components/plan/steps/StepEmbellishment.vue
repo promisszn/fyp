@@ -152,7 +152,7 @@
       <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">
         Text & Symbols
       </h3>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <div>
           <label
             class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1"
@@ -193,7 +193,33 @@
            <option value="2000">1:2000</option>
          </select>
         </div>
-        <div class="sm:col-span-3">
+        <div>
+          <label
+            class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >Beacon Size</label
+          >
+          <input
+            v-model.number="local.embellishment.beacon_size"
+            type="number"
+            step="0.1"
+            min="0.1"
+            class="w-full text-sm rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <label
+            class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >Label Size</label
+          >
+          <input
+            v-model.number="local.embellishment.label_size"
+            type="number"
+            step="0.1"
+            min="0.1"
+            class="w-full text-sm rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div class="sm:col-span-2 lg:col-span-5">
           <label
             class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1"
             >Beacon Type</label
@@ -248,16 +274,89 @@
       </div>
     </div>
 
+    <!-- Page Settings -->
+    <div
+      class="bg-gray-50 dark:bg-slate-900/40 rounded-md border border-gray-200 dark:border-slate-700 p-4 space-y-4"
+    >
+      <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+        Page Settings
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label
+            class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >Page Size</label
+          >
+          <select
+            v-model="local.embellishment.page_size"
+            class="w-full text-sm rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="A4">A4</option>
+            <option value="A3">A3</option>
+            <option value="A2">A2</option>
+          </select>
+        </div>
+        <div>
+          <label
+            class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >Page Orientation</label
+          >
+          <select
+            v-model="local.embellishment.page_orientation"
+            class="w-full text-sm rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="portrait">Portrait</option>
+            <option value="landscape">Landscape</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
     <!-- Notes -->
-    <!-- <div class="space-y-2">
-      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notes / Annotations</label>
-      <textarea
-        v-model="local.embellishment.notes"
-        rows="4"
-        class="w-full text-sm rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        placeholder="Enter legend, north arrow notes, disclaimers..."
-      />
-    </div> -->
+    <div
+      class="bg-gray-50 dark:bg-slate-900/40 rounded-md border border-gray-200 dark:border-slate-700 p-4 space-y-4"
+    >
+      <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+        Notes / Annotations
+      </h3>
+      <div class="space-y-4">
+        <div v-for="(note, index) in safeNotes" :key="index" class="relative">
+          <label
+            class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >Note {{ index + 1 }}</label
+          >
+          <div class="relative">
+            <ClientOnly>
+              <QuillEditorClient
+                :model-value="note || ''"
+                @update:model-value="updateNote(index, $event)"
+                :placeholder="`Enter note ${index + 1}...`"
+              />
+              <template #fallback>
+                <div class="w-full h-[140px] rounded-md border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 flex items-center justify-center">
+                  <span class="text-gray-500 dark:text-gray-400 text-sm">Loading editor...</span>
+                </div>
+              </template>
+            </ClientOnly>
+            <button
+              v-if="safeNotes.length > 1"
+              @click="removeNote(index)"
+              type="button"
+              class="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold z-10"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+        <button
+          @click="addNote"
+          type="button"
+          class="w-full py-2 px-4 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          + Add Note
+        </button>
+      </div>
+    </div>
 
     <div class="flex justify-end pt-2">
       <button
@@ -288,8 +387,13 @@ interface EmbellishmentState {
   origin: string;
   scale: number;
   beacon_type: string;
+  beacon_size: number;
+  label_size: number;
   personel_name: string;
   surveyor_name: string;
+  page_size: string;
+  page_orientation: string;
+  notes: string[];
 }
 
 const props = defineProps<{
@@ -311,8 +415,13 @@ const local = reactive<{ embellishment: EmbellishmentState }>({
     origin: "utm_zone_31",
     scale: 1,
     beacon_type: "none",
+    beacon_size: 0.3,
+    label_size: 0.2,
     personel_name: "",
     surveyor_name: "",
+    page_size: "A4",
+    page_orientation: "portrait",
+    notes: [""],
   },
 });
 
@@ -320,13 +429,34 @@ watch(
   () => props.modelValue,
   (v) => {
     if (v?.embellishment) {
-      local.embellishment = { ...local.embellishment, ...v.embellishment };
+      local.embellishment = { 
+        ...local.embellishment, 
+        ...v.embellishment,
+        notes: v.embellishment.notes?.length ? v.embellishment.notes : [""]
+      };
     }
   },
   { immediate: true, deep: true }
 );
 
 const loading = computed(() => !!props.loading);
+
+// Ensure notes are always properly initialized
+const safeNotes = computed(() => {
+  return local.embellishment.notes.length > 0 ? local.embellishment.notes : [""];
+});
+
+function addNote() {
+  local.embellishment.notes.push("");
+}
+
+function removeNote(index: number) {
+  local.embellishment.notes.splice(index, 1);
+}
+
+function updateNote(index: number, value: string) {
+  local.embellishment.notes[index] = value;
+}
 
 function onComplete() {
   emit("update:modelValue", { embellishment: { ...local.embellishment } });
