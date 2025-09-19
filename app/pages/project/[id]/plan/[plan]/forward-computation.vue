@@ -2,7 +2,7 @@
   <UserHeader />
 
   <div class="min-h-screen bg-gray-50 dark:bg-slate-900 pt-24 pb-12">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Back -->
       <div class="mb-4">
         <button
@@ -18,150 +18,10 @@
         Forward Computation
       </h1>
 
-      <!-- Known Coordinates Table -->
+      <!-- Forward Computation Table -->
       <div
         class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-6 mb-6"
       >
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
-            Known Coordinates
-          </h2>
-          <button
-            @click="addCoordinate"
-            :disabled="isLoading"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-          >
-            Add Point
-          </button>
-        </div>
-
-        <div class="overflow-x-auto">
-          <!-- Loading Skeleton -->
-          <div v-if="isLoading" class="space-y-4">
-            <div class="animate-pulse">
-              <div class="h-4 bg-gray-200 dark:bg-slate-600 rounded mb-2"></div>
-              <div class="space-y-2">
-                <div class="h-12 bg-gray-200 dark:bg-slate-600 rounded"></div>
-                <div class="h-12 bg-gray-200 dark:bg-slate-600 rounded"></div>
-                <div class="h-12 bg-gray-200 dark:bg-slate-600 rounded"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Actual Table -->
-          <table v-else class="w-full border-collapse">
-            <thead>
-              <tr class="border-b border-gray-200 dark:border-slate-700">
-                <th
-                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Start
-                </th>
-                <th
-                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Point ID
-                </th>
-                <th
-                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Northing(mN)
-                </th>
-                <th
-                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Easting(mE)
-                </th>
-                <th
-                  class="text-center py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="(coord, index) in coordinates"
-                :key="index"
-                class="border-b border-gray-100 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700"
-              >
-                <td class="py-3 px-4">
-                  <input
-                    type="radio"
-                    name="startPoint"
-                    v-model="selectedStartPoint"
-                    :disabled="!coord.id"
-                    :value="coord.id"
-                    class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                  />
-                </td>
-                <td class="py-3 px-4">
-                  <input
-                    v-model="coord.id"
-                    type="text"
-                    class="w-full px-2 py-1 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500"
-                    placeholder="A"
-                  />
-                </td>
-                <td class="py-3 px-4">
-                  <input
-                    v-model.number="coord.northing"
-                    type="number"
-                    step="0.001"
-                    class="w-full px-2 py-1 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500"
-                    placeholder="713275.432"
-                  />
-                </td>
-                <td class="py-3 px-4">
-                  <input
-                    v-model.number="coord.easting"
-                    type="number"
-                    step="0.001"
-                    class="w-full px-2 py-1 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500"
-                    placeholder="559945.971"
-                  />
-                </td>
-                <td class="py-3 px-4 text-center">
-                  <button
-                    @click="removeCoordinate(index)"
-                    class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                  >
-                    <RiDeleteBinLine class="w-4 h-4" />
-                  </button>
-                </td>
-              </tr>
-              <tr v-if="coordinates.length === 0">
-                <td
-                  colspan="5"
-                  class="py-8 text-center text-gray-500 dark:text-gray-400"
-                >
-                  No coordinates added yet. Click "Add Point" to start.
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Bearing and Distance Table -->
-      <div
-        class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-6 mb-6"
-      >
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
-            Bearing and Distance
-          </h2>
-          <div class="flex items-center space-x-3">
-            <button
-              @click="addLeg"
-              :disabled="isLoading"
-              class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-            >
-              Add Leg
-            </button>
-          </div>
-        </div>
-
         <!-- File Upload Section -->
         <div
           class="flex items-center justify-between gap-3 p-3 rounded-md border border-green-200 dark:border-slate-700 bg-green-50/70 dark:bg-slate-800/50 mb-4"
@@ -182,10 +42,11 @@
             </svg>
             <div>
               <div class="text-xs font-medium text-gray-800 dark:text-gray-200">
-                Import bearing & distance data (CSV or TXT)
+                Import data (CSV or TXT)
               </div>
               <div class="text-[11px] text-gray-600 dark:text-gray-400">
-                Columns: From, To, Degrees, Minutes, Seconds, Distance(m)
+                Columns: Distance, Degrees, Minutes, Seconds, Easting, Northing,
+                Point ID
               </div>
               <div class="text-[10px] text-gray-500 dark:text-gray-500 mt-0.5">
                 Supports comma, tab, or space separated files with optional
@@ -195,15 +56,15 @@
           </div>
           <div class="flex items-center gap-2">
             <input
-              ref="bearingFileInputRef"
+              ref="forwardFileInputRef"
               type="file"
               accept=".csv,.txt"
-              @change="onBearingFile"
+              @change="onForwardFile"
               class="hidden"
             />
             <button
               type="button"
-              @click="triggerBearingFile"
+              @click="triggerForwardFile"
               :disabled="isLoading"
               class="px-3 py-1.5 text-xs rounded bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
@@ -212,7 +73,7 @@
             <button
               type="button"
               class="px-3 py-1.5 text-xs rounded border border-green-300 text-green-700 hover:bg-green-50 dark:border-slate-600 dark:text-gray-200 dark:hover:bg-slate-700/60"
-              @click="downloadBearingTemplate"
+              @click="downloadForwardTemplate"
             >
               Download Template
             </button>
@@ -239,32 +100,48 @@
                 <th
                   class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
                 >
-                  From
+                  Distance
                 </th>
                 <th
                   class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
                 >
-                  Bearing(°)
+                  Degrees
                 </th>
                 <th
                   class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
                 >
-                  Minutes(')
+                  Minutes
                 </th>
                 <th
                   class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
                 >
-                  Seconds(")
+                  Seconds
                 </th>
                 <th
                   class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
                 >
-                  Distance(m)
+                  Departure
                 </th>
                 <th
                   class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
                 >
-                  To
+                  Latitude
+                </th>
+                <th
+                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Easting
+                </th>
+                <th
+                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Northing
+                </th>
+
+                <th
+                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Point ID
                 </th>
                 <th
                   class="text-center py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
@@ -275,41 +152,32 @@
             </thead>
             <tbody>
               <tr
-                v-for="(leg, index) in legs"
+                v-for="(row, index) in forwardRows"
                 :key="index"
                 class="border-b border-gray-100 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700"
               >
                 <td class="py-3 px-4">
                   <input
-                    v-model="leg.from.id"
-                    type="text"
+                    v-model.number="row.distance"
+                    type="number"
+                    step="0.01"
                     class="w-full px-2 py-1 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500"
-                    placeholder="A"
+                    placeholder="0.00"
                   />
                 </td>
                 <td class="py-3 px-4">
                   <input
-                    v-model.number="leg.bearing.degrees"
+                    v-model.number="row.degrees"
                     type="number"
                     min="0"
                     max="359"
                     class="w-full px-2 py-1 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500"
-                    placeholder="357"
+                    placeholder="0"
                   />
                 </td>
                 <td class="py-3 px-4">
                   <input
-                    v-model.number="leg.bearing.minutes"
-                    type="number"
-                    min="0"
-                    max="59"
-                    class="w-full px-2 py-1 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500"
-                    placeholder="41"
-                  />
-                </td>
-                <td class="py-3 px-4">
-                  <input
-                    v-model.number="leg.bearing.seconds"
+                    v-model.number="row.minutes"
                     type="number"
                     min="0"
                     max="59"
@@ -319,40 +187,94 @@
                 </td>
                 <td class="py-3 px-4">
                   <input
-                    v-model.number="leg.distance"
+                    v-model.number="row.seconds"
                     type="number"
-                    step="0.01"
+                    min="0"
+                    max="59"
                     class="w-full px-2 py-1 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500"
-                    placeholder="17.18"
+                    placeholder="0"
                   />
                 </td>
                 <td class="py-3 px-4">
                   <input
-                    v-model="leg.to.id"
+                    type="text"
+                    readonly
+                    class="w-full px-2 py-1 border border-gray-300 dark:border-slate-600 rounded bg-gray-50 dark:bg-slate-600 text-gray-900 dark:text-gray-100"
+                    :value="
+                      typeof row.departure === 'number'
+                        ? row.departure.toFixed(3)
+                        : row.departure
+                    "
+                  />
+                </td>
+                <td class="py-3 px-4">
+                  <input
+                    type="text"
+                    readonly
+                    class="w-full px-2 py-1 border border-gray-300 dark:border-slate-600 rounded bg-gray-50 dark:bg-slate-600 text-gray-900 dark:text-gray-100"
+                    :value="
+                      typeof row.latitude === 'number'
+                        ? row.latitude.toFixed(3)
+                        : row.latitude
+                    "
+                  />
+                </td>
+                <td class="py-3 px-4">
+                  <input
+                    v-model.number="row.easting"
+                    type="number"
+                    step="0.001"
+                    class="w-full px-2 py-1 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500"
+                    placeholder="0.000"
+                  />
+                </td>
+                <td class="py-3 px-4">
+                  <input
+                    v-model.number="row.northing"
+                    type="number"
+                    step="0.001"
+                    class="w-full px-2 py-1 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500"
+                    placeholder="0.000"
+                  />
+                </td>
+                <td class="py-3 px-4">
+                  <input
+                    v-model="row.pointId"
                     type="text"
                     class="w-full px-2 py-1 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500"
-                    placeholder="B"
+                    placeholder="A"
                   />
                 </td>
                 <td class="py-3 px-4 text-center">
                   <button
-                    @click="removeLeg(index)"
+                    @click="removeTableRow(index)"
                     class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                    :disabled="forwardRows.length <= 1"
                   >
                     <RiDeleteBinLine class="w-4 h-4" />
                   </button>
                 </td>
               </tr>
-              <tr v-if="legs.length === 0">
+              <tr v-if="forwardRows.length === 0">
                 <td
-                  colspan="7"
+                  colspan="10"
                   class="py-8 text-center text-gray-500 dark:text-gray-400"
                 >
-                  No legs added yet. Click "Add Leg" to start.
+                  No coordinates added yet. Upload a file or add data manually.
                 </td>
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- Add Row Button -->
+        <div class="mt-4 flex justify-center">
+          <button
+            @click="addTableRow"
+            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Add Row
+          </button>
         </div>
       </div>
 
@@ -404,6 +326,15 @@
               </span>
               <span v-else>Compute</span>
             </button>
+
+            <!-- Save to Coordinates Button - shown after computation -->
+            <button
+              v-if="computationResults"
+              @click="saveToCoordinates"
+              class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Save Coordinates
+            </button>
           </div>
         </div>
 
@@ -419,26 +350,44 @@
             {{ computationError }}
           </p>
         </div>
+
+        <!-- Success Section -->
+        <div
+          v-if="computationResults && !computationError"
+          class="mt-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
+        >
+          <h3 class="font-semibold text-green-800 dark:text-green-300 mb-2">
+            Computation Completed
+          </h3>
+          <p class="text-sm text-green-700 dark:text-green-300">
+            Forward computation completed successfully. The traverse has been
+            closed and all coordinates have been computed. You can now save
+            these coordinates to use in your plan.
+          </p>
+        </div>
       </div>
     </div>
   </div>
-
-  <!-- Results Modal -->
-  <ForwardComputationResultsModal
-    :show="showResultsModal"
-    :results="computationResults?.data || null"
-    @close="closeModal"
-    @save-coordinates="handleSaveCoordinates"
-  />
 </template>
 
 <script lang="ts" setup>
 import { RiArrowLeftLine, RiDeleteBinLine } from "@remixicon/vue";
 import { useRoute } from "vue-router";
 import { navigateTo } from "#imports";
-import { ref, computed, onMounted } from "vue";
-import ForwardComputationResultsModal from "~/components/ForwardComputationResultsModal.vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useCoordinateTransfer } from "~/composables/useCoordinateTransfer";
+
+interface ForwardRow {
+  pointId: string;
+  distance: number | null;
+  degrees: number | null;
+  minutes: number | null;
+  seconds: number | null;
+  departure: string | number | null;
+  latitude: string | number | null;
+  easting: number | null;
+  northing: number | null;
+}
 
 definePageMeta({ middleware: ["auth"] });
 
@@ -447,51 +396,54 @@ const route = useRoute();
 const projectId = route.params.id as string;
 const planId = route.params.plan as string;
 
-// Reactive data
-const coordinates = ref([
+// Reactive data for the unified table
+const forwardRows = ref<ForwardRow[]>([
   {
-    id: "",
-    northing: 0,
-    easting: 0,
+    pointId: "",
+    distance: null,
+    degrees: null,
+    minutes: null,
+    seconds: null,
+    departure: "",
+    latitude: "",
+    easting: null,
+    northing: null,
   },
 ]);
 
-const legs = ref([
-  {
-    from: { id: "" },
-    to: { id: "" },
-    bearing: {
-      degrees: 0,
-      minutes: 0,
-      seconds: 0,
-    },
-    distance: 0,
-  },
-]);
-
-const selectedStartPoint = ref<string | null>(null);
-const misclosureCorrection = ref(true);
+const misclosureCorrection = ref(false);
 const computationResults = ref<any>(null);
 const computationError = ref("");
-const showResultsModal = ref(false);
 const isLoading = ref(true);
 const isComputing = ref(false);
-const bearingFileInputRef = ref<HTMLInputElement | null>(null);
+const forwardFileInputRef = ref<HTMLInputElement | null>(null);
 
 // Computed properties
 const canCompute = computed(() => {
-  const hasValidCoordinates =
-    coordinates.value.length > 0 &&
-    coordinates.value.some((coord) => coord.id && coord.id.trim() !== "");
-  const hasValidLegs =
-    legs.value.length > 0 &&
-    legs.value.some((leg) => leg.from.id && leg.to.id && leg.distance > 0);
-  const hasValidStartPoint =
-    selectedStartPoint.value !== null &&
-    selectedStartPoint.value !== "" &&
-    coordinates.value.some((coord) => coord.id === selectedStartPoint.value);
+  const hasValidRows =
+    forwardRows.value.length > 0 &&
+    forwardRows.value.some((row) => row.pointId && row.pointId.trim() !== "");
 
-  return hasValidCoordinates && hasValidLegs && hasValidStartPoint;
+  // Find first row with valid easting and northing as start point
+  const startPointRow = forwardRows.value.find(
+    (row) =>
+      row.easting !== null &&
+      row.easting !== 0 &&
+      !isNaN(row.easting) &&
+      row.northing !== null &&
+      row.northing !== 0 &&
+      !isNaN(row.northing) &&
+      row.pointId &&
+      row.pointId.trim() !== ""
+  );
+
+  const hasStartPoint = !!startPointRow;
+
+  const hasValidForwardData = forwardRows.value.some(
+    (row) => row.pointId && row.distance !== null && row.distance > 0
+  );
+
+  return hasValidRows && hasStartPoint && hasValidForwardData;
 });
 
 // Fetch plan data on component mount
@@ -504,32 +456,59 @@ const fetchPlanData = async () => {
     if (response.data?.data?.forward_computation_data) {
       const forwardData = response.data.data.forward_computation_data;
 
-      // Populate coordinates
-      if (forwardData.coordinates && forwardData.coordinates.length > 0) {
-        coordinates.value = forwardData.coordinates.map((coord: any) => ({
-          id: coord.id,
-          northing: coord.northing,
-          easting: coord.easting,
+      // Convert old data structure to new table format if needed
+      if (forwardData.traverseRows && forwardData.traverseRows.length > 0) {
+        forwardRows.value = forwardData.traverseRows.map((row: any) => ({
+          pointId: row.pointId || "",
+          distance: row.distance || 0,
+          degrees: row.degrees || 0,
+          minutes: row.minutes || 0,
+          seconds: row.seconds || 0,
+          departure: row.departure || "",
+          latitude: row.latitude || "",
+          easting: row.easting || 0,
+          northing: row.northing || 0,
+          isStartPoint: row.isStartPoint || false,
         }));
-      }
 
-      // Populate legs
-      if (forwardData.legs && forwardData.legs.length > 0) {
-        legs.value = forwardData.legs.map((leg: any) => ({
-          from: { id: leg.from.id },
-          to: { id: leg.to.id },
-          bearing: {
-            degrees: leg.bearing.degrees,
-            minutes: leg.bearing.minutes,
-            seconds: leg.bearing.seconds,
-          },
-          distance: leg.distance,
-        }));
-      }
+        // No need to track start point index anymore - will be auto-detected
+      } else if (forwardData.coordinates && forwardData.legs) {
+        // Convert old coordinates and legs to new format
+        const newRows: ForwardRow[] = [];
 
-      // Set start point
-      if (forwardData.start) {
-        selectedStartPoint.value = forwardData.start.id;
+        // Add all coordinates as potential points
+        if (forwardData.coordinates) {
+          forwardData.coordinates.forEach((coord: any) => {
+            newRows.push({
+              pointId: coord.id,
+              distance: 0,
+              degrees: 0,
+              minutes: 0,
+              seconds: 0,
+              departure: "",
+              latitude: "",
+              easting: coord.easting,
+              northing: coord.northing,
+            });
+          });
+        }
+
+        // Add legs data to corresponding rows
+        if (forwardData.legs) {
+          forwardData.legs.forEach((leg: any) => {
+            const fromRow = newRows.find((row) => row.pointId === leg.from.id);
+            if (fromRow) {
+              fromRow.distance = leg.distance;
+              fromRow.degrees = leg.bearing.degrees;
+              fromRow.minutes = leg.bearing.minutes;
+              fromRow.seconds = leg.bearing.seconds;
+            }
+          });
+        }
+
+        forwardRows.value = newRows.length > 0 ? newRows : forwardRows.value;
+
+        // No need to track start point index anymore - will be auto-detected
       }
 
       // Set misclosure correction
@@ -549,81 +528,36 @@ onMounted(() => {
 });
 
 // Methods
-const addCoordinate = () => {
-  coordinates.value.push({
-    id: "",
-    northing: 0,
-    easting: 0,
-  });
-  // Don't auto-select the new coordinate
-};
-
-const removeCoordinate = (index: number) => {
-  if (coordinates.value.length > 1) {
-    const removedCoord = coordinates.value[index];
-    coordinates.value.splice(index, 1);
-
-    // Reset selected start point if it was the removed coordinate
-    if (removedCoord && selectedStartPoint.value === removedCoord.id) {
-      selectedStartPoint.value = null;
-    }
-  } else if (coordinates.value.length === 1) {
-    // If only one coordinate left, clear it but keep the array with one empty item
-    coordinates.value[0] = { id: "", northing: 0, easting: 0 };
-    selectedStartPoint.value = null;
-  }
-};
-
-const addLeg = () => {
-  const previousLeg = legs.value[legs.value.length - 1];
-  const fromId = previousLeg && previousLeg.to.id ? previousLeg.to.id : "";
-
-  legs.value.push({
-    from: { id: fromId },
-    to: { id: "" },
-    bearing: {
-      degrees: 0,
-      minutes: 0,
-      seconds: 0,
-    },
-    distance: 0,
+const addTableRow = () => {
+  forwardRows.value.push({
+    pointId: "",
+    distance: null,
+    degrees: null,
+    minutes: null,
+    seconds: null,
+    departure: "",
+    latitude: "",
+    easting: null,
+    northing: null,
   });
 };
 
-const removeLeg = (index: number) => {
-  if (legs.value.length > 1) {
-    legs.value.splice(index, 1);
-  }
-};
-
-const closeModal = () => {
-  showResultsModal.value = false;
-};
-
-const handleSaveCoordinates = async (
-  coordinates: {
-    point: string;
-    easting: number;
-    northing: number;
-    elevation: number | null;
-  }[]
-) => {
-  try {
-    const { setTransferredCoordinates } = useCoordinateTransfer();
-
-    // Store coordinates in the composable
-    setTransferredCoordinates(coordinates);
-
-    // Redirect to the edit page with coordinates step
-    await navigateTo(
-      `/project/${projectId}/plan/${planId}/edit?step=coordinates`
-    );
-  } catch (error: any) {
-    console.error("Failed to prepare coordinate transfer:", error);
-    toast.add({
-      title: "Failed to prepare coordinate transfer. Please try again.",
-      color: "error",
-    });
+const removeTableRow = (index: number) => {
+  if (forwardRows.value.length > 1) {
+    forwardRows.value.splice(index, 1);
+  } else if (forwardRows.value.length === 1) {
+    // If only one row left, clear it but keep the array with one empty item
+    forwardRows.value[0] = {
+      pointId: "",
+      distance: null,
+      degrees: null,
+      minutes: null,
+      seconds: null,
+      departure: "",
+      latitude: "",
+      easting: null,
+      northing: null,
+    };
   }
 };
 
@@ -633,23 +567,135 @@ const performComputation = async () => {
     computationError.value = "";
     computationResults.value = null;
 
-    // Find the start coordinate
-    const startCoord = coordinates.value.find(
-      (coord) => coord.id === selectedStartPoint.value
+    // Find first row with valid easting and northing as start point
+    const startPointIndex = forwardRows.value.findIndex(
+      (row) =>
+        row.easting !== null &&
+        row.easting !== 0 &&
+        !isNaN(row.easting) &&
+        row.northing !== null &&
+        row.northing !== 0 &&
+        !isNaN(row.northing) &&
+        row.pointId &&
+        row.pointId.trim() !== ""
     );
-    if (!startCoord) {
-      throw new Error("Selected start point not found in coordinates");
+
+    if (startPointIndex === -1) {
+      throw new Error(
+        "No valid start point found. Please ensure at least one row has valid easting and northing coordinates."
+      );
+    }
+
+    const startRow = forwardRows.value[startPointIndex];
+    if (
+      !startRow ||
+      !startRow.pointId ||
+      startRow.easting === 0 ||
+      startRow.northing === 0
+    ) {
+      throw new Error("Start point must have valid coordinates");
+    }
+
+    // Convert table data to API format
+    const coordinates = forwardRows.value
+      .filter(
+        (row) =>
+          row.pointId.trim() !== "" &&
+          row.northing !== null &&
+          row.northing !== 0 &&
+          !isNaN(row.northing) &&
+          row.easting !== null &&
+          row.easting !== 0 &&
+          !isNaN(row.easting)
+      )
+      .map((row) => ({
+        id: row.pointId,
+        northing: row.northing,
+        easting: row.easting,
+      }));
+
+    const legs = [];
+    const processedRows = new Set<number>(); // Track which rows we've processed
+    
+    for (let i = 0; i < forwardRows.value.length; i++) {
+      const row = forwardRows.value[i];
+      if (
+        row &&
+        row.pointId &&
+        row.distance !== null &&
+        row.distance > 0 &&
+        i !== startPointIndex && // Skip the start point row
+        !processedRows.has(i) // Don't process the same row twice
+      ) {
+        // Find the "from" point
+        let fromId = "";
+        if (i === startPointIndex + 1 || (startPointIndex > 0 && i === 0)) {
+          // First leg after start point starts from the start point
+          fromId = startRow.pointId;
+        } else {
+          // Subsequent legs start from previous point
+          const prevRow = forwardRows.value[i - 1];
+          fromId = prevRow?.pointId || startRow.pointId;
+        }
+
+        legs.push({
+          from: { id: fromId },
+          to: { id: row.pointId },
+          bearing: {
+            degrees: row.degrees,
+            minutes: row.minutes,
+            seconds: row.seconds,
+          },
+          distance: row.distance,
+        });
+        
+        processedRows.add(i);
+      }
+    }
+
+    // Only add closing leg if it wasn't already processed in the main loop
+    const closingRowIndex = forwardRows.value.findIndex((row, index) => 
+      row.pointId === startRow.pointId && 
+      index !== startPointIndex &&
+      row.distance !== null && 
+      row.distance > 0
+    );
+    
+    if (closingRowIndex !== -1 && !processedRows.has(closingRowIndex)) {
+      const closingRow = forwardRows.value[closingRowIndex];
+      if (closingRow) {
+        // Find the last non-start point before the closing row
+        let lastPointId = startRow.pointId;
+        for (let i = closingRowIndex - 1; i >= 0; i--) {
+          const row = forwardRows.value[i];
+          if (row && row.pointId && row.pointId !== startRow.pointId) {
+            lastPointId = row.pointId;
+            break;
+          }
+        }
+        
+        legs.push({
+          from: { id: lastPointId },
+          to: { id: startRow.pointId },
+          bearing: {
+            degrees: closingRow.degrees,
+            minutes: closingRow.minutes,
+            seconds: closingRow.seconds,
+          },
+          distance: closingRow.distance,
+        });
+      }
     }
 
     // Prepare the payload
     const payload = {
-      coordinates: coordinates.value,
+      coordinates,
       start: {
-        id: startCoord.id,
-        northing: startCoord.northing,
-        easting: startCoord.easting,
+        id: startRow.pointId,
+        northing: startRow.northing,
+        easting: startRow.easting,
       },
-      legs: legs.value,
+      legs,
       misclosure_correction: misclosureCorrection.value,
     };
 
@@ -662,16 +708,84 @@ const performComputation = async () => {
 
     computationResults.value = response.data;
 
-    // Save the forward computation data to the plan
-    try {
-      await $axios.put(`/plan/forward-data/edit/${planId}`, payload);
-    } catch (saveError: any) {
-      console.error("Failed to save forward computation data:", saveError);
-      // Note: We don't show this error to the user as the computation was successful
-      // The data is just not saved to the plan, but the results are still shown
+    // Fill computed values back into the table
+    if (response.data?.data?.computed_legs) {
+      const startId = response.data?.data?.start?.id;
+      
+      response.data.data.computed_legs.forEach((computedLeg: any) => {
+        const targetRow = forwardRows.value.find(
+          (row) => row.pointId === computedLeg.to.id
+        );
+        if (targetRow) {
+          // Only fill departure and latitude if this is not the first occurrence of the start point
+          const isFirstStartPoint = targetRow.pointId === startId && 
+            forwardRows.value.findIndex(r => r.pointId === startId) === forwardRows.value.indexOf(targetRow);
+          
+          if (!isFirstStartPoint) {
+            targetRow.departure = computedLeg.delta_easting.toFixed(3);
+            targetRow.latitude = computedLeg.delta_northing.toFixed(3);
+          }
+          
+          targetRow.easting = computedLeg.to.easting;
+          targetRow.northing = computedLeg.to.northing;
+        }
+      });
+
+      // Handle closed traverse - find the closing leg and update the corresponding row
+      if (startId) {
+        // Find the closing leg that goes back to the start point
+        const closingLeg = response.data.data.computed_legs.find(
+          (leg: any) => leg.to.id === startId && leg.from.id !== startId
+        );
+        
+        if (closingLeg) {
+          // Find the closing row (the row that represents the closing leg back to start)
+          const closingRowIndex = forwardRows.value.findIndex((row, index) => 
+            row.pointId === startId && index > 0 // Not the first occurrence
+          );
+          
+          if (closingRowIndex !== -1) {
+            const closingRow = forwardRows.value[closingRowIndex];
+            if (closingRow) {
+              closingRow.departure = closingLeg.delta_easting.toFixed(3);
+              closingRow.latitude = closingLeg.delta_northing.toFixed(3);
+              closingRow.easting = closingLeg.to.easting;
+              closingRow.northing = closingLeg.to.northing;
+            }
+          }
+        }
+        
+        // Ensure the first start point row has no departure/latitude values
+        const firstStartPointIndex = forwardRows.value.findIndex(row => row.pointId === startId);
+        if (firstStartPointIndex !== -1) {
+          const firstStartPoint = forwardRows.value[firstStartPointIndex];
+          if (firstStartPoint) {
+            firstStartPoint.departure = "";
+            firstStartPoint.latitude = "";
+            // Keep the original or computed easting/northing
+            if (response.data?.data?.start) {
+              firstStartPoint.easting = response.data.data.start.easting;
+              firstStartPoint.northing = response.data.data.start.northing;
+            }
+          }
+        }
+      }
     }
 
-    showResultsModal.value = true; // Show the modal instead of just storing results
+    // Save the table data to the plan
+    try {
+      await $axios.put(`/plan/forward-data/edit/${planId}`, {
+        forwardRows: forwardRows.value,
+        misclosure_correction: misclosureCorrection.value,
+      });
+    } catch (saveError: any) {
+      console.error("Failed to save forward computation data:", saveError);
+    }
+
+    toast.add({
+      title: "Forward computation completed successfully",
+      color: "success",
+    });
   } catch (error: any) {
     console.error("Forward computation error:", error);
     computationError.value =
@@ -683,28 +797,26 @@ const performComputation = async () => {
   }
 };
 
-// File upload methods for bearing and distance data
-const triggerBearingFile = () => {
-  bearingFileInputRef.value?.click();
+// File upload methods for traverse data
+const triggerForwardFile = () => {
+  forwardFileInputRef.value?.click();
 };
 
-const parseBearingCSV = (text: string) => {
-  // Handle both comma and whitespace separated values, including tabs
+const parseForwardCSV = (text: string) => {
   const lines = text
     .split(/\r?\n/)
     .map((l) => l.trim())
-    .filter((l) => l && !/^#/.test(l)); // Filter out comments starting with #
+    .filter((l) => l && !/^#/.test(l));
 
   if (!lines.length) return [];
 
-  // Detect header - check if first line contains typical column names
   const header = (lines[0] ?? "").toLowerCase();
-  const hasHeader = /from|to|deg|min|sec|dist|bear|point/i.test(header);
+  const hasHeader =
+    /point|id|dist|deg|min|sec|departure|latitude|east|north/i.test(header);
   const dataLines = hasHeader ? lines.slice(1) : lines;
 
-  const parsedLegs = [];
+  const parsedRows = [];
   for (const line of dataLines) {
-    // Split by comma first, then by whitespace/tabs if no commas
     let cols;
     if (line.includes(",")) {
       cols = line.split(",").map((c) => c.trim());
@@ -714,116 +826,132 @@ const parseBearingCSV = (text: string) => {
       cols = line.split(/\s+/).filter((c) => c.length > 0);
     }
 
-    if (cols.length < 6) continue;
+    if (cols.length < 7) continue;
 
-    const fromId = String(cols[0]).trim();
-    const toId = String(cols[1]).trim();
+    // New column order: Distance, Degrees, Minutes, Seconds, Easting, Northing, Point ID
+    const distance = parseFloat(String(cols[0]).trim()) || 0;
+    const degrees = Math.max(
+      0,
+      Math.min(359, parseInt(String(cols[1]).trim()) || 0)
+    );
+    const minutes = Math.max(
+      0,
+      Math.min(59, parseInt(String(cols[2]).trim()) || 0)
+    );
+    const seconds = Math.max(
+      0,
+      Math.min(59.999999, parseFloat(String(cols[3]).trim()) || 0)
+    );
+    const easting = parseFloat(String(cols[4]).trim()) || 0;
+    const northing = parseFloat(String(cols[5]).trim()) || 0;
+    const pointId = String(cols[6]).trim();
 
-    // Parse and validate degrees (0-359)
-    const degrees = parseInt(String(cols[2]).trim()) || 0;
-    const validDegrees = Math.max(0, Math.min(359, degrees));
-
-    // Parse and validate minutes (0-59)
-    const minutes = parseInt(String(cols[3]).trim()) || 0;
-    const validMinutes = Math.max(0, Math.min(59, minutes));
-
-    // Parse and validate seconds (0-59.999999)
-    const seconds = parseFloat(String(cols[4]).trim()) || 0;
-    const validSeconds = Math.max(0, Math.min(59.999999, seconds));
-
-    // Parse distance (must be positive)
-    const distance = parseFloat(String(cols[5]).trim()) || 0;
-    const validDistance = Math.max(0, distance);
-
-    // Only add if we have valid data
-    if (fromId && toId && validDistance > 0) {
-      parsedLegs.push({
-        from: { id: fromId },
-        to: { id: toId },
-        bearing: {
-          degrees: validDegrees,
-          minutes: validMinutes,
-          seconds: validSeconds,
-        },
-        distance: validDistance,
+    if (pointId) {
+      parsedRows.push({
+        pointId,
+        distance,
+        degrees,
+        minutes,
+        seconds,
+        departure: "", // Will be computed
+        latitude: "", // Will be computed
+        easting,
+        northing,
       });
     }
   }
-  return parsedLegs;
+  return parsedRows;
 };
 
-const onBearingFile = (ev: Event) => {
-  const input = ev.target as HTMLInputElement;
-  const file = input.files?.[0];
-  if (!file) return;
-
-  // Check file type
-  const allowedTypes = [".csv", ".txt"];
-  const fileExtension = "." + file.name.split(".").pop()?.toLowerCase();
-  if (!allowedTypes.includes(fileExtension)) {
-    toast.add({
-      title: "Invalid file type. Please upload CSV, TXT",
-      color: "error",
-    });
-    if (bearingFileInputRef.value) bearingFileInputRef.value.value = "";
-    return;
-  }
-
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const text = String(reader.result || "");
-      const parsedLegs = parseBearingCSV(text);
-
-      if (parsedLegs.length) {
-        legs.value = parsedLegs;
-        toast.add({
-          title: `Successfully imported ${parsedLegs.length} bearing and distance entries`,
-          color: "success",
-        });
-      } else {
-        toast.add({
-          title:
-            "No valid data found in the file. Please check the format and try again.",
-          color: "warning",
-        });
+const onForwardFile = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      if (text) {
+        const parsed = parseForwardCSV(text);
+        forwardRows.value = parsed;
       }
-    } catch (error) {
-      toast.add({
-        title:
-          "Error reading file. Please check the file format and try again.",
-        color: "error",
-      });
-    }
-
-    if (bearingFileInputRef.value) bearingFileInputRef.value.value = "";
-  };
-
-  reader.onerror = () => {
-    toast.add({
-      title: "Failed to read the file. Please try again.",
-      color: "error",
-    });
-    if (bearingFileInputRef.value) bearingFileInputRef.value.value = "";
-  };
-
-  reader.readAsText(file);
+    };
+    reader.readAsText(file);
+  }
 };
 
-const downloadBearingTemplate = () => {
+const downloadForwardTemplate = () => {
   const csv = [
-    "From,To,Degrees,Minutes,Seconds,Distance",
-    "A,B,357,41,0,17.18",
-    "B,C,88,30,0,39.51",
-    "C,D,179,17,0,17.16",
-    "D,A,268,28,0,39.03",
+    "Distance,Degrees,Minutes,Seconds,Easting,Northing,Point ID",
+    ",,,,564836.710,714206.422,A",
+    "34.54,261,13,0,,,B",
+    "28.75,315,45,30,,,C",
+    "42.18,87,22,15,,,D",
+    "15.00,180,0,0,,,A",
   ].join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "bearing_distance_template.csv";
+  a.download = "forward_template.csv";
   a.click();
   URL.revokeObjectURL(url);
+};
+
+const saveToCoordinates = async () => {
+  try {
+    // Extract coordinates from the computed results
+    const coordinates = forwardRows.value
+      .filter(
+        (row) =>
+          row.pointId.trim() !== "" &&
+          row.easting !== null &&
+          row.northing !== null
+      )
+      .map((row) => ({
+        point: row.pointId,
+        easting: row.easting!,
+        northing: row.northing!,
+        elevation: null,
+      }));
+
+    if (coordinates.length === 0) {
+      toast.add({
+        title: "No valid coordinates found to save",
+        color: "warning",
+      });
+      return;
+    }
+
+    await handleSaveCoordinates(coordinates);
+  } catch (error: any) {
+    console.error("Failed to save coordinates:", error);
+    toast.add({
+      title: "Failed to save coordinates. Please try again.",
+      color: "error",
+    });
+  }
+};
+
+const handleSaveCoordinates = async (
+  coordinates: {
+    point: string;
+    easting: number;
+    northing: number;
+    elevation: number | null;
+  }[]
+) => {
+  try {
+    const { setTransferredCoordinates } = useCoordinateTransfer();
+    setTransferredCoordinates(coordinates);
+    await navigateTo(
+      `/project/${projectId}/plan/${planId}/edit?step=coordinates`
+    );
+  } catch (error: any) {
+    console.error("Failed to prepare coordinate transfer:", error);
+    toast.add({
+      title: "Failed to prepare coordinate transfer. Please try again.",
+      color: "error",
+    });
+  }
 };
 </script>
