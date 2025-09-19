@@ -137,7 +137,16 @@
                 >
                   Northing
                 </th>
-
+                <th
+                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Easting Misclosure
+                </th>
+                <th
+                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Northing Misclosure
+                </th>
                 <th
                   class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
                 >
@@ -239,6 +248,34 @@
                 </td>
                 <td class="py-3 px-4">
                   <input
+                    type="text"
+                    readonly
+                    class="w-full px-2 py-1 border border-gray-300 dark:border-slate-600 rounded bg-gray-50 dark:bg-slate-600 text-gray-900 dark:text-gray-100"
+                    :value="
+                      row.eastingMisclosure !== null &&
+                      row.eastingMisclosure !== undefined
+                        ? row.eastingMisclosure.toFixed(4)
+                        : ''
+                    "
+                    placeholder="--"
+                  />
+                </td>
+                <td class="py-3 px-4">
+                  <input
+                    type="text"
+                    readonly
+                    class="w-full px-2 py-1 border border-gray-300 dark:border-slate-600 rounded bg-gray-50 dark:bg-slate-600 text-gray-900 dark:text-gray-100"
+                    :value="
+                      row.northingMisclosure !== null &&
+                      row.northingMisclosure !== undefined
+                        ? row.northingMisclosure.toFixed(4)
+                        : ''
+                    "
+                    placeholder="--"
+                  />
+                </td>
+                <td class="py-3 px-4">
+                  <input
                     v-model="row.pointId"
                     type="text"
                     class="w-full px-2 py-1 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500"
@@ -257,7 +294,7 @@
               </tr>
               <tr v-if="forwardRows.length === 0">
                 <td
-                  colspan="10"
+                  colspan="12"
                   class="py-8 text-center text-gray-500 dark:text-gray-400"
                 >
                   No coordinates added yet. Upload a file or add data manually.
@@ -364,64 +401,103 @@
             closed and all coordinates have been computed. You can now save
             these coordinates to use in your plan.
           </p>
-          
+
           <!-- Misclosure Information -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div class="bg-white dark:bg-slate-700 p-3 rounded border">
-              <h4 class="font-medium text-green-800 dark:text-green-300 text-sm mb-2">
+              <h4
+                class="font-medium text-green-800 dark:text-green-300 text-sm mb-2"
+              >
                 Misclosure Analysis
               </h4>
               <div class="space-y-1 text-xs">
                 <div class="flex justify-between">
-                  <span class="text-gray-600 dark:text-gray-400">Northing Misclosure:</span>
+                  <span class="text-gray-600 dark:text-gray-400"
+                    >Northing Misclosure:</span
+                  >
                   <span class="font-mono text-gray-900 dark:text-gray-100">
-                    {{ computationResults.data?.northing_misclosure?.toFixed(3) || '0.000' }}
+                    {{
+                      computationResults.data?.northing_misclosure?.toFixed(
+                        3
+                      ) || "0.000"
+                    }}
                   </span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-600 dark:text-gray-400">Easting Misclosure:</span>
+                  <span class="text-gray-600 dark:text-gray-400"
+                    >Easting Misclosure:</span
+                  >
                   <span class="font-mono text-gray-900 dark:text-gray-100">
-                    {{ computationResults.data?.easting_misclosure?.toFixed(3) || '0.000' }}
+                    {{
+                      computationResults.data?.easting_misclosure?.toFixed(3) ||
+                      "0.000"
+                    }}
                   </span>
                 </div>
               </div>
             </div>
-            
+
             <div class="bg-white dark:bg-slate-700 p-3 rounded border">
-              <h4 class="font-medium text-green-800 dark:text-green-300 text-sm mb-2">
+              <h4
+                class="font-medium text-green-800 dark:text-green-300 text-sm mb-2"
+              >
                 Traverse Summary
               </h4>
               <div class="space-y-1 text-xs">
                 <div class="flex justify-between">
-                  <span class="text-gray-600 dark:text-gray-400">Total Distance:</span>
+                  <span class="text-gray-600 dark:text-gray-400"
+                    >Total Distance:</span
+                  >
                   <span class="font-mono text-gray-900 dark:text-gray-100">
-                    {{ computationResults.data?.traverse?.total_distance?.toFixed(2) || '0.00' }} m
+                    {{
+                      computationResults.data?.traverse?.total_distance?.toFixed(
+                        2
+                      ) || "0.00"
+                    }}
+                    m
                   </span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-600 dark:text-gray-400">Correction Applied:</span>
+                  <span class="text-gray-600 dark:text-gray-400"
+                    >Correction Applied:</span
+                  >
                   <span class="font-mono text-gray-900 dark:text-gray-100">
-                    {{ misclosureCorrection ? 'Yes' : 'No' }}
+                    {{ misclosureCorrection ? "Yes" : "No" }}
                   </span>
                 </div>
               </div>
             </div>
           </div>
-          
+
           <!-- Misclosure Status -->
-          <div class="mt-3 p-2 rounded text-xs" 
-               :class="misclosureCorrection ? 
-                 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' : 
-                 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300'">
+          <div
+            class="mt-3 p-2 rounded text-xs"
+            :class="
+              misclosureCorrection
+                ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                : 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300'
+            "
+          >
             <div v-if="misclosureCorrection" class="flex items-center gap-1">
               <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clip-rule="evenodd"
+                />
               </svg>
-              <span>Misclosure correction applied - traverse is perfectly closed</span>
+              <span
+                >Misclosure correction applied - traverse is perfectly
+                closed</span
+              >
             </div>
             <div v-else class="flex items-center gap-1">
               <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                <path
+                  fill-rule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clip-rule="evenodd"
+                />
               </svg>
               <span>Raw computation - misclosure shows measurement errors</span>
             </div>
@@ -449,6 +525,8 @@ interface ForwardRow {
   latitude: string | number | null;
   easting: number | null;
   northing: number | null;
+  northingMisclosure: number | null;
+  eastingMisclosure: number | null;
 }
 
 definePageMeta({ middleware: ["auth"] });
@@ -470,6 +548,8 @@ const forwardRows = ref<ForwardRow[]>([
     latitude: "",
     easting: null,
     northing: null,
+    northingMisclosure: null,
+    eastingMisclosure: null,
   },
 ]);
 
@@ -551,6 +631,8 @@ const fetchPlanData = async () => {
               latitude: "",
               easting: coord.easting,
               northing: coord.northing,
+              northingMisclosure: null,
+              eastingMisclosure: null,
             });
           });
         }
@@ -601,6 +683,8 @@ const addTableRow = () => {
     latitude: "",
     easting: null,
     northing: null,
+    northingMisclosure: null,
+    eastingMisclosure: null,
   });
 };
 
@@ -619,6 +703,8 @@ const removeTableRow = (index: number) => {
       latitude: "",
       easting: null,
       northing: null,
+      northingMisclosure: null,
+      eastingMisclosure: null,
     };
   }
 };
@@ -678,7 +764,7 @@ const performComputation = async () => {
 
     const legs = [];
     const processedRows = new Set<number>(); // Track which rows we've processed
-    
+
     for (let i = 0; i < forwardRows.value.length; i++) {
       const row = forwardRows.value[i];
       if (
@@ -710,19 +796,20 @@ const performComputation = async () => {
           },
           distance: row.distance,
         });
-        
+
         processedRows.add(i);
       }
     }
 
     // Only add closing leg if it wasn't already processed in the main loop
-    const closingRowIndex = forwardRows.value.findIndex((row, index) => 
-      row.pointId === startRow.pointId && 
-      index !== startPointIndex &&
-      row.distance !== null && 
-      row.distance > 0
+    const closingRowIndex = forwardRows.value.findIndex(
+      (row, index) =>
+        row.pointId === startRow.pointId &&
+        index !== startPointIndex &&
+        row.distance !== null &&
+        row.distance > 0
     );
-    
+
     if (closingRowIndex !== -1 && !processedRows.has(closingRowIndex)) {
       const closingRow = forwardRows.value[closingRowIndex];
       if (closingRow) {
@@ -735,7 +822,7 @@ const performComputation = async () => {
             break;
           }
         }
-        
+
         legs.push({
           from: { id: lastPointId },
           to: { id: startRow.pointId },
@@ -773,23 +860,36 @@ const performComputation = async () => {
     // Fill computed values back into the table
     if (response.data?.data?.computed_legs) {
       const startId = response.data?.data?.start?.id;
-      
+
       response.data.data.computed_legs.forEach((computedLeg: any) => {
         const targetRow = forwardRows.value.find(
           (row) => row.pointId === computedLeg.to.id
         );
         if (targetRow) {
           // Only fill departure and latitude if this is not the first occurrence of the start point
-          const isFirstStartPoint = targetRow.pointId === startId && 
-            forwardRows.value.findIndex(r => r.pointId === startId) === forwardRows.value.indexOf(targetRow);
-          
+          const isFirstStartPoint =
+            targetRow.pointId === startId &&
+            forwardRows.value.findIndex((r) => r.pointId === startId) ===
+              forwardRows.value.indexOf(targetRow);
+
           if (!isFirstStartPoint) {
             targetRow.departure = computedLeg.delta_easting.toFixed(3);
             targetRow.latitude = computedLeg.delta_northing.toFixed(3);
           }
-          
+
           targetRow.easting = computedLeg.to.easting;
           targetRow.northing = computedLeg.to.northing;
+
+          // Add misclosure values if available, but only for non-start points
+          // The first row (start point) should only contain northing and easting
+          if (!isFirstStartPoint) {
+            if (computedLeg.northing_misclosure !== undefined) {
+              targetRow.northingMisclosure = computedLeg.northing_misclosure;
+            }
+            if (computedLeg.easting_misclosure !== undefined) {
+              targetRow.eastingMisclosure = computedLeg.easting_misclosure;
+            }
+          }
         }
       });
 
@@ -799,13 +899,13 @@ const performComputation = async () => {
         const closingLeg = response.data.data.computed_legs.find(
           (leg: any) => leg.to.id === startId && leg.from.id !== startId
         );
-        
+
         if (closingLeg) {
           // Find the closing row (the row that represents the closing leg back to start)
-          const closingRowIndex = forwardRows.value.findIndex((row, index) => 
-            row.pointId === startId && index > 0 // Not the first occurrence
+          const closingRowIndex = forwardRows.value.findIndex(
+            (row, index) => row.pointId === startId && index > 0 // Not the first occurrence
           );
-          
+
           if (closingRowIndex !== -1) {
             const closingRow = forwardRows.value[closingRowIndex];
             if (closingRow) {
@@ -813,12 +913,22 @@ const performComputation = async () => {
               closingRow.latitude = closingLeg.delta_northing.toFixed(3);
               closingRow.easting = closingLeg.to.easting;
               closingRow.northing = closingLeg.to.northing;
+              
+              // Add misclosure values for the closing leg
+              if (closingLeg.northing_misclosure !== undefined) {
+                closingRow.northingMisclosure = closingLeg.northing_misclosure;
+              }
+              if (closingLeg.easting_misclosure !== undefined) {
+                closingRow.eastingMisclosure = closingLeg.easting_misclosure;
+              }
             }
           }
         }
-        
+
         // Ensure the first start point row has no departure/latitude values
-        const firstStartPointIndex = forwardRows.value.findIndex(row => row.pointId === startId);
+        const firstStartPointIndex = forwardRows.value.findIndex(
+          (row) => row.pointId === startId
+        );
         if (firstStartPointIndex !== -1) {
           const firstStartPoint = forwardRows.value[firstStartPointIndex];
           if (firstStartPoint) {
@@ -919,6 +1029,8 @@ const parseForwardCSV = (text: string) => {
         latitude: "", // Will be computed
         easting,
         northing,
+        northingMisclosure: null,
+        eastingMisclosure: null,
       });
     }
   }
