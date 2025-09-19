@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6">
     <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
-      {{ props.planType === 'route' ? 'Route Drawing' : 'Drawing' }}
+      {{ props.planType === "route" ? "Route Drawing" : "Drawing" }}
     </h2>
 
     <!-- Leaflet map with base-layer switch (auto: WebMercator tiles if geographic, else CRS.Simple) -->
@@ -114,26 +114,26 @@ const emit = defineEmits(["complete"]);
 
 // Prepare parcel data for rendering all parcels together (for cadastral) or route data (for route surveys)
 const allParcels = computed(() => {
-  if (props.planType === 'route') {
+  if (props.planType === "route") {
     // For route surveys, create a single "route" using all coordinates in sequence
     if (!Array.isArray(props.coordinates)) return [];
-    
-    const filtered = props.coordinates.filter((r) => 
-      r.point && r.northing != null && r.easting != null
+
+    const filtered = props.coordinates.filter(
+      (r) => r.point && r.northing != null && r.easting != null
     );
-    
+
     if (!filtered.length) return [];
-    
+
     const points = filtered.map((r) => ({
       key: r.point || `${r.easting},${r.northing}`,
       label: r.point || "",
       x: Number(r.easting),
       y: Number(r.northing),
     }));
-    
+
     return [{ name: props.parcelName || "Route", points, isRoute: true }];
   }
-  
+
   // Existing cadastral survey logic
   if (!Array.isArray(props.parcels) || !Array.isArray(props.coordinates)) {
     return [];
@@ -220,10 +220,10 @@ const parcelLatLngs = computed<
       if (orient === "latlon") return [p.x, p.y] as [number, number]; // x=lat, y=lng
       return [p.y, p.x] as [number, number]; // y=lat, x=lng (default)
     });
-    return { 
-      name: parcel.name, 
+    return {
+      name: parcel.name,
       points,
-      isRoute: (parcel as any).isRoute 
+      isRoute: (parcel as any).isRoute,
     };
   });
 });
@@ -284,7 +284,7 @@ const parcelCentroids = computed(() => {
     const n = pts.length;
 
     if (!n) return { name: parcel.name, position: [0, 0] as [number, number] };
-    
+
     // For route surveys, use the midpoint of the route
     if (parcel.isRoute) {
       const midIndex = Math.floor(n / 2);
@@ -293,7 +293,7 @@ const parcelCentroids = computed(() => {
         position: pts[midIndex] as [number, number],
       };
     }
-    
+
     // For cadastral surveys, use polygon centroid calculation
     if (n < 3) {
       const s = pts.reduce(
@@ -496,13 +496,13 @@ function renderLayers() {
         (pp) => pp.label === leg.to.id || pp.key === leg.to.id
       );
       if (!from || !to) continue;
-      
+
       const midLat = (from.lat + to.lat) / 2;
       const midLng = (from.lng + to.lng) / 2;
-      
+
       // compute bearing label (degrees + minutes) and distance label separately
       const distTxt = `${Number(leg.distance).toFixed(2)}m`;
-      
+
       // format bearing as degrees and minutes with unit - exactly matching screenshot format
       const bd = leg.bearing;
       let bearingTxt = "";
@@ -519,32 +519,32 @@ function renderLayers() {
       // Get the map's pixel coordinates for the line endpoints
       const fromPt = map.latLngToLayerPoint(L.latLng(from.lat, from.lng));
       const toPt = map.latLngToLayerPoint(L.latLng(to.lat, to.lng));
-      
+
       // Calculate the line's angle in degrees
       const dx = toPt.x - fromPt.x;
       const dy = toPt.y - fromPt.y;
       const angleRad = Math.atan2(dy, dx);
       const angleDeg = (angleRad * 180) / Math.PI;
-      
+
       // Calculate perpendicular offset direction
       const perpX = -dy;
       const perpY = dx;
       const perpLength = Math.sqrt(perpX * perpX + perpY * perpY);
       const normalizedPerpX = perpX / perpLength;
       const normalizedPerpY = perpY / perpLength;
-      
+
       // Calculate the midpoint in pixel coordinates
       const midPoint = L.latLng(midLat, midLng);
       const midLayerPoint = map.latLngToLayerPoint(midPoint);
-      
+
       // Calculate offset distance based on line length
       const lineLength = Math.sqrt(dx * dx + dy * dy);
       const offsetDistance = Math.max(15, Math.min(30, lineLength * 0.1));
-      
+
       // Determine which side is inside (toward centroid) and which is outside
       let insideDirection = 1;
       let outsideDirection = -1;
-      
+
       // Find the closest parcel centroid for this line segment
       let closestCentroid: [number, number] | null = null;
       let minDistance = Infinity;
@@ -563,14 +563,15 @@ function renderLayers() {
       if (closestCentroid) {
         const centroidLL = L.latLng(closestCentroid[0], closestCentroid[1]);
         const centroidLayer = map.latLngToLayerPoint(centroidLL);
-        
+
         // Vector from midpoint to centroid
         const toCentroidX = centroidLayer.x - midLayerPoint.x;
         const toCentroidY = centroidLayer.y - midLayerPoint.y;
-        
+
         // Dot product with perpendicular vector
-        const dotProduct = toCentroidX * normalizedPerpX + toCentroidY * normalizedPerpY;
-        
+        const dotProduct =
+          toCentroidX * normalizedPerpX + toCentroidY * normalizedPerpY;
+
         // If dot product is positive, the centroid is in the direction of the perpendicular vector
         if (dotProduct > 0) {
           insideDirection = 1;
@@ -580,45 +581,58 @@ function renderLayers() {
           outsideDirection = 1;
         }
       }
-      
+
       // Position distance label on the inside of the line
-      const distanceOffsetX = midLayerPoint.x + normalizedPerpX * offsetDistance * insideDirection;
-      const distanceOffsetY = midLayerPoint.y + normalizedPerpY * offsetDistance * insideDirection;
-      const distanceLatLng = map.layerPointToLatLng(L.point(distanceOffsetX, distanceOffsetY));
-      
+      const distanceOffsetX =
+        midLayerPoint.x + normalizedPerpX * offsetDistance * insideDirection;
+      const distanceOffsetY =
+        midLayerPoint.y + normalizedPerpY * offsetDistance * insideDirection;
+      const distanceLatLng = map.layerPointToLatLng(
+        L.point(distanceOffsetX, distanceOffsetY)
+      );
+
       // Position bearing label on the outside of the line
-      const bearingOffsetX = midLayerPoint.x + normalizedPerpX * offsetDistance * outsideDirection;
-      const bearingOffsetY = midLayerPoint.y + normalizedPerpY * offsetDistance * outsideDirection;
-      const bearingLatLng = map.layerPointToLatLng(L.point(bearingOffsetX, bearingOffsetY));
-      
+      const bearingOffsetX =
+        midLayerPoint.x + normalizedPerpX * offsetDistance * outsideDirection;
+      const bearingOffsetY =
+        midLayerPoint.y + normalizedPerpY * offsetDistance * outsideDirection;
+      const bearingLatLng = map.layerPointToLatLng(
+        L.point(bearingOffsetX, bearingOffsetY)
+      );
+
+      // Ensure label is always upright (not upside down)
+      let uprightAngle = ((angleDeg % 360) + 360) % 360; // normalize to [0,360)
+      if (uprightAngle > 90 && uprightAngle < 270) {
+        uprightAngle = (uprightAngle + 180) % 360;
+      }
       // Create HTML for labels with proper rotation
-      const distanceHtml = `<div class="dim-box" style="transform: translate(-50%,-50%) rotate(${angleDeg}deg); transform-origin: center; text-align: center;">${distTxt}</div>`;
-      const bearingHtml = `<div class="dim-box" style="transform: translate(-50%,-50%) rotate(${angleDeg}deg); transform-origin: center; text-align: center;">${bearingTxt}</div>`;
-      
+      const distanceHtml = `<div class="dim-box" style="transform: translate(-50%,-50%) rotate(${uprightAngle}deg); transform-origin: center; text-align: center;">${distTxt}</div>`;
+      const bearingHtml = `<div class="dim-box" style="transform: translate(-50%,-50%) rotate(${uprightAngle}deg); transform-origin: center; text-align: center;">${bearingTxt}</div>`;
+
       // Create icons for labels
       const distanceIcon = L.divIcon({
         className: "dimension-label distance-label",
         html: distanceHtml,
         iconAnchor: [0, 0],
       });
-      
+
       const bearingIcon = L.divIcon({
         className: "dimension-label bearing-label",
         html: bearingHtml,
         iconAnchor: [0, 0],
       });
-      
+
       // Add markers for labels
       const distanceMarker = L.marker(distanceLatLng, {
         icon: distanceIcon,
         interactive: false,
       }).addTo(map);
-      
+
       const bearingMarker = L.marker(bearingLatLng, {
         icon: bearingIcon,
         interactive: false,
       }).addTo(map);
-      
+
       dimensionLayers.push(distanceMarker, bearingMarker);
     }
   }

@@ -111,6 +111,32 @@
               }}</span>
             </div>
             <div>
+              <span class="text-gray-500 dark:text-gray-400">Beacon Size:</span>
+              <span class="ml-2 text-gray-800 dark:text-gray-100">{{
+                modelValue.embellishment?.beacon_size ?? "—"
+              }}</span>
+            </div>
+            <div>
+              <span class="text-gray-500 dark:text-gray-400">Label Size:</span>
+              <span class="ml-2 text-gray-800 dark:text-gray-100">{{
+                modelValue.embellishment?.label_size ?? "—"
+              }}</span>
+            </div>
+            <div>
+              <span class="text-gray-500 dark:text-gray-400">Page Size:</span>
+              <span class="ml-2 text-gray-800 dark:text-gray-100">{{
+                modelValue.embellishment?.page_size ?? "—"
+              }}</span>
+            </div>
+            <div>
+              <span class="text-gray-500 dark:text-gray-400"
+                >Page Orientation:</span
+              >
+              <span class="ml-2 text-gray-800 dark:text-gray-100">{{
+                modelValue.embellishment?.page_orientation ?? "—"
+              }}</span>
+            </div>
+            <div>
               <span class="text-gray-500 dark:text-gray-400">Font:</span>
               <span class="ml-2 text-gray-800 dark:text-gray-100"
                 >{{ modelValue.embellishment?.font || "—" }} ({{
@@ -132,6 +158,31 @@
               >
               <span class="ml-2 text-gray-800 dark:text-gray-100">{{
                 modelValue.embellishment?.surveyor_name || "—"
+              }}</span>
+            </div>
+            <div>
+              <span class="text-gray-500 dark:text-gray-400">Footers:</span>
+              <span class="ml-2 text-gray-800 dark:text-gray-100">
+                <span
+                  v-if="
+                    Array.isArray(modelValue.embellishment?.footers) &&
+                    modelValue.embellishment?.footers.length
+                  "
+                >
+                  <span
+                    v-for="(footer, idx) in modelValue.embellishment.footers"
+                    :key="idx"
+                  >
+                    <span v-html="footer"></span>
+                  </span>
+                </span>
+                <span v-else>—</span>
+              </span>
+            </div>
+            <div>
+              <span class="text-gray-500 dark:text-gray-400">Footer Size:</span>
+              <span class="ml-2 text-gray-800 dark:text-gray-100">{{
+                modelValue.embellishment?.footer_size ?? "—"
               }}</span>
             </div>
           </div>

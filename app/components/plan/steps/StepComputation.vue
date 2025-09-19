@@ -14,9 +14,7 @@
           </option>
         </select>
       </div>
-      <div v-else class="text-sm text-gray-600">
-        Route Survey Computation
-      </div>
+      <div v-else class="text-sm text-gray-600">Route Survey Computation</div>
     </div>
 
     <div v-if="loadingLocal" class="animate-pulse space-y-3">
@@ -33,23 +31,34 @@
           <table class="w-full table-auto border-collapse">
             <thead>
               <tr class="text-left">
-                <th class="px-2 py-1">From</th>
-                <th class="px-2 py-1">Latitude</th>
-                <th class="px-2 py-1">Departure</th>
                 <th class="px-2 py-1">Distance (m)</th>
                 <th class="px-2 py-1">Bearing (°)</th>
-                <th class="px-2 py-1">To</th>
+                <th class="px-2 py-1">Departure</th>
+                <th class="px-2 py-1">Latitude</th>
+                <th class="px-2 py-1">Easting (mE)</th>
+                <th class="px-2 py-1">Northing (mN)</th>
+                <th class="px-2 py-1">ID</th>
               </tr>
             </thead>
             <tbody>
+              <tr>
+                <td class="px-2 py-1"></td>
+                <td class="px-2 py-1"></td>
+                <td class="px-2 py-1"></td>
+                <td class="px-2 py-1"></td>
+                <td class="px-2 py-1">{{ legs[0].from.easting }}</td>
+                <td class="px-2 py-1">{{ legs[0].from.northing }}</td>
+                <td class="px-2 py-1">{{ legs[0].from.id }}</td>
+              </tr>
               <tr v-for="(leg, i) in legs" :key="i" class="border-t">
-                <td class="px-2 py-1">{{ leg.from.id }}</td>
-                <td class="px-2 py-1">{{ leg.delta_northing }}</td>
-                <td class="px-2 py-1">{{ leg.delta_easting }}</td>
                 <td class="px-2 py-1">{{ leg.distance }}</td>
                 <td class="px-2 py-1">
                   {{ formatBearing(leg.bearing?.decimal) }}
                 </td>
+                <td class="px-2 py-1">{{ leg.delta_easting }}</td>
+                <td class="px-2 py-1">{{ leg.delta_northing }}</td>
+                <td class="px-2 py-1">{{ leg.to.easting }}</td>
+                <td class="px-2 py-1">{{ leg.to.northing }}</td>
                 <td class="px-2 py-1">{{ leg.to.id }}</td>
               </tr>
             </tbody>
@@ -124,7 +133,7 @@ const traverse = ref<any | null>(null);
 const parcelsWithIndex = computed(() => props.parcels || []);
 
 // Computed property to determine if we should use coordinates directly (for route surveys)
-const isRouteType = computed(() => props.planType === 'route');
+const isRouteType = computed(() => props.planType === "route");
 
 function buildPayloadForParcel(parcel: any) {
   // For route surveys, use coordinates directly
@@ -203,12 +212,12 @@ function formatBearing(decimalDeg: number | null | undefined) {
 
 function formatArea(area: number | null | undefined) {
   if (area === null || area === undefined || Number.isNaN(area)) return "";
-  
+
   if (area >= 10000) {
     const hectares = area / 10000;
     return `${area.toFixed(3)} sqm (${hectares.toFixed(3)} hectares)`;
   }
-  
+
   return `${area.toFixed(3)} sqm`;
 }
 
@@ -216,7 +225,7 @@ async function fetchComputation() {
   error.value = false;
   legs.value = [];
   traverse.value = null;
-  
+
   let payload;
   if (isRouteType.value) {
     // For route surveys, use coordinates directly
@@ -226,7 +235,7 @@ async function fetchComputation() {
     const parcel = parcelsWithIndex.value[selectedIndex.value] || { ids: [] };
     payload = buildPayloadForParcel(parcel);
   }
-  
+
   if (!payload.points || !payload.points.length) {
     error.value = true;
     return;
