@@ -7,33 +7,66 @@
       <div class="space-y-4">
         <div class="flex items-center justify-between">
           <label class="flex items-center gap-3">
-            <input type="checkbox" v-model="local.show_spot_heights" class="form-checkbox h-4 w-4" />
+            <input
+              type="checkbox"
+              v-model="local.show_spot_heights"
+              class="form-checkbox h-4 w-4"
+            />
             <span class="text-sm font-medium">Show spot heights</span>
           </label>
-          <span class="text-xs text-gray-500">Toggle display of point elevations</span>
+          <span class="text-xs text-gray-500"
+            >Toggle display of point elevations</span
+          >
         </div>
 
         <div>
-          <label class="block text-xs text-gray-600 mb-1">Point label scale</label>
-          <input v-model.number="local.point_label_scale" type="number" step="0.01" class="w-full px-3 py-2 rounded border bg-white dark:bg-slate-800" />
+          <label class="block text-xs text-gray-600 mb-1"
+            >Point label scale</label
+          >
+          <input
+            v-model.number="local.point_label_scale"
+            type="number"
+            step="0.01"
+            class="w-full px-3 py-2 rounded border bg-white dark:bg-slate-800"
+          />
         </div>
 
         <div class="flex items-center justify-between mt-2">
           <label class="flex items-center gap-3">
-            <input type="checkbox" v-model="local.show_contours" class="form-checkbox h-4 w-4" />
+            <input
+              type="checkbox"
+              v-model="local.show_contours"
+              class="form-checkbox h-4 w-4"
+            />
             <span class="text-sm font-medium">Show contours</span>
           </label>
-          <span class="text-xs text-gray-500">Generate contour lines from TIN</span>
+          <span class="text-xs text-gray-500"
+            >Generate contour lines from TIN</span
+          >
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs text-gray-600 mb-1">Contour interval</label>
-            <input v-model.number="local.contour_interval" type="number" step="0.01" class="w-full px-3 py-2 rounded border bg-white dark:bg-slate-800" />
+            <label class="block text-xs text-gray-600 mb-1"
+              >Contour interval</label
+            >
+            <input
+              v-model.number="local.contour_interval"
+              type="number"
+              step="0.01"
+              class="w-full px-3 py-2 rounded border bg-white dark:bg-slate-800"
+            />
           </div>
           <div>
-            <label class="block text-xs text-gray-600 mb-1">Major contour</label>
-            <input v-model.number="local.major_contour" type="number" step="1" class="w-full px-3 py-2 rounded border bg-white dark:bg-slate-800" />
+            <label class="block text-xs text-gray-600 mb-1"
+              >Major contour</label
+            >
+            <input
+              v-model.number="local.major_contour"
+              type="number"
+              step="1"
+              class="w-full px-3 py-2 rounded border bg-white dark:bg-slate-800"
+            />
           </div>
         </div>
       </div>
@@ -41,31 +74,60 @@
       <!-- Right column -->
       <div class="space-y-4">
         <div>
-          <label class="block text-xs text-gray-600 mb-1">Minimum distance</label>
-          <input v-model.number="local.minimum_distance" type="number" step="0.01" class="w-full px-3 py-2 rounded border bg-white dark:bg-slate-800" />
+          <label class="block text-xs text-gray-600 mb-1"
+            >Minimum distance</label
+          >
+          <input
+            v-model.number="local.minimum_distance"
+            type="number"
+            step="0.01"
+            class="w-full px-3 py-2 rounded border bg-white dark:bg-slate-800"
+          />
         </div>
 
         <div class="flex items-center gap-3">
-          <input type="checkbox" v-model="local.show_contours_labels" class="form-checkbox h-4 w-4" />
+          <input
+            type="checkbox"
+            v-model="local.show_contours_labels"
+            class="form-checkbox h-4 w-4"
+          />
           <label class="text-sm font-medium">Show contour labels</label>
         </div>
 
         <div>
-          <label class="block text-xs text-gray-600 mb-1">Contour label scale</label>
-          <input v-model.number="local.contour_label_scale" type="number" step="0.01" class="w-full px-3 py-2 rounded border bg-white dark:bg-slate-800" />
+          <label class="block text-xs text-gray-600 mb-1"
+            >Contour label scale</label
+          >
+          <input
+            v-model.number="local.contour_label_scale"
+            type="number"
+            step="0.01"
+            class="w-full px-3 py-2 rounded border bg-white dark:bg-slate-800"
+          />
         </div>
 
         <div class="flex items-center gap-3">
-          <input type="checkbox" v-model="local.show_boundary" class="form-checkbox h-4 w-4" />
+          <input
+            type="checkbox"
+            v-model="local.show_boundary"
+            class="form-checkbox h-4 w-4"
+          />
           <label class="text-sm font-medium">Show boundary</label>
         </div>
 
         <div>
-          <label class="block text-xs text-gray-600 mb-1">Boundary label scale</label>
-          <input v-model.number="local.boundary_label_scale" type="number" step="0.01" class="w-full px-3 py-2 rounded border bg-white dark:bg-slate-800" />
+          <label class="block text-xs text-gray-600 mb-1"
+            >Boundary label scale</label
+          >
+          <input
+            v-model.number="local.boundary_label_scale"
+            type="number"
+            step="0.01"
+            class="w-full px-3 py-2 rounded border bg-white dark:bg-slate-800"
+          />
         </div>
 
-        <div class="flex items-center gap-4 mt-2">
+        <!-- <div class="flex items-center gap-4 mt-2">
           <label class="flex items-center gap-3">
             <input type="checkbox" v-model="local.tin" class="form-checkbox h-4 w-4" />
             <span class="text-sm font-medium">TIN</span>
@@ -75,23 +137,32 @@
             <input type="checkbox" v-model="local.grid" class="form-checkbox h-4 w-4" />
             <span class="text-sm font-medium">Grid</span>
           </label>
-        </div>
+        </div> -->
       </div>
     </div>
 
     <div class="flex justify-end gap-3">
-      <button @click="onSave" :disabled="submitting" class="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-60">{{ submitting ? 'Saving...' : 'Save & Continue' }}</button>
+      <button
+        @click="onSave"
+        :disabled="submitting"
+        class="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-60"
+      >
+        {{ submitting ? "Saving..." : "Save & Continue" }}
+      </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, watch, ref } from 'vue';
-import axios from 'axios';
-import { useRoute } from 'vue-router';
+import { reactive, watch, ref } from "vue";
+import axios from "axios";
+import { useRoute } from "vue-router";
 
-const props = defineProps<{ modelValue: { settings: any }, loading?: boolean }>();
-const emit = defineEmits(['update:modelValue', 'complete']);
+const props = defineProps<{
+  modelValue: { settings: any };
+  loading?: boolean;
+}>();
+const emit = defineEmits(["update:modelValue", "complete"]);
 
 const local = reactive<any>({
   show_spot_heights: true,
@@ -110,18 +181,26 @@ const local = reactive<any>({
 
 const submitting = ref(false);
 const route = useRoute();
-const planId = String(route.params.plan || '');
+const planId = String(route.params.plan || "");
 
-watch(() => props.modelValue?.settings, (v) => {
-  if (v && typeof v === 'object') {
-    Object.assign(local, v);
-  }
-}, { immediate: true, deep: true });
+watch(
+  () => props.modelValue?.settings,
+  (v) => {
+    if (v && typeof v === "object") {
+      Object.assign(local, v);
+    }
+  },
+  { immediate: true, deep: true }
+);
 
 // emit changes upward when local changes
-watch(() => local, (v) => {
-  emit('update:modelValue', { settings: { ...v } });
-}, { deep: true });
+watch(
+  () => local,
+  (v) => {
+    emit("update:modelValue", { settings: { ...v } });
+  },
+  { deep: true }
+);
 
 async function onSave() {
   if (submitting.value) return;
@@ -144,10 +223,10 @@ async function onSave() {
 
     await axios.put(`/plan/topo/setting/edit/${planId}`, payload);
     // notify parent to advance
-    emit('complete');
+    emit("complete");
   } catch (err) {
     // best-effort: emit update so parent can show a toast if desired
-    emit('update:modelValue', { settings: { ...local } });
+    emit("update:modelValue", { settings: { ...local } });
   } finally {
     submitting.value = false;
   }

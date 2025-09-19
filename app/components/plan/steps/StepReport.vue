@@ -188,6 +188,64 @@
           </div>
         </div>
       </div>
+      
+      <!-- Topographic Settings & Boundary (topo plans) -->
+      <div v-if="props.basic?.type === 'topographic'" class="border border-gray-200 dark:border-slate-700 rounded-md p-4 bg-white dark:bg-slate-800">
+        <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-4">Topographic Summary</h3>
+
+        <div class="mb-4">
+          <h4 class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2">Topographic Settings</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div>
+              <span class="text-gray-500 dark:text-gray-400">Show spot heights:</span>
+              <span class="ml-2 text-gray-800 dark:text-gray-100">{{ formatBool(props.topoSettings?.show_spot_heights) }}</span>
+            </div>
+            <div>
+              <span class="text-gray-500 dark:text-gray-400">Point label scale:</span>
+              <span class="ml-2 text-gray-800 dark:text-gray-100">{{ props.topoSettings?.point_label_scale ?? '—' }}</span>
+            </div>
+            <div>
+              <span class="text-gray-500 dark:text-gray-400">Show contours:</span>
+              <span class="ml-2 text-gray-800 dark:text-gray-100">{{ formatBool(props.topoSettings?.show_contours) }}</span>
+            </div>
+            <div>
+              <span class="text-gray-500 dark:text-gray-400">Contour interval:</span>
+              <span class="ml-2 text-gray-800 dark:text-gray-100">{{ props.topoSettings?.contour_interval ?? '—' }}</span>
+            </div>
+            <div>
+              <span class="text-gray-500 dark:text-gray-400">Major contour:</span>
+              <span class="ml-2 text-gray-800 dark:text-gray-100">{{ props.topoSettings?.major_contour ?? '—' }}</span>
+            </div>
+            <div>
+              <span class="text-gray-500 dark:text-gray-400">Minimum distance:</span>
+              <span class="ml-2 text-gray-800 dark:text-gray-100">{{ props.topoSettings?.minimum_distance ?? '—' }}</span>
+            </div>
+            <!-- <div>
+              <span class="text-gray-500 dark:text-gray-400">Grid:</span>
+              <span class="ml-2 text-gray-800 dark:text-gray-100">{{ formatBool(props.topoSettings?.grid) }}</span>
+            </div>
+            <div>
+              <span class="text-gray-500 dark:text-gray-400">TIN:</span>
+              <span class="ml-2 text-gray-800 dark:text-gray-100">{{ formatBool(props.topoSettings?.tin) }}</span>
+            </div> -->
+            <div>
+              <span class="text-gray-500 dark:text-gray-400">Show contour labels:</span>
+              <span class="ml-2 text-gray-800 dark:text-gray-100">{{ formatBool(props.topoSettings?.show_contours_labels) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- <div v-if="Array.isArray(props.topoBoundary)" class="mb-2">
+          <h4 class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2">Boundary</h4>
+          <div class="text-sm text-gray-800 dark:text-gray-100">
+            <div>Points: {{ props.topoBoundary.length }}</div>
+            <div class="mt-2">Sample points:</div>
+            <ul class="list-disc ml-5 mt-1">
+              <li v-for="(p, idx) in props.topoBoundary.slice(0,5)" :key="idx">{{ p.id || p.point || ('#' + (idx+1)) }} — N: {{ p.northing }} E: {{ p.easting }} Z: {{ p.elevation }}</li>
+            </ul>
+          </div>
+        </div> -->
+      </div>
 
       <!-- Plan Generation Section -->
       <div
@@ -328,6 +386,9 @@ const props = defineProps<{
   basic: Basic;
   coordinatesCount: number;
   parcelsCount: number;
+  // Topographic-specific (optional)
+  topoSettings?: Record<string, any> | null;
+  topoBoundary?: Array<Record<string, any>> | null;
 }>();
 const emit = defineEmits(["cancel", "finish"]);
 
@@ -413,5 +474,11 @@ function formatScale(scale: number | null | undefined) {
 function formatBeaconType(beaconType: string | null | undefined) {
   if (!beaconType || beaconType === "none") return "—";
   return beaconType.replace(/_/g, " ").toUpperCase();
+}
+
+function formatBool(v: boolean | null | undefined) {
+  if (v === true) return "Yes";
+  if (v === false) return "No";
+  return "—";
 }
 </script>

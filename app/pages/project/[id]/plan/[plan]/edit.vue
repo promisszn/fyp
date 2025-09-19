@@ -121,6 +121,8 @@
             :basic="planData.basic"
             :coordinates-count="(planData.topoPoints || []).length"
             :parcels-count="0"
+            :topo-settings="planData.topoSettings"
+            :topo-boundary="planData.boundary"
             @update:model-value="onReportUpdate"
             @cancel="navigateTo(`/project/${projectId}`)"
             @finish="finishPlan"
@@ -418,17 +420,30 @@ onMounted(async () => {
           planData.topoSettings = { ...data.topographic_setting };
         }
 
-        // Auto-progress for topographic flow: boundary -> topo points -> topo settings
+        // Auto-progress for topographic flow: boundary is always completed (optional)
+        // Only check for topo points and settings to determine current step
         const hasBoundary = planData.boundary.length > 0;
         const hasTopoPoints = planData.topoPoints.length > 0;
-        if (hasBoundary) completed.value.add(1);
+        const hasTopoSettings = Object.keys(planData.topoSettings).length > 0;
+
+        // Boundary step is always considered completed since it's optional
+        completed.value.add(1);
+
         if (hasTopoPoints) completed.value.add(2);
-        if (hasBoundary && hasTopoPoints) {
+        if (hasTopoSettings) completed.value.add(3);
+
+        if (!hasTopoPoints) {
+          currentStep.value = 2;
+          return;
+        }
+
+        // Determine current step based on what's been completed
+        if (hasTopoSettings) {
+          currentStep.value = 4; // embellishment
+        } else if (hasTopoPoints) {
           currentStep.value = 3; // topo settings
-        } else if (hasBoundary) {
-          currentStep.value = 2; // topo points
         } else {
-          currentStep.value = 1; // boundary
+          currentStep.value = 2; // topo points (since boundary is optional)
         }
 
         // Skip the rest of auto-progress logic for other plan types
@@ -659,9 +674,11 @@ async function completeEmbellishment() {
       footer_size: Number(e.footer_size ?? 1),
     };
     await axios.put(`/plan/edit/${planId}`, payload);
-    // embellishment is step 5
-    markCompleted(5);
-    currentStep.value = 6;
+    // embellishment step index differs for topographic plans
+    const embellishmentStep = planData.basic.type === "topographic" ? 4 : 5;
+    const nextStep = planData.basic.type === "topographic" ? 5 : 6;
+    markCompleted(embellishmentStep);
+    currentStep.value = nextStep;
     toast.add({ title: "Embellishment saved", color: "success" });
   } catch (error) {
     toast.add({ title: "Failed to save embellishment", color: "error" });
@@ -672,7 +689,9 @@ async function completeEmbellishment() {
 
 // Final Step
 function finishPlan() {
-  markCompleted(6);
+  // final step index differs for topographic plans
+  const finalStep = planData.basic.type === "topographic" ? 5 : 6;
+  markCompleted(finalStep);
   navigateTo(`/project/${projectId}/plan/${planId}`);
 }
 
