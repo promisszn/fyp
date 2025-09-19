@@ -420,17 +420,30 @@ onMounted(async () => {
           planData.topoSettings = { ...data.topographic_setting };
         }
 
-        // Auto-progress for topographic flow: boundary -> topo points -> topo settings
+        // Auto-progress for topographic flow: boundary is always completed (optional)
+        // Only check for topo points and settings to determine current step
         const hasBoundary = planData.boundary.length > 0;
         const hasTopoPoints = planData.topoPoints.length > 0;
-        if (hasBoundary) completed.value.add(1);
+        const hasTopoSettings = Object.keys(planData.topoSettings).length > 0;
+
+        // Boundary step is always considered completed since it's optional
+        completed.value.add(1);
+
         if (hasTopoPoints) completed.value.add(2);
-        if (hasBoundary && hasTopoPoints) {
+        if (hasTopoSettings) completed.value.add(3);
+
+        if (!hasTopoPoints) {
+          currentStep.value = 2;
+          return;
+        }
+
+        // Determine current step based on what's been completed
+        if (hasTopoSettings) {
+          currentStep.value = 4; // embellishment
+        } else if (hasTopoPoints) {
           currentStep.value = 3; // topo settings
-        } else if (hasBoundary) {
-          currentStep.value = 2; // topo points
         } else {
-          currentStep.value = 1; // boundary
+          currentStep.value = 2; // topo points (since boundary is optional)
         }
 
         // Skip the rest of auto-progress logic for other plan types
