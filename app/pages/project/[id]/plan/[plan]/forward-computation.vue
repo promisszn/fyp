@@ -372,6 +372,15 @@
             >
               Save Coordinates
             </button>
+
+            <!-- Download CSV Button - shown after computation -->
+            <button
+              v-if="computationResults"
+              @click="downloadComputationCSV"
+              class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              Download CSV
+            </button>
           </div>
         </div>
 
@@ -1069,6 +1078,52 @@ const downloadForwardTemplate = () => {
   a.download = "forward_template.csv";
   a.click();
   URL.revokeObjectURL(url);
+};
+
+const downloadComputationCSV = () => {
+  if (!forwardRows.value || forwardRows.value.length === 0) {
+    toast.add({
+      title: "No computation data to download",
+      color: "warning",
+    });
+    return;
+  }
+
+  // Create CSV header (excluding misclosure columns)
+  const header = "Point ID,Distance(m),Degrees,Minutes,Seconds,Departure,Latitude,Easting(mE),Northing(mN)";
+  
+  // Convert rows to CSV format (excluding misclosure columns)
+  const csvRows = forwardRows.value
+    .filter(row => row.pointId && row.pointId.trim() !== "")
+    .map(row => {
+      const distance = row.distance !== null ? row.distance : "";
+      const degrees = row.degrees !== null ? row.degrees : "";
+      const minutes = row.minutes !== null ? row.minutes : "";
+      const seconds = row.seconds !== null ? row.seconds : "";
+      const departure = typeof row.departure === 'number' ? row.departure.toFixed(3) : row.departure || "";
+      const latitude = typeof row.latitude === 'number' ? row.latitude.toFixed(3) : row.latitude || "";
+      const easting = row.easting !== null ? row.easting.toFixed(3) : "";
+      const northing = row.northing !== null ? row.northing.toFixed(3) : "";
+      
+      return `${row.pointId},${distance},${degrees},${minutes},${seconds},${departure},${latitude},${easting},${northing}`;
+    });
+
+  // Combine header and data
+  const csvContent = [header, ...csvRows].join("\n");
+  
+  // Create and download the file
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `forward_computation_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  toast.add({
+    title: "Computation data downloaded successfully",
+    color: "success",
+  });
 };
 
 const saveToCoordinates = async () => {
