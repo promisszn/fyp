@@ -77,83 +77,137 @@
         </div>
       </div>
       <div v-else class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
-        <StepCoordinates
-          v-if="currentStep === 1"
-          :model-value="{ coordinates: planData.coordinates }"
-          :loading="submittingCoordinates"
-          @update:model-value="onCoordinatesUpdate"
-          @complete="completeCoordinates"
-        />
-
-        <!-- Route Survey: Elevation Step -->
-        <StepElevation
-          v-else-if="currentStep === 2 && planData.basic.type === 'route'"
-          :model-value="{ elevations: planData.elevations }"
-          :coordinate-ids="
-            planData.coordinates.map((c) => c.point).filter(Boolean)
-          "
-          :loading="submittingElevation"
-          @update:model-value="onElevationUpdate"
-          @complete="completeElevation"
-        />
-
-        <!-- Cadastral Survey: Parcels Step -->
-        <StepParcels
-          v-else-if="currentStep === 2 && planData.basic.type !== 'route'"
-          :model-value="{ parcels: planData.parcels }"
-          :coordinate-ids="
-            planData.coordinates.map((c) => c.point).filter(Boolean)
-          "
-          :loading="submittingParcels"
-          @update:model-value="onParcelsUpdate"
-          @complete="completeParcels"
-        />
-
-        <!-- Computation Step (step 3 for route, step 3 for cadastral) -->
-        <StepComputation
-          v-else-if="currentStep === 3"
-          :parcels="planData.basic.type === 'route' ? [] : planData.parcels"
-          :coordinates="planData.coordinates"
-          :plan-type="planData.basic.type"
-          @complete="onComputationComplete"
-        />
-
-        <!-- Drawing Step (step 4 for both types) -->
-        <StepDrawing
-          v-else-if="currentStep === 4"
-          :model-value="{ drawing: planData.drawing }"
-          :coordinates="planData.coordinates"
-          :parcel-name="planData.basic.type === 'route' ? planData.basic.name : (planData.parcels[0]?.name || planData.basic.name)"
-          :parcels="planData.basic.type === 'route' ? [] : planData.parcels"
-          :plan-type="planData.basic.type"
-          :legs="computationResult?.legs || []"
-          @update:model-value="onDrawingUpdate"
-          @complete="completeDrawing"
-        />
-
-        <!-- Embellishment Step (step 5 for both types) -->
-        <StepEmbellishment
-          v-else-if="currentStep === 5"
-          :model-value="{ embellishment: planData.embellishment }"
-          :loading="submittingEmbellishment"
-          @update:model-value="onEmbellishmentUpdate"
-          @complete="completeEmbellishment"
-        />
-
-        <!-- Report Step (step 6 for both types) -->
-        <StepReport
-          v-else-if="currentStep === 6"
-          :model-value="{
-            report: planData.report,
-            embellishment: planData.embellishment,
-          }"
-          :basic="planData.basic"
-          :coordinates-count="planData.coordinates.length"
-          :parcels-count="planData.basic.type === 'route' ? 0 : planData.parcels.length"
-          @update:model-value="onReportUpdate"
-          @cancel="navigateTo(`/project/${projectId}`)"
-          @finish="finishPlan"
-        />
+        <!-- Topographic Plan Steps -->
+        <template v-if="planData.basic.type === 'topographic'">
+          <!-- Step 1: Topo Boundary Table -->
+          <StepCoordinates
+            v-if="currentStep === 1"
+            :model-value="{ coordinates: planData.boundary }"
+            :loading="submittingCoordinates"
+            @update:modelValue="(v) => (planData.boundary = v.coordinates)"
+            @complete="completeTopoBoundary"
+          />
+          <!-- Step 2: Topo Points (like coordinates, but elevation required) -->
+          <StepTopoPoints
+            v-else-if="currentStep === 2"
+            :model-value="{ coordinates: planData.topoPoints }"
+            :loading="submittingCoordinates"
+            @update:modelValue="(v) => (planData.topoPoints = v.coordinates)"
+            @complete="completeCoordinates"
+          />
+          <!-- Step 3: Topo Settings (could be a new component) -->
+          <StepEmbellishment
+            v-else-if="currentStep === 3"
+            :model-value="{ embellishment: planData.topoSettings }"
+            :loading="submittingEmbellishment"
+            @update:model-value="
+              (v) => (planData.topoSettings = v.embellishment)
+            "
+            @complete="completeEmbellishment"
+          />
+          <!-- Step 4: Embellishment -->
+          <StepEmbellishment
+            v-else-if="currentStep === 4"
+            :model-value="{ embellishment: planData.embellishment }"
+            :loading="submittingEmbellishment"
+            @update:model-value="onEmbellishmentUpdate"
+            @complete="completeEmbellishment"
+          />
+          <!-- Step 5: Report -->
+          <StepReport
+            v-else-if="currentStep === 5"
+            :model-value="{
+              report: planData.report,
+              embellishment: planData.embellishment,
+            }"
+            :basic="planData.basic"
+            :coordinates-count="(planData.topoPoints || []).length"
+            :parcels-count="0"
+            @update:model-value="onReportUpdate"
+            @cancel="navigateTo(`/project/${projectId}`)"
+            @finish="finishPlan"
+          />
+        </template>
+        <!-- Route and Cadastral Plan Steps -->
+        <template v-else>
+          <StepCoordinates
+            v-if="currentStep === 1"
+            :model-value="{ coordinates: planData.coordinates }"
+            :loading="submittingCoordinates"
+            @update:model-value="onCoordinatesUpdate"
+            @complete="completeCoordinates"
+          />
+          <!-- Route Survey: Elevation Step -->
+          <StepElevation
+            v-else-if="currentStep === 2 && planData.basic.type === 'route'"
+            :model-value="{ elevations: planData.elevations }"
+            :coordinate-ids="
+              planData.coordinates.map((c) => c.point).filter(Boolean)
+            "
+            :loading="submittingElevation"
+            @update:model-value="onElevationUpdate"
+            @complete="completeElevation"
+          />
+          <!-- Cadastral Survey: Parcels Step -->
+          <StepParcels
+            v-else-if="currentStep === 2 && planData.basic.type !== 'route'"
+            :model-value="{ parcels: planData.parcels }"
+            :coordinate-ids="
+              planData.coordinates.map((c) => c.point).filter(Boolean)
+            "
+            :loading="submittingParcels"
+            @update:model-value="onParcelsUpdate"
+            @complete="completeParcels"
+          />
+          <!-- Computation Step (step 3 for route, step 3 for cadastral) -->
+          <StepComputation
+            v-else-if="currentStep === 3"
+            :parcels="planData.basic.type === 'route' ? [] : planData.parcels"
+            :coordinates="planData.coordinates"
+            :plan-type="planData.basic.type"
+            @complete="onComputationComplete"
+          />
+          <!-- Drawing Step (step 4 for both types) -->
+          <StepDrawing
+            v-else-if="currentStep === 4"
+            :model-value="{ drawing: planData.drawing }"
+            :coordinates="planData.coordinates"
+            :parcel-name="
+              planData.basic.type === 'route'
+                ? planData.basic.name
+                : planData.parcels[0]?.name || planData.basic.name
+            "
+            :parcels="planData.basic.type === 'route' ? [] : planData.parcels"
+            :plan-type="planData.basic.type"
+            :legs="computationResult?.legs || []"
+            @update:model-value="onDrawingUpdate"
+            @complete="completeDrawing"
+          />
+          <!-- Embellishment Step (step 5 for both types) -->
+          <StepEmbellishment
+            v-else-if="currentStep === 5"
+            :model-value="{ embellishment: planData.embellishment }"
+            :loading="submittingEmbellishment"
+            @update:model-value="onEmbellishmentUpdate"
+            @complete="completeEmbellishment"
+          />
+          <!-- Report Step (step 6 for both types) -->
+          <StepReport
+            v-else-if="currentStep === 6"
+            :model-value="{
+              report: planData.report,
+              embellishment: planData.embellishment,
+            }"
+            :basic="planData.basic"
+            :coordinates-count="planData.coordinates.length"
+            :parcels-count="
+              planData.basic.type === 'route' ? 0 : planData.parcels.length
+            "
+            @update:model-value="onReportUpdate"
+            @cancel="navigateTo(`/project/${projectId}`)"
+            @finish="finishPlan"
+          />
+        </template>
       </div>
     </div>
   </div>
@@ -162,6 +216,7 @@
 <script lang="ts" setup>
 import { RiArrowLeftLine } from "@remixicon/vue";
 import StepCoordinates from "~/components/plan/steps/StepCoordinates.vue";
+import StepTopoPoints from "~/components/plan/steps/StepTopoPoints.vue";
 import StepParcels from "~/components/plan/steps/StepParcels.vue";
 import StepElevation from "~/components/plan/steps/StepElevation.vue";
 import StepComputation from "~/components/plan/steps/StepComputation.vue";
@@ -189,7 +244,15 @@ const initialLoading = ref(true);
 
 // Dynamic steps based on plan type
 const steps = computed(() => {
-  if (planData.basic.type === "route") {
+  if (planData.basic.type === "topographic") {
+    return [
+      { key: "topo-boundary", title: "Topo Boundary" },
+      { key: "topo-points", title: "Topo Points" },
+      { key: "topo-settings", title: "Topo Settings" },
+      { key: "embellishment", title: "Plan Embellishment" },
+      { key: "report", title: "Report" },
+    ];
+  } else if (planData.basic.type === "route") {
     return [
       { key: "coordinates", title: "Coordinate Table" },
       { key: "elevation", title: "Elevation Data" },
@@ -242,6 +305,10 @@ const planData = reactive({
     footer_size: 0.5,
   },
   report: { generate: true },
+  // Topographic plan fields
+  boundary: [] as any[],
+  topoPoints: [] as any[],
+  topoSettings: {} as any,
 });
 
 // Computation payload captured from StepComputation
@@ -267,7 +334,7 @@ onMounted(async () => {
         }));
       }
 
-      // Elevations: map API -> component shape  
+      // Elevations: map API -> component shape
       if (Array.isArray(data.elevations)) {
         planData.elevations = data.elevations.map((e: any) => ({
           _key: crypto.randomUUID(),
@@ -304,11 +371,16 @@ onMounted(async () => {
           beacon_type: emb.beacon_type ?? planData.embellishment.beacon_type,
           beacon_size: emb.beacon_size ?? planData.embellishment.beacon_size,
           label_size: emb.label_size ?? planData.embellishment.label_size,
-          personel_name: emb.personel_name ?? planData.embellishment.personel_name,
-          surveyor_name: emb.surveyor_name ?? planData.embellishment.surveyor_name,
+          personel_name:
+            emb.personel_name ?? planData.embellishment.personel_name,
+          surveyor_name:
+            emb.surveyor_name ?? planData.embellishment.surveyor_name,
           page_size: emb.page_size ?? planData.embellishment.page_size,
-          page_orientation: emb.page_orientation ?? planData.embellishment.page_orientation,
-          footers: Array.isArray(emb.footers) ? emb.footers : planData.embellishment.footers,
+          page_orientation:
+            emb.page_orientation ?? planData.embellishment.page_orientation,
+          footers: Array.isArray(emb.footers)
+            ? emb.footers
+            : planData.embellishment.footers,
           footer_size: emb.footer_size ?? planData.embellishment.footer_size,
         };
       }
@@ -317,11 +389,11 @@ onMounted(async () => {
       const hasCoords = planData.coordinates.length > 0;
       const hasParcels = planData.parcels.length > 0;
       const hasElevations = planData.elevations.length > 0;
-      
+
       if (hasCoords) {
         completed.value.add(1);
       }
-      
+
       if (planData.basic.type === "route") {
         // Route survey flow: coordinates -> elevation -> computation
         if (hasElevations) {
@@ -421,6 +493,31 @@ async function completeElevation() {
     toast.add({ title: "Failed to save elevation data", color: "error" });
   } finally {
     submittingElevation.value = false;
+  }
+}
+
+// Topo Boundary handling (for topographic plans)
+async function completeTopoBoundary() {
+  if (submittingCoordinates.value) return;
+  if (!planData.boundary.length) return;
+  try {
+    submittingCoordinates.value = true;
+    const payload = {
+      coordinates: planData.boundary.map((r: any) => ({
+        id: r.point,
+        northing: r.northing != null ? Number(r.northing) : 0,
+        easting: r.easting != null ? Number(r.easting) : 0,
+        elevation: r.elevation != null ? Number(r.elevation) : 0,
+      })),
+    };
+    await axios.put(`/plan/topo/boundary/edit/${planId}`, payload);
+    markCompleted(1);
+    currentStep.value = 2;
+    toast.add({ title: "Topo boundary saved", color: "success" });
+  } catch (error) {
+    toast.add({ title: "Failed to save topo boundary", color: "error" });
+  } finally {
+    submittingCoordinates.value = false;
   }
 }
 

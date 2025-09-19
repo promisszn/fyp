@@ -6,7 +6,7 @@ export interface PlanTypeOption {
 
 export const PLAN_TYPES: PlanTypeOption[] = [
   { value: "cadastral", label: "Cadastral" },
-  { value: "route", label: "Route" },
-  { value: "topographic", label: "Topographic (coming soon)", disabled: true },
+  { value: "topographic", label: "Topographic" },
+  { value: "route", label: "Route (coming soon)", disabled: true },
   { value: "layout", label: "Layout (coming soon)", disabled: true },
 ];
