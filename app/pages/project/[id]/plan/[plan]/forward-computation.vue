@@ -98,57 +98,57 @@
             <thead>
               <tr class="border-b border-gray-200 dark:border-slate-700">
                 <th
-                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
+                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[120px]"
                 >
-                  Distance
+                  Distance(m)
                 </th>
                 <th
-                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
+                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[120px]"
                 >
                   Degrees
                 </th>
                 <th
-                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
+                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[120px]"
                 >
                   Minutes
                 </th>
                 <th
-                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
+                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[120px]"
                 >
                   Seconds
                 </th>
                 <th
-                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
+                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[150px]"
                 >
                   Departure
                 </th>
                 <th
-                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
+                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[150px]"
                 >
                   Latitude
                 </th>
                 <th
-                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
+                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[200px]"
                 >
-                  Easting
+                  Easting(mE)
                 </th>
                 <th
-                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
+                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[200px]"
                 >
-                  Northing
+                  Northing(mN)
                 </th>
                 <th
-                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
+                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[200px]"
                 >
                   Easting Misclosure
                 </th>
                 <th
-                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
+                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[200px]"
                 >
                   Northing Misclosure
                 </th>
                 <th
-                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
+                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[120px]"
                 >
                   Point ID
                 </th>
@@ -913,7 +913,7 @@ const performComputation = async () => {
               closingRow.latitude = closingLeg.delta_northing.toFixed(3);
               closingRow.easting = closingLeg.to.easting;
               closingRow.northing = closingLeg.to.northing;
-              
+
               // Add misclosure values for the closing leg
               if (closingLeg.northing_misclosure !== undefined) {
                 closingRow.northingMisclosure = closingLeg.northing_misclosure;
