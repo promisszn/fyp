@@ -607,8 +607,52 @@ const fetchPlanData = async () => {
     if (response.data?.data?.forward_computation_data) {
       const forwardData = response.data.data.forward_computation_data;
 
-      // Convert old data structure to new table format if needed
-      if (forwardData.traverseRows && forwardData.traverseRows.length > 0) {
+      // Handle the proper API format: coordinates + legs structure
+      if (forwardData.coordinates && forwardData.legs && forwardData.start) {
+        const newRows: ForwardRow[] = [];
+
+        // Add the start point first (with coordinates but no distance/bearing)
+        const startPoint = forwardData.start;
+        newRows.push({
+          pointId: startPoint.id,
+          distance: null,
+          degrees: null,
+          minutes: null,
+          seconds: null,
+          departure: "",
+          latitude: "",
+          easting: startPoint.easting,
+          northing: startPoint.northing,
+          northingMisclosure: null,
+          eastingMisclosure: null,
+        });
+
+        // Add each leg as a row with the "to" point's data
+        forwardData.legs.forEach((leg: any) => {
+          // Find the corresponding coordinate for the "to" point
+          const toCoordinate = forwardData.coordinates.find(
+            (coord: any) => coord.id === leg.to.id
+          );
+
+          newRows.push({
+            pointId: leg.to.id,
+            distance: leg.distance,
+            degrees: leg.bearing.degrees,
+            minutes: leg.bearing.minutes,
+            seconds: leg.bearing.seconds,
+            departure: "", // Will be filled after computation
+            latitude: "", // Will be filled after computation
+            easting: toCoordinate ? toCoordinate.easting : null,
+            northing: toCoordinate ? toCoordinate.northing : null,
+            northingMisclosure: null,
+            eastingMisclosure: null,
+          });
+        });
+
+        forwardRows.value = newRows;
+      }
+      // Fallback: Handle old data structure if it exists
+      else if (forwardData.traverseRows && forwardData.traverseRows.length > 0) {
         forwardRows.value = forwardData.traverseRows.map((row: any) => ({
           pointId: row.pointId || "",
           distance: row.distance || 0,
@@ -619,49 +663,9 @@ const fetchPlanData = async () => {
           latitude: row.latitude || "",
           easting: row.easting || 0,
           northing: row.northing || 0,
-          isStartPoint: row.isStartPoint || false,
+          northingMisclosure: null,
+          eastingMisclosure: null,
         }));
-
-        // No need to track start point index anymore - will be auto-detected
-      } else if (forwardData.coordinates && forwardData.legs) {
-        // Convert old coordinates and legs to new format
-        const newRows: ForwardRow[] = [];
-
-        // Add all coordinates as potential points
-        if (forwardData.coordinates) {
-          forwardData.coordinates.forEach((coord: any) => {
-            newRows.push({
-              pointId: coord.id,
-              distance: 0,
-              degrees: 0,
-              minutes: 0,
-              seconds: 0,
-              departure: "",
-              latitude: "",
-              easting: coord.easting,
-              northing: coord.northing,
-              northingMisclosure: null,
-              eastingMisclosure: null,
-            });
-          });
-        }
-
-        // Add legs data to corresponding rows
-        if (forwardData.legs) {
-          forwardData.legs.forEach((leg: any) => {
-            const fromRow = newRows.find((row) => row.pointId === leg.from.id);
-            if (fromRow) {
-              fromRow.distance = leg.distance;
-              fromRow.degrees = leg.bearing.degrees;
-              fromRow.minutes = leg.bearing.minutes;
-              fromRow.seconds = leg.bearing.seconds;
-            }
-          });
-        }
-
-        forwardRows.value = newRows.length > 0 ? newRows : forwardRows.value;
-
-        // No need to track start point index anymore - will be auto-detected
       }
 
       // Set misclosure correction
@@ -955,10 +959,19 @@ const performComputation = async () => {
 
     // Save the table data to the plan
     try {
-      await $axios.put(`/plan/forward-data/edit/${planId}`, {
-        forwardRows: forwardRows.value,
+      // Convert table data back to API format for saving
+      const savePayload = {
+        coordinates: coordinates, // Use the same coordinates array from computation payload
+        start: {
+          id: startRow.pointId,
+          northing: startRow.northing,
+          easting: startRow.easting,
+        },
+        legs: legs, // Use the same legs array from computation payload
         misclosure_correction: misclosureCorrection.value,
-      });
+      };
+
+      await $axios.put(`/plan/forward-data/edit/${planId}`, savePayload);
     } catch (saveError: any) {
       console.error("Failed to save forward computation data:", saveError);
     }
