@@ -628,12 +628,8 @@ const fetchPlanData = async () => {
         });
 
         // Add each leg as a row with the "to" point's data
+        // Only include distance and bearing - coordinates will be calculated
         forwardData.legs.forEach((leg: any) => {
-          // Find the corresponding coordinate for the "to" point
-          const toCoordinate = forwardData.coordinates.find(
-            (coord: any) => coord.id === leg.to.id
-          );
-
           newRows.push({
             pointId: leg.to.id,
             distance: leg.distance,
@@ -642,8 +638,8 @@ const fetchPlanData = async () => {
             seconds: leg.bearing.seconds,
             departure: "", // Will be filled after computation
             latitude: "", // Will be filled after computation
-            easting: toCoordinate ? toCoordinate.easting : null,
-            northing: toCoordinate ? toCoordinate.northing : null,
+            easting: null, // Will be calculated during computation
+            northing: null, // Will be calculated during computation
             northingMisclosure: null,
             eastingMisclosure: null,
           });
@@ -652,7 +648,10 @@ const fetchPlanData = async () => {
         forwardRows.value = newRows;
       }
       // Fallback: Handle old data structure if it exists
-      else if (forwardData.traverseRows && forwardData.traverseRows.length > 0) {
+      else if (
+        forwardData.traverseRows &&
+        forwardData.traverseRows.length > 0
+      ) {
         forwardRows.value = forwardData.traverseRows.map((row: any) => ({
           pointId: row.pointId || "",
           distance: row.distance || 0,
@@ -1103,33 +1102,42 @@ const downloadComputationCSV = () => {
   }
 
   // Create CSV header (excluding misclosure columns)
-  const header = "Point ID,Distance(m),Degrees,Minutes,Seconds,Departure,Latitude,Easting(mE),Northing(mN)";
-  
+  const header =
+    "Point ID,Distance(m),Degrees,Minutes,Seconds,Departure,Latitude,Easting(mE),Northing(mN)";
+
   // Convert rows to CSV format (excluding misclosure columns)
   const csvRows = forwardRows.value
-    .filter(row => row.pointId && row.pointId.trim() !== "")
-    .map(row => {
+    .filter((row) => row.pointId && row.pointId.trim() !== "")
+    .map((row) => {
       const distance = row.distance !== null ? row.distance : "";
       const degrees = row.degrees !== null ? row.degrees : "";
       const minutes = row.minutes !== null ? row.minutes : "";
       const seconds = row.seconds !== null ? row.seconds : "";
-      const departure = typeof row.departure === 'number' ? row.departure.toFixed(3) : row.departure || "";
-      const latitude = typeof row.latitude === 'number' ? row.latitude.toFixed(3) : row.latitude || "";
+      const departure =
+        typeof row.departure === "number"
+          ? row.departure.toFixed(3)
+          : row.departure || "";
+      const latitude =
+        typeof row.latitude === "number"
+          ? row.latitude.toFixed(3)
+          : row.latitude || "";
       const easting = row.easting !== null ? row.easting.toFixed(3) : "";
       const northing = row.northing !== null ? row.northing.toFixed(3) : "";
-      
+
       return `${row.pointId},${distance},${degrees},${minutes},${seconds},${departure},${latitude},${easting},${northing}`;
     });
 
   // Combine header and data
   const csvContent = [header, ...csvRows].join("\n");
-  
+
   // Create and download the file
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `forward_computation_${new Date().toISOString().split('T')[0]}.csv`;
+  a.download = `forward_computation_${
+    new Date().toISOString().split("T")[0]
+  }.csv`;
   a.click();
   URL.revokeObjectURL(url);
 
@@ -1141,24 +1149,32 @@ const downloadComputationCSV = () => {
 
 const saveToCoordinates = async () => {
   try {
-    // Extract coordinates from the computed results
-    const coordinates = forwardRows.value
+    // Extract all computed coordinates and ensure unique points (last occurrence takes precedence)
+    const coordinatesMap = new Map();
+    
+    forwardRows.value
       .filter(
         (row) =>
           row.pointId.trim() !== "" &&
           row.easting !== null &&
-          row.northing !== null
+          row.northing !== null &&
+          !isNaN(row.easting) &&
+          !isNaN(row.northing)
       )
-      .map((row) => ({
-        point: row.pointId,
-        easting: row.easting!,
-        northing: row.northing!,
-        elevation: null,
-      }));
+      .forEach((row) => {
+        coordinatesMap.set(row.pointId, {
+          point: row.pointId,
+          easting: row.easting!,
+          northing: row.northing!,
+          elevation: null,
+        });
+      });
+
+    const coordinates = Array.from(coordinatesMap.values());
 
     if (coordinates.length === 0) {
       toast.add({
-        title: "No valid coordinates found to save",
+        title: "No computed coordinates found to save",
         color: "warning",
       });
       return;
