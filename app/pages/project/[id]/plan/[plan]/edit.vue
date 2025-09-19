@@ -93,7 +93,7 @@
             :model-value="{ coordinates: planData.topoPoints }"
             :loading="submittingCoordinates"
             @update:modelValue="(v) => (planData.topoPoints = v.coordinates)"
-            @complete="completeCoordinates"
+            @complete="onTopoPointsSaved"
           />
           <!-- Step 3: Topo Settings (could be a new component) -->
           <StepEmbellishment
@@ -385,38 +385,88 @@ onMounted(async () => {
         };
       }
 
-      // Auto-progress steps if data exists
-      const hasCoords = planData.coordinates.length > 0;
-      const hasParcels = planData.parcels.length > 0;
-      const hasElevations = planData.elevations.length > 0;
-
-      if (hasCoords) {
-        completed.value.add(1);
-      }
-
-      if (planData.basic.type === "route") {
-        // Route survey flow: coordinates -> elevation -> computation
-        if (hasElevations) {
-          completed.value.add(2);
+      // If this is a topographic plan, map topographic-specific data
+      if (planData.basic.type === "topographic") {
+        // boundary comes from topographic_boundary.coordinates
+        if (
+          data.topographic_boundary &&
+          Array.isArray(data.topographic_boundary.coordinates)
+        ) {
+          planData.boundary = data.topographic_boundary.coordinates.map(
+            (c: any) => ({
+              _key: crypto.randomUUID(),
+              point: c.id ?? "",
+              northing: c.northing ?? null,
+              easting: c.easting ?? null,
+              elevation: c.elevation ?? null,
+            })
+          );
         }
-        if (hasCoords && hasElevations) {
-          currentStep.value = 3; // computation
-        } else if (hasCoords) {
-          currentStep.value = 2; // elevation
+
+        // topo points come from the main coordinates array
+        if (Array.isArray(data.coordinates)) {
+          planData.topoPoints = data.coordinates.map((c: any) => ({
+            _key: crypto.randomUUID(),
+            point: c.id ?? "",
+            northing: c.northing ?? null,
+            easting: c.easting ?? null,
+            elevation: c.elevation ?? null,
+          }));
+        }
+
+        // settings
+        if (data.topographic_setting) {
+          planData.topoSettings = { ...data.topographic_setting };
+        }
+
+        // Auto-progress for topographic flow: boundary -> topo points -> topo settings
+        const hasBoundary = planData.boundary.length > 0;
+        const hasTopoPoints = planData.topoPoints.length > 0;
+        if (hasBoundary) completed.value.add(1);
+        if (hasTopoPoints) completed.value.add(2);
+        if (hasBoundary && hasTopoPoints) {
+          currentStep.value = 3; // topo settings
+        } else if (hasBoundary) {
+          currentStep.value = 2; // topo points
         } else {
-          currentStep.value = 1; // coordinates
+          currentStep.value = 1; // boundary
         }
+
+        // Skip the rest of auto-progress logic for other plan types
       } else {
-        // Cadastral survey flow: coordinates -> parcels -> computation
-        if (hasParcels) {
-          completed.value.add(2);
+        // Auto-progress steps if data exists (non-topographic)
+        const hasCoords = planData.coordinates.length > 0;
+        const hasParcels = planData.parcels.length > 0;
+        const hasElevations = planData.elevations.length > 0;
+
+        if (hasCoords) {
+          completed.value.add(1);
         }
-        if (hasCoords && hasParcels) {
-          currentStep.value = 3; // computation
-        } else if (hasCoords) {
-          currentStep.value = 2; // parcels
+
+        if (planData.basic.type === "route") {
+          // Route survey flow: coordinates -> elevation -> computation
+          if (hasElevations) {
+            completed.value.add(2);
+          }
+          if (hasCoords && hasElevations) {
+            currentStep.value = 3; // computation
+          } else if (hasCoords) {
+            currentStep.value = 2; // elevation
+          } else {
+            currentStep.value = 1; // coordinates
+          }
         } else {
-          currentStep.value = 1; // coordinates
+          // Cadastral survey flow: coordinates -> parcels -> computation
+          if (hasParcels) {
+            completed.value.add(2);
+          }
+          if (hasCoords && hasParcels) {
+            currentStep.value = 3; // computation
+          } else if (hasCoords) {
+            currentStep.value = 2; // parcels
+          } else {
+            currentStep.value = 1; // coordinates
+          }
         }
       }
     }
@@ -564,6 +614,14 @@ function onComputationComplete(
   computationResult.value = payload || null;
   // mark and move to drawing
   completeComputation();
+}
+
+// Called when Topo Points step completes (saved)
+function onTopoPointsSaved() {
+  // mark topo points completed (step 2)
+  markCompleted(2);
+  // move to topo settings (step 3)
+  currentStep.value = 3;
 }
 
 // Embellishment
