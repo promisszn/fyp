@@ -95,15 +95,13 @@
             @update:modelValue="(v) => (planData.topoPoints = v.coordinates)"
             @complete="onTopoPointsSaved"
           />
-          <!-- Step 3: Topo Settings (could be a new component) -->
-          <StepEmbellishment
+          <!-- Step 3: Topo Settings -->
+          <StepTopoSettings
             v-else-if="currentStep === 3"
-            :model-value="{ embellishment: planData.topoSettings }"
+            :model-value="{ settings: planData.topoSettings }"
             :loading="submittingEmbellishment"
-            @update:model-value="
-              (v) => (planData.topoSettings = v.embellishment)
-            "
-            @complete="completeEmbellishment"
+            @update:modelValue="(v) => (planData.topoSettings = v.settings)"
+            @complete="onTopoSettingsSaved"
           />
           <!-- Step 4: Embellishment -->
           <StepEmbellishment
@@ -217,6 +215,7 @@
 import { RiArrowLeftLine } from "@remixicon/vue";
 import StepCoordinates from "~/components/plan/steps/StepCoordinates.vue";
 import StepTopoPoints from "~/components/plan/steps/StepTopoPoints.vue";
+import StepTopoSettings from "~/components/plan/steps/StepTopoSettings.vue";
 import StepParcels from "~/components/plan/steps/StepParcels.vue";
 import StepElevation from "~/components/plan/steps/StepElevation.vue";
 import StepComputation from "~/components/plan/steps/StepComputation.vue";
@@ -622,6 +621,14 @@ function onTopoPointsSaved() {
   markCompleted(2);
   // move to topo settings (step 3)
   currentStep.value = 3;
+}
+
+// Called when Topo Settings step completes (saved)
+function onTopoSettingsSaved() {
+  // mark topo settings completed (step 3)
+  markCompleted(3);
+  // move to embellishment (step 4)
+  currentStep.value = 4;
 }
 
 // Embellishment
