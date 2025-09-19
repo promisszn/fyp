@@ -121,6 +121,8 @@
             :basic="planData.basic"
             :coordinates-count="(planData.topoPoints || []).length"
             :parcels-count="0"
+            :topo-settings="planData.topoSettings"
+            :topo-boundary="planData.boundary"
             @update:model-value="onReportUpdate"
             @cancel="navigateTo(`/project/${projectId}`)"
             @finish="finishPlan"
@@ -659,9 +661,11 @@ async function completeEmbellishment() {
       footer_size: Number(e.footer_size ?? 1),
     };
     await axios.put(`/plan/edit/${planId}`, payload);
-    // embellishment is step 5
-    markCompleted(5);
-    currentStep.value = 6;
+    // embellishment step index differs for topographic plans
+    const embellishmentStep = planData.basic.type === "topographic" ? 4 : 5;
+    const nextStep = planData.basic.type === "topographic" ? 5 : 6;
+    markCompleted(embellishmentStep);
+    currentStep.value = nextStep;
     toast.add({ title: "Embellishment saved", color: "success" });
   } catch (error) {
     toast.add({ title: "Failed to save embellishment", color: "error" });
@@ -672,7 +676,9 @@ async function completeEmbellishment() {
 
 // Final Step
 function finishPlan() {
-  markCompleted(6);
+  // final step index differs for topographic plans
+  const finalStep = planData.basic.type === "topographic" ? 5 : 6;
+  markCompleted(finalStep);
   navigateTo(`/project/${projectId}/plan/${planId}`);
 }
 
