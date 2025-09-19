@@ -234,6 +234,12 @@ const planData = reactive({
     beacon_type: "none",
     personel_name: "",
     surveyor_name: "",
+    beacon_size: 1,
+    label_size: 1,
+    page_size: "A4",
+    page_orientation: "portrait",
+    footers: [],
+    footer_size: 0.5,
   },
   report: { generate: true },
 });
@@ -296,10 +302,14 @@ onMounted(async () => {
           origin: emb.origin ?? planData.embellishment.origin,
           scale: emb.scale ?? planData.embellishment.scale,
           beacon_type: emb.beacon_type ?? planData.embellishment.beacon_type,
-          personel_name:
-            emb.personel_name ?? planData.embellishment.personel_name,
-          surveyor_name:
-            emb.surveyor_name ?? planData.embellishment.surveyor_name,
+          beacon_size: emb.beacon_size ?? planData.embellishment.beacon_size,
+          label_size: emb.label_size ?? planData.embellishment.label_size,
+          personel_name: emb.personel_name ?? planData.embellishment.personel_name,
+          surveyor_name: emb.surveyor_name ?? planData.embellishment.surveyor_name,
+          page_size: emb.page_size ?? planData.embellishment.page_size,
+          page_orientation: emb.page_orientation ?? planData.embellishment.page_orientation,
+          footers: Array.isArray(emb.footers) ? emb.footers : planData.embellishment.footers,
+          footer_size: emb.footer_size ?? planData.embellishment.footer_size,
         };
       }
 
@@ -468,7 +478,7 @@ async function completeEmbellishment() {
     const payload = {
       name: e.name,
       font: e.font,
-      font_size: Number(e.font_size ?? 12),
+      font_size: Number(e.font_size ?? 1),
       title: e.title,
       address: e.address,
       local_govt: e.local_govt,
@@ -477,8 +487,14 @@ async function completeEmbellishment() {
       origin: e.origin,
       scale: Number(e.scale ?? 1),
       beacon_type: e.beacon_type,
+      beacon_size: Number(e.beacon_size ?? 0.75),
+      label_size: Number(e.label_size ?? 0.25),
       personel_name: e.personel_name,
       surveyor_name: e.surveyor_name,
+      page_size: e.page_size ?? "A4",
+      page_orientation: e.page_orientation ?? "portrait",
+      footers: Array.isArray(e.footers) ? e.footers : [],
+      footer_size: Number(e.footer_size ?? 1),
     };
     await axios.put(`/plan/edit/${planId}`, payload);
     // embellishment is step 5
@@ -518,6 +534,8 @@ type EmbellishmentUpdate = {
     beacon_type: string;
     personel_name: string;
     surveyor_name: string;
+    footers: string[];
+    footer_size: number;
   };
 };
 type ReportUpdate = {
@@ -536,6 +554,8 @@ type ReportUpdate = {
     beacon_type: string;
     personel_name: string;
     surveyor_name: string;
+    footers: string[];
+    footer_size: number;
   };
 };
 
