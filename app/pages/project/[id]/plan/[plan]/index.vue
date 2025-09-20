@@ -166,6 +166,22 @@
               <span class="ml-2 text-xs text-gray-500 dark:text-gray-400"
                 >({{ planData.coordinates.length }})</span
               >
+              <div class="ml-auto flex items-center gap-2">
+                <button
+                  @click="exportCoordinates"
+                  class="text-xs px-2 py-1 border rounded text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700"
+                  title="Export coordinates as CSV"
+                >
+                  Export CSV
+                </button>
+                <button
+                  v-if="planData.coordinates.length > 10"
+                  @click="showAllCoordinates = !showAllCoordinates"
+                  class="text-xs px-2 py-1 border rounded text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700"
+                >
+                  {{ showAllCoordinates ? "Show Less" : "Show All" }}
+                </button>
+              </div>
             </div>
             <div v-if="planData.coordinates.length" class="overflow-x-auto">
               <table class="min-w-full text-sm">
@@ -176,11 +192,12 @@
                     <th class="py-2 pr-4">Point ID</th>
                     <th class="py-2 pr-4">Northing(mN)</th>
                     <th class="py-2 pr-4">Easting(mE)</th>
+                    <th class="py-2 pr-4">Elevation(m)</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr
-                    v-for="c in planData.coordinates"
+                    v-for="c in visibleCoordinates"
                     :key="c._key"
                     class="border-b border-gray-100 dark:border-slate-700/60"
                   >
@@ -193,6 +210,9 @@
                     <td class="py-2 pr-4 text-gray-800 dark:text-gray-100">
                       {{ formatNumber(c.easting) }}
                     </td>
+                    <td class="py-2 pr-4 text-gray-800 dark:text-gray-100">
+                      {{ formatNumber(c.elevation) }}
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -203,7 +223,10 @@
           </div>
 
           <!-- Parcels -->
-          <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+          <div
+            v-if="planData.parcels.length"
+            class="bg-white dark:bg-slate-800 rounded-lg shadow p-6"
+          >
             <div class="flex items-center mb-4">
               <h2
                 class="text-lg font-semibold text-gray-800 dark:text-gray-100"
@@ -323,6 +346,102 @@
                   }}
                 </div>
               </div>
+              <div>
+                <div class="text-gray-500 dark:text-gray-400">Beacon Size</div>
+                <div class="text-gray-800 dark:text-gray-100">{{ planData.embellishment.beacon_size ?? '—' }}</div>
+              </div>
+              <div>
+                <div class="text-gray-500 dark:text-gray-400">Label Size</div>
+                <div class="text-gray-800 dark:text-gray-100">{{ planData.embellishment.label_size ?? '—' }}</div>
+              </div>
+              <div>
+                <div class="text-gray-500 dark:text-gray-400">Page Size</div>
+                <div class="text-gray-800 dark:text-gray-100">{{ planData.embellishment.page_size ?? pageSize ?? '—' }}</div>
+              </div>
+              <div>
+                <div class="text-gray-500 dark:text-gray-400">Orientation</div>
+                <div class="text-gray-800 dark:text-gray-100">{{ planData.embellishment.page_orientation ?? pageOrientation ?? '—' }}</div>
+              </div>
+              <div class="md:col-span-2">
+                <div class="text-gray-500 dark:text-gray-400">Footers</div>
+                <div class="text-gray-800 dark:text-gray-100">
+                  <div v-if="planData.embellishment.footers?.length" v-for="(f, i) in planData.embellishment.footers" :key="i" class="text-sm" v-html="f"></div>
+                  <div v-else-if="footers.length" v-for="(f, i) in footers" :key="`f-${i}`" class="text-sm" v-html="f"></div>
+                  <div v-else>—</div>
+                </div>
+              </div>
+              <div>
+                <div class="text-gray-500 dark:text-gray-400">Footer Size</div>
+                <div class="text-gray-800 dark:text-gray-100">{{ planData.embellishment.footer_size ?? footerSize ?? '—' }}</div>
+              </div>
+            </div>
+
+            <!-- Topographic Settings (inside Embellishment) -->
+            <div
+              v-if="planData.basic.type === 'topographic'"
+              class="mt-4 border-t border-gray-100 dark:border-slate-700 pt-4"
+            >
+              <h3
+                class="text-sm font-medium text-gray-800 dark:text-gray-100 mb-3"
+              >
+                Topographic Settings
+              </h3>
+              <div
+                v-if="topographicSettings"
+                class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm"
+              >
+                <div>
+                  <div class="text-gray-500 dark:text-gray-400">
+                    Show Spot Heights
+                  </div>
+                  <div class="text-gray-800 dark:text-gray-100">
+                    {{ topographicSettings.show_spot_heights ? "Yes" : "No" }}
+                  </div>
+                </div>
+                <div>
+                  <div class="text-gray-500 dark:text-gray-400">
+                    Point Label Scale
+                  </div>
+                  <div class="text-gray-800 dark:text-gray-100">
+                    {{ topographicSettings.point_label_scale ?? "—" }}
+                  </div>
+                </div>
+                <div>
+                  <div class="text-gray-500 dark:text-gray-400">
+                    Show Contours
+                  </div>
+                  <div class="text-gray-800 dark:text-gray-100">
+                    {{ topographicSettings.show_contours ? "Yes" : "No" }}
+                  </div>
+                </div>
+                <div>
+                  <div class="text-gray-500 dark:text-gray-400">
+                    Contour Interval
+                  </div>
+                  <div class="text-gray-800 dark:text-gray-100">
+                    {{ topographicSettings.contour_interval ?? "—" }}
+                  </div>
+                </div>
+                <div>
+                  <div class="text-gray-500 dark:text-gray-400">
+                    Major Contour
+                  </div>
+                  <div class="text-gray-800 dark:text-gray-100">
+                    {{ topographicSettings.major_contour ?? "—" }}
+                  </div>
+                </div>
+                <div>
+                  <div class="text-gray-500 dark:text-gray-400">
+                    Minimum Distance
+                  </div>
+                  <div class="text-gray-800 dark:text-gray-100">
+                    {{ topographicSettings.minimum_distance ?? "—" }}
+                  </div>
+                </div>
+              </div>
+              <div v-else class="text-sm text-gray-500 dark:text-gray-400">
+                No topographic settings available.
+              </div>
             </div>
           </div>
         </div>
@@ -344,7 +463,7 @@ definePageMeta({ middleware: ["auth"] });
 
 import { RiArrowLeftLine, RiDeleteBinLine } from "@remixicon/vue";
 import ConfirmModal from "~/components/ConfirmModal.vue";
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
 import { navigateTo } from "#imports";
 import axios from "axios";
@@ -356,6 +475,13 @@ const projectId = route.params.id as string;
 const planId = route.params.plan as string;
 const initialLoading = ref(true);
 const showDeleteModal = ref(false);
+const showAllCoordinates = ref(false);
+
+const topographicSettings = ref<any>(null);
+const pageSize = ref<string | null>(null);
+const pageOrientation = ref<string | null>(null);
+const footers = ref<string[]>([]);
+const footerSize = ref<number | null>(null);
 
 const planData = reactive({
   basic: { name: "", type: "" },
@@ -374,6 +500,12 @@ const planData = reactive({
     origin: "utm_zone_31",
     scale: 1,
     beacon_type: "none",
+    beacon_size: null as number | null,
+    label_size: null as number | null,
+    page_size: null as string | null,
+    page_orientation: null as string | null,
+    footers: [] as string[],
+    footer_size: null as number | null,
     personel_name: "",
     surveyor_name: "",
   },
@@ -432,6 +564,15 @@ onMounted(async () => {
           origin: emb.origin ?? planData.embellishment.origin,
           scale: emb.scale ?? planData.embellishment.scale,
           beacon_type: emb.beacon_type ?? planData.embellishment.beacon_type,
+          beacon_size: emb.beacon_size ?? planData.embellishment.beacon_size,
+          label_size: emb.label_size ?? planData.embellishment.label_size,
+          page_size: emb.page_size ?? planData.embellishment.page_size,
+          page_orientation:
+            emb.page_orientation ?? planData.embellishment.page_orientation,
+          footers: Array.isArray(emb.footers)
+            ? [...emb.footers]
+            : planData.embellishment.footers ?? footers.value,
+          footer_size: emb.footer_size ?? planData.embellishment.footer_size ?? footerSize.value,
           personel_name:
             emb.personel_name ?? planData.embellishment.personel_name,
           surveyor_name:
@@ -439,12 +580,50 @@ onMounted(async () => {
         };
       }
     }
+
+    // Topographic settings and page/footer info may be at root of response
+    if (data?.topographic_setting) {
+      topographicSettings.value = data.topographic_setting;
+    }
   } catch (error) {
     toast?.add?.({ title: "Failed to load plan", color: "error" });
   } finally {
     initialLoading.value = false;
   }
 });
+
+const visibleCoordinates = computed(() => {
+  if (showAllCoordinates.value) return planData.coordinates;
+  return planData.coordinates.slice(0, 10);
+});
+
+function exportCoordinates() {
+  if (!planData.coordinates || !planData.coordinates.length) {
+    toast?.add?.({ title: "No coordinates to export", color: "warning" });
+    return;
+  }
+
+  const rows = planData.coordinates.map((c: any) => {
+    return [
+      c.point ?? "",
+      c.northing ?? "",
+      c.easting ?? "",
+      c.elevation ?? "",
+    ].join(",");
+  });
+  const header = ["id", "northing", "easting", "elevation"].join(",");
+  const csv = [header, ...rows].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `coordinates_${planData.basic.name || planId}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast?.add?.({ title: "Coordinates exported", color: "success" });
+}
 
 function formatNumber(v: number | string | null | undefined) {
   if (v === null || v === undefined || v === "") return "—";
