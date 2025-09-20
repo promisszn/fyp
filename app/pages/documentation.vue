@@ -291,7 +291,8 @@
                         </h4>
                         <ul class="list-disc list-inside space-y-1 text-sm text-gray-600 dark:text-gray-300">
                           <li>CSV file upload</li>
-                          <li>TXT file upload</li>
+                            <li>TXT file upload</li>
+                            <li>XLSX spreadsheet upload (column-aware)</li>
                           <li>Download coordinate template</li>
                           <li>Manual data entry</li>
                         </ul>
@@ -361,6 +362,7 @@
                           <li>Bounding box coordinates</li>
                           <li>Perimeter measurements</li>
                           <li>Closure verification</li>
+                          <li>Export to DXF for CAD workflows</li>
                         </ul>
                       </div>
                     </div>
@@ -422,7 +424,8 @@
                       <li>Automated calculation reports</li>
                       <li>Coordinate tables</li>
                       <li>Area summaries</li>
-                      <li>Export to PDF format</li>
+                          <li>Export to PDF format</li>
+                          <li>Export plan drawings to DXF for CAD (where applicable)</li>
                     </ul>
                   </div>
                 </div>
@@ -493,7 +496,8 @@
                       <li>Transfer coordinates between plan components</li>
                       <li>Maintain coordinate integrity across workflows</li>
                       <li>Support for elevation data handling</li>
-                      <li>Automatic validation and error detection</li>
+                        <li>Automatic validation and error detection</li>
+                        <li>Supports importing from CSV and XLSX; exports include PDF, DXF and coordinate tables</li>
                     </ul>
                   </div>
 
@@ -582,6 +586,7 @@
                         <ul class="text-sm text-blue-700 dark:text-blue-300">
                           <li>CSV files</li>
                           <li>TXT files</li>
+                          <li>XLSX spreadsheets (.xlsx)</li>
                           <li>Coordinate data</li>
                         </ul>
                       </div>
@@ -591,8 +596,9 @@
                         </h4>
                         <ul class="text-sm text-green-700 dark:text-green-300">
                           <li>PDF reports</li>
+                          <li>DXF drawings (for CAD)</li>
                           <li>Map images</li>
-                          <li>Coordinate tables</li>
+                          <li>Coordinate tables (CSV/XLSX)</li>
                         </ul>
                       </div>
                       <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">

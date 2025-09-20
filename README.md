@@ -12,6 +12,8 @@ A modern web application built with Nuxt 3 for creating and managing cadastral a
 - **Coordinate Management**: Advanced coordinate transfer system between components
 - **Interactive Maps**: Leaflet integration for coordinate visualization and plotting
 - **Elevation Data**: Handle and process elevation information for surveys
+- **Spreadsheet Support**: Import coordinates from CSV and XLSX files
+- **CAD Export**: Export drawings to DXF for use in CAD software
 
 ### Authentication & User Management
 - **Dual Authentication**: Email/OTP and Google OAuth integration
@@ -104,6 +106,21 @@ The application will be available at `http://localhost:4000` (note: not the defa
 6. Copy Client ID to your `.env` file
 
 For detailed setup instructions, see [GOOGLE_AUTH_SETUP.md](./GOOGLE_AUTH_SETUP.md)
+
+## 📁 File Format Support
+
+Supported import formats:
+
+- CSV files
+- XLSX spreadsheet files
+- TXT coordinate exports
+
+Supported export formats:
+
+- PDF reports
+- DXF drawings (for CAD workflows)
+- Map images (PNG/JPEG)
+- Coordinate tables (CSV/XLSX)
 
 ## 🏗️ Project Structure
 
