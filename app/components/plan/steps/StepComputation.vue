@@ -30,9 +30,9 @@
         <div class="overflow-x-auto">
           <table class="w-full table-auto border-collapse">
             <thead>
-              <tr class="text-left">
+              <tr class="text-left border-b">
                 <th class="px-2 py-1">Distance (m)</th>
-                <th class="px-2 py-1">Bearing (°)</th>
+                <th class="px-2 py-1">Bearing</th>
                 <th class="px-2 py-1">Departure</th>
                 <th class="px-2 py-1">Latitude</th>
                 <th class="px-2 py-1">Easting (mE)</th>
@@ -192,7 +192,7 @@ function formatBearing(decimalDeg: number | null | undefined) {
   let deg = Math.floor(absDeg);
   const minutesFloat = (absDeg - deg) * 60;
   let minutes = Math.floor(minutesFloat);
-  let secondsFloat = (minutesFloat - minutes) * 60;
+  let secondsFloat = Math.round((minutesFloat - minutes) * 60);
   const sign = decimalDeg < 0 ? "-" : "";
 
   // Handle rare precision edge where secondsFloat rounds to 60.0
