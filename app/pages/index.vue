@@ -46,10 +46,11 @@
               <p
                 class="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto lg:mx-0 leading-relaxed"
               >
-                A web-based geospatial platform built to speed up cadastral and
-                engineering surveys. Import coordinates or files and
-                automatically compute areas and bearings, transform coordinate
-                systems, and export submission-ready plans and reports.
+                A web-based geospatial platform that accelerates cadastral and
+                engineering surveys. Import coordinates or spreadsheet files
+                (CSV / XLSX), run automated computations, transform coordinate
+                systems, and export submission-ready PDFs, DXF drawings, and
+                coordinate tables.
               </p>
             </div>
 
@@ -60,7 +61,7 @@
                 to="/dashboard"
                 class="group inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
               >
-                Try AutoPlan for free
+                Get started
                 <Icon
                   name="heroicons:arrow-right-20-solid"
                   class="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300"
