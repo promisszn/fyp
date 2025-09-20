@@ -24,7 +24,7 @@
         </svg>
         <div>
           <div class="text-xs font-medium text-gray-800 dark:text-gray-200">
-            Import topo points (CSV or TXT)
+            Import topo points (CSV or TXT or XLS/XLSX)
           </div>
           <div class="text-[11px] text-gray-600 dark:text-gray-400">
             Columns: Point, Easting, Northing, Elevation

@@ -167,7 +167,7 @@
             </svg>
             <div>
               <div class="text-xs font-medium text-gray-800 dark:text-gray-200">
-                Import observed angle & distance data (CSV or TXT)
+                Import observed angle & distance data (CSV or TXT or XLS/XLSX)
               </div>
               <div class="text-[11px] text-gray-600 dark:text-gray-400">
                 Columns: From, To, Degrees, Minutes, Seconds, Distance(m)
@@ -660,16 +660,16 @@ const parseAngleCSV = async (input: string | ArrayBuffer | any) => {
     const fromId = cols[0];
     const toId = cols[1];
 
-  const degrees = parseInt(String(cols[2] ?? "0")) || 0;
+    const degrees = parseInt(String(cols[2] ?? "0")) || 0;
     const validDegrees = Math.max(0, Math.min(359, degrees));
 
-  const minutes = parseInt(String(cols[3] ?? "0")) || 0;
+    const minutes = parseInt(String(cols[3] ?? "0")) || 0;
     const validMinutes = Math.max(0, Math.min(59, minutes));
 
-  const seconds = parseFloat(String(cols[4] ?? "0")) || 0;
+    const seconds = parseFloat(String(cols[4] ?? "0")) || 0;
     const validSeconds = Math.max(0, Math.min(59.999999, seconds));
 
-  const distance = cols[5] ? parseFloat(String(cols[5])) || 0 : 0;
+    const distance = cols[5] ? parseFloat(String(cols[5])) || 0 : 0;
     const validDistance = Math.max(0, distance);
 
     if (fromId && toId) {
@@ -697,7 +697,10 @@ const onAngleFile = (ev: Event) => {
   const allowedTypes = [".csv", ".txt", ".xls", ".xlsx"];
   const fileExtension = "." + (file.name.split(".").pop() || "").toLowerCase();
   if (!allowedTypes.includes(fileExtension)) {
-    toast.add({ title: "Invalid file type. Please upload CSV, TXT or Excel.", color: "error" });
+    toast.add({
+      title: "Invalid file type. Please upload CSV, TXT or Excel.",
+      color: "error",
+    });
     if (angleFileInputRef.value) angleFileInputRef.value.value = "";
     return;
   }
@@ -711,19 +714,33 @@ const onAngleFile = (ev: Event) => {
         const parsedLegs = await parseAngleCSV(arrayBuffer);
         if (parsedLegs.length) {
           legs.value = parsedLegs;
-          toast.add({ title: `Successfully imported ${parsedLegs.length} observed angle and distance entries from Excel`, color: "success" });
+          toast.add({
+            title: `Successfully imported ${parsedLegs.length} observed angle and distance entries from Excel`,
+            color: "success",
+          });
         } else {
-          toast.add({ title: "No valid data found in the Excel file. Please check the format and try again.", color: "warning" });
+          toast.add({
+            title:
+              "No valid data found in the Excel file. Please check the format and try again.",
+            color: "warning",
+          });
         }
       } catch (error) {
         console.error("Error parsing Excel file:", error);
-        toast.add({ title: "Error reading Excel file. Please check the file and try again.", color: "error" });
+        toast.add({
+          title:
+            "Error reading Excel file. Please check the file and try again.",
+          color: "error",
+        });
       } finally {
         if (angleFileInputRef.value) angleFileInputRef.value.value = "";
       }
     };
     reader.onerror = () => {
-      toast.add({ title: "Failed to read the file. Please try again.", color: "error" });
+      toast.add({
+        title: "Failed to read the file. Please try again.",
+        color: "error",
+      });
       if (angleFileInputRef.value) angleFileInputRef.value.value = "";
     };
     reader.readAsArrayBuffer(file);
@@ -735,19 +752,33 @@ const onAngleFile = (ev: Event) => {
         const parsedLegs = await parseAngleCSV(text);
         if (parsedLegs.length) {
           legs.value = parsedLegs;
-          toast.add({ title: `Successfully imported ${parsedLegs.length} observed angle and distance entries`, color: "success" });
+          toast.add({
+            title: `Successfully imported ${parsedLegs.length} observed angle and distance entries`,
+            color: "success",
+          });
         } else {
-          toast.add({ title: "No valid data found in the file. Please check the format and try again.", color: "warning" });
+          toast.add({
+            title:
+              "No valid data found in the file. Please check the format and try again.",
+            color: "warning",
+          });
         }
       } catch (error) {
         console.error("Error reading file:", error);
-        toast.add({ title: "Error reading file. Please check the file format and try again.", color: "error" });
+        toast.add({
+          title:
+            "Error reading file. Please check the file format and try again.",
+          color: "error",
+        });
       } finally {
         if (angleFileInputRef.value) angleFileInputRef.value.value = "";
       }
     };
     reader.onerror = () => {
-      toast.add({ title: "Failed to read the file. Please try again.", color: "error" });
+      toast.add({
+        title: "Failed to read the file. Please try again.",
+        color: "error",
+      });
       if (angleFileInputRef.value) angleFileInputRef.value.value = "";
     };
     reader.readAsText(file);

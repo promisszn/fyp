@@ -33,7 +33,7 @@
         </svg>
         <div>
           <div class="text-xs font-medium text-gray-800 dark:text-gray-200">
-            Import coordinates (CSV or TXT)
+            Import coordinates (CSV or TXT or XLS/XLSX)
           </div>
           <div class="text-[11px] text-gray-600 dark:text-gray-400">
             Columns: GCP_Name, Easting, Northing
@@ -244,10 +244,10 @@ function goToTraverseComputation() {
   navigateTo(`/project/${projectId}/plan/${planId}/traverse-computation`);
 }
 
-function onComputationTypeSelected(type: 'forward' | 'traverse') {
-  if (type === 'forward') {
+function onComputationTypeSelected(type: "forward" | "traverse") {
+  if (type === "forward") {
     goToForwardComputation();
-  } else if (type === 'traverse') {
+  } else if (type === "traverse") {
     goToTraverseComputation();
   }
 }

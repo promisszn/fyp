@@ -42,7 +42,7 @@
             </svg>
             <div>
               <div class="text-xs font-medium text-gray-800 dark:text-gray-200">
-                Import data (CSV or TXT)
+                Import data (CSV or TXT or XLS/XLSX)
               </div>
               <div class="text-[11px] text-gray-600 dark:text-gray-400">
                 Columns: Distance, Degrees, Minutes, Seconds, Easting, Northing,
