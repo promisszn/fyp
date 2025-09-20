@@ -1,4 +1,14 @@
 <template>
+  <div class="flex justify-end mb-2">
+    <button
+      @click="onComplete"
+      :disabled="!modelValue.coordinates.length || submitting"
+      class="px-4 py-2 rounded bg-blue-600 text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700"
+    >
+      Save & Continue
+    </button>
+  </div>
+
   <StepTopoPointsTable
     :model-value="{ coordinates: modelValue.coordinates }"
     @update:modelValue="onUpdate"
