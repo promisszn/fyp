@@ -44,7 +44,7 @@
         <input
           ref="fileInputRef"
           type="file"
-          accept=".csv,.txt"
+          accept=".csv,.txt,.xls,.xlsx"
           @change="onFile"
           class="hidden"
         />
@@ -292,55 +292,55 @@ function onComplete() {
   emit("complete");
 }
 
-function parseCSV(text: string): CoordRow[] {
-  // try to handle both comma and whitespace separated
-  const lines = text
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter((l) => l && !/^#/.test(l));
-  if (!lines.length) return [];
+import { parseTable } from "~/composables/useSheetParser";
 
-  // detect header
-  const header = (lines[0] ?? "").toLowerCase();
-  const hasHeader = /point|pt|east|north|northing|easting/.test(header);
-  const dataLines = hasHeader ? lines.slice(1) : lines;
-
-  const rows: CoordRow[] = [];
-  for (const line of dataLines) {
-    const cols = line.includes(",") ? line.split(",") : line.split(/[\s;\t]+/);
-    if (cols.length < 3) continue;
-    const point = String(cols[0]).trim();
-    const eRaw = String(cols[1]).trim();
-    const nRaw = String(cols[2]).trim();
-    const elevRaw = cols[3] != null ? String(cols[3]).trim() : "";
-
-    const northing = nRaw ? Number(nRaw) : null;
-    const easting = eRaw ? Number(eRaw) : null;
-
-    rows.push({
-      _key: crypto.randomUUID(),
-      point,
-      northing,
-      easting,
-    });
-  }
-  return rows;
-}
-
-function onFile(ev: Event) {
+async function onFile(ev: Event) {
   const input = ev.target as HTMLInputElement;
   const file = input.files?.[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    const text = String(reader.result || "");
-    const rows = parseCSV(text);
-    if (rows.length) {
-      local.coordinates = rows;
+
+  const ext = "." + (file.name.split(".").pop() || "").toLowerCase();
+
+  try {
+    if (ext === ".xls" || ext === ".xlsx") {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const arrayBuffer = reader.result as ArrayBuffer;
+        const rows = await parseTable(arrayBuffer);
+        const parsed = rows
+          .map((cols) => ({
+            _key: crypto.randomUUID(),
+            point: String(cols[0] ?? "").trim(),
+            easting: cols[1] ? Number(cols[1]) : null,
+            northing: cols[2] ? Number(cols[2]) : null,
+          }))
+          .filter((r) => r.point);
+        if (parsed.length) local.coordinates = parsed;
+        if (fileInputRef.value) fileInputRef.value.value = "";
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const text = String(reader.result || "");
+        const rows = await parseTable(text);
+        const parsed = rows
+          .map((cols) => ({
+            _key: crypto.randomUUID(),
+            point: String(cols[0] ?? "").trim(),
+            easting: cols[1] ? Number(cols[1]) : null,
+            northing: cols[2] ? Number(cols[2]) : null,
+          }))
+          .filter((r) => r.point);
+        if (parsed.length) local.coordinates = parsed;
+        if (fileInputRef.value) fileInputRef.value.value = "";
+      };
+      reader.readAsText(file);
     }
+  } catch (err) {
+    console.error("File import error:", err);
     if (fileInputRef.value) fileInputRef.value.value = "";
-  };
-  reader.readAsText(file);
+  }
 }
 
 function downloadTemplate() {
