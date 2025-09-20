@@ -20,7 +20,7 @@
           <input
             ref="fileInputRef"
             type="file"
-            accept=".csv,.txt"
+            accept=".csv,.txt,.xls,.xlsx"
             @change="onFile"
             class="hidden"
           />
@@ -202,60 +202,55 @@ function removeRow(index: number) {
   }
 }
 
-function parseCSV(text: string): ElevationRow[] {
-  const lines = text.split(/\r?\n/).filter((l) => l.trim());
-  if (!lines.length) return [];
+import { parseTable } from "~/composables/useSheetParser";
 
-  // Skip header if it looks like one
-  const firstLine = lines[0];
-  const startIdx =
-    firstLine &&
-    (firstLine.toLowerCase().includes("point") ||
-      firstLine.toLowerCase().includes("elevation") ||
-      firstLine.toLowerCase().includes("chainage"))
-      ? 1
-      : 0;
-
-  const rows: ElevationRow[] = [];
-  for (let i = startIdx; i < lines.length; i++) {
-    const line = lines[i];
-    if (!line) continue;
-    const cols = line.split(",").map((c) => c.trim());
-    if (cols.length < 2) continue;
-
-    const point = cols[0] || "";
-    const elevationRaw = cols[1] ? String(cols[1]).trim() : "";
-    const chainage = cols[2] || "";
-
-    const elevation = elevationRaw ? Number(elevationRaw) : null;
-
-    if (point) {
-      rows.push({
-        _key: crypto.randomUUID(),
-        point,
-        elevation,
-        chainage,
-      });
-    }
-  }
-  return rows;
-}
-
-function onFile(ev: Event) {
+async function onFile(ev: Event) {
   const input = ev.target as HTMLInputElement;
   const file = input.files?.[0];
   if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = () => {
-    const text = String(reader.result || "");
-    const rows = parseCSV(text);
-    if (rows.length) {
-      local.elevations = rows;
+  const ext = "." + (file.name.split(".").pop() || "").toLowerCase();
+
+  try {
+    if (ext === ".xls" || ext === ".xlsx") {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const arrayBuffer = reader.result as ArrayBuffer;
+        const rows = await parseTable(arrayBuffer);
+        const parsed = rows
+          .map((cols) => ({
+            _key: crypto.randomUUID(),
+            point: String(cols[0] ?? "").trim(),
+            elevation: cols[1] ? Number(cols[1]) : null,
+            chainage: String(cols[2] ?? ""),
+          }))
+          .filter((r) => r.point);
+        if (parsed.length) local.elevations = parsed;
+        if (fileInputRef.value) fileInputRef.value.value = "";
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const text = String(reader.result || "");
+        const rows = await parseTable(text);
+        const parsed = rows
+          .map((cols) => ({
+            _key: crypto.randomUUID(),
+            point: String(cols[0] ?? "").trim(),
+            elevation: cols[1] ? Number(cols[1]) : null,
+            chainage: String(cols[2] ?? ""),
+          }))
+          .filter((r) => r.point);
+        if (parsed.length) local.elevations = parsed;
+        if (fileInputRef.value) fileInputRef.value.value = "";
+      };
+      reader.readAsText(file);
     }
+  } catch (err) {
+    console.error("File import error:", err);
     if (fileInputRef.value) fileInputRef.value.value = "";
-  };
-  reader.readAsText(file);
+  }
 }
 
 function downloadTemplate() {

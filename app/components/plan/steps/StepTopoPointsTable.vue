@@ -24,7 +24,7 @@
         </svg>
         <div>
           <div class="text-xs font-medium text-gray-800 dark:text-gray-200">
-            Import topo points (CSV or TXT)
+            Import topo points (CSV or TXT or XLS/XLSX)
           </div>
           <div class="text-[11px] text-gray-600 dark:text-gray-400">
             Columns: Point, Easting, Northing, Elevation
@@ -35,7 +35,7 @@
         <input
           ref="fileInputRef"
           type="file"
-          accept=".csv,.txt"
+          accept=".csv,.txt,.xls,.xlsx"
           @change="onFile"
           class="hidden"
         />
@@ -237,21 +237,59 @@ function parseCSV(text: string): any[] {
   return rows;
 }
 
-function onFile(ev: Event) {
+import { parseTable } from "~/composables/useSheetParser";
+
+async function onFile(ev: Event) {
   const input = ev.target as HTMLInputElement;
   const file = input.files?.[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    const text = String(reader.result || "");
-    const rows = parseCSV(text);
-    if (rows.length) {
-      local.coordinates = rows;
-      emit("update:modelValue", { coordinates: [...local.coordinates] });
+
+  const ext = "." + (file.name.split(".").pop() || "").toLowerCase();
+
+  try {
+    if (ext === ".xls" || ext === ".xlsx") {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const arrayBuffer = reader.result as ArrayBuffer;
+        const rows = await parseTable(arrayBuffer);
+        const parsed = rows.map((cols) => ({
+          _key: crypto.randomUUID(),
+          point: String(cols[0] ?? "").trim(),
+          easting: cols[1] ? Number(cols[1]) : null,
+          northing: cols[2] ? Number(cols[2]) : null,
+          elevation: cols[3] ? Number(cols[3]) : null,
+        }));
+        if (parsed.length) {
+          local.coordinates = parsed;
+          emit("update:modelValue", { coordinates: [...local.coordinates] });
+        }
+        if (fileInputRef.value) fileInputRef.value.value = "";
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const text = String(reader.result || "");
+        const rows = await parseTable(text);
+        const parsed = rows.map((cols) => ({
+          _key: crypto.randomUUID(),
+          point: String(cols[0] ?? "").trim(),
+          easting: cols[1] ? Number(cols[1]) : null,
+          northing: cols[2] ? Number(cols[2]) : null,
+          elevation: cols[3] ? Number(cols[3]) : null,
+        }));
+        if (parsed.length) {
+          local.coordinates = parsed;
+          emit("update:modelValue", { coordinates: [...local.coordinates] });
+        }
+        if (fileInputRef.value) fileInputRef.value.value = "";
+      };
+      reader.readAsText(file);
     }
+  } catch (err) {
+    console.error("File import error:", err);
     if (fileInputRef.value) fileInputRef.value.value = "";
-  };
-  reader.readAsText(file);
+  }
 }
 
 function downloadTemplate() {

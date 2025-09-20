@@ -42,7 +42,7 @@
             </svg>
             <div>
               <div class="text-xs font-medium text-gray-800 dark:text-gray-200">
-                Import data (CSV or TXT)
+                Import data (CSV or TXT or XLS/XLSX)
               </div>
               <div class="text-[11px] text-gray-600 dark:text-gray-400">
                 Columns: Distance, Degrees, Minutes, Seconds, Easting, Northing,
@@ -58,7 +58,7 @@
             <input
               ref="forwardFileInputRef"
               type="file"
-              accept=".csv,.txt"
+              accept=".csv,.txt,.xls,.xlsx"
               @change="onForwardFile"
               class="hidden"
             />
@@ -995,49 +995,37 @@ const triggerForwardFile = () => {
   forwardFileInputRef.value?.click();
 };
 
-const parseForwardCSV = (text: string) => {
-  const lines = text
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter((l) => l && !/^#/.test(l));
+import { parseTable } from "~/composables/useSheetParser";
 
-  if (!lines.length) return [];
+const parseForwardCSV = async (input: string | ArrayBuffer | any) => {
+  const rows = await parseTable(input);
+  if (!rows || rows.length === 0) return [];
 
-  const header = (lines[0] ?? "").toLowerCase();
-  const hasHeader =
-    /point|id|dist|deg|min|sec|departure|latitude|east|north/i.test(header);
-  const dataLines = hasHeader ? lines.slice(1) : lines;
+  // Detect header
+  const firstRow = Array.isArray(rows[0]) ? rows[0].map((c: any) => String(c ?? "").toLowerCase()).join(" ") : String(rows[0] ?? "").toLowerCase();
+  const hasHeader = /point|id|dist|deg|min|sec|departure|latitude|east|north/i.test(firstRow);
+  const dataRows = hasHeader ? rows.slice(1) : rows;
 
-  const parsedRows = [];
-  for (const line of dataLines) {
-    let cols;
-    if (line.includes(",")) {
-      cols = line.split(",").map((c) => c.trim());
-    } else if (line.includes("\t")) {
-      cols = line.split("\t").map((c) => c.trim());
-    } else {
-      cols = line.split(/\s+/).filter((c) => c.length > 0);
-    }
+  const parsedRows: any[] = [];
+  for (const colsRaw of dataRows) {
+  const cols = (colsRaw || []).map((c: any) => String(c ?? "").trim());
+  if (cols.length < 7) continue;
 
-    if (cols.length < 7) continue;
+  const c0 = cols[0] ?? "";
+  const c1 = cols[1] ?? "";
+  const c2 = cols[2] ?? "";
+  const c3 = cols[3] ?? "";
+  const c4 = cols[4] ?? "";
+  const c5 = cols[5] ?? "";
+  const c6 = cols[6] ?? "";
 
-    // New column order: Distance, Degrees, Minutes, Seconds, Easting, Northing, Point ID
-    const distance = parseFloat(String(cols[0]).trim()) || 0;
-    const degrees = Math.max(
-      0,
-      Math.min(359, parseInt(String(cols[1]).trim()) || 0)
-    );
-    const minutes = Math.max(
-      0,
-      Math.min(59, parseInt(String(cols[2]).trim()) || 0)
-    );
-    const seconds = Math.max(
-      0,
-      Math.min(59.999999, parseFloat(String(cols[3]).trim()) || 0)
-    );
-    const easting = parseFloat(String(cols[4]).trim()) || 0;
-    const northing = parseFloat(String(cols[5]).trim()) || 0;
-    const pointId = String(cols[6]).trim();
+  const distance = parseFloat(c0) || 0;
+  const degrees = Math.max(0, Math.min(359, parseInt(c1) || 0));
+  const minutes = Math.max(0, Math.min(59, parseInt(c2) || 0));
+  const seconds = Math.max(0, Math.min(59.999999, parseFloat(c3) || 0));
+  const easting = parseFloat(c4) || 0;
+  const northing = parseFloat(c5) || 0;
+  const pointId = String(c6).trim();
 
     if (pointId) {
       parsedRows.push({
@@ -1046,8 +1034,8 @@ const parseForwardCSV = (text: string) => {
         degrees,
         minutes,
         seconds,
-        departure: "", // Will be computed
-        latitude: "", // Will be computed
+        departure: "",
+        latitude: "",
         easting,
         northing,
         northingMisclosure: null,
@@ -1058,19 +1046,32 @@ const parseForwardCSV = (text: string) => {
   return parsedRows;
 };
 
-const onForwardFile = (event: Event) => {
+const onForwardFile = async (event: Event) => {
   const target = event.target as HTMLInputElement;
   const file = target.files?.[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target?.result as string;
-      if (text) {
-        const parsed = parseForwardCSV(text);
+  if (!file) return;
+
+  const ext = "." + (file.name.split(".").pop() || "").toLowerCase();
+  try {
+    if (ext === ".xls" || ext === ".xlsx") {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const arrayBuffer = e.target?.result as ArrayBuffer;
+        const parsed = await parseForwardCSV(arrayBuffer);
         forwardRows.value = parsed;
-      }
-    };
-    reader.readAsText(file);
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const text = e.target?.result as string;
+        const parsed = await parseForwardCSV(text);
+        forwardRows.value = parsed;
+      };
+      reader.readAsText(file);
+    }
+  } catch (err) {
+    console.error("Forward file import error:", err);
   }
 };
 
