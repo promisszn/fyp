@@ -55,7 +55,7 @@
           </div>
         </div>
 
-        <div>
+        <!-- <div>
           <h3 class="font-semibold text-gray-900 dark:text-gray-100">
             Location
           </h3>
@@ -157,7 +157,7 @@
               />
             </div>
           </div>
-        </div>
+        </div> -->
 
         <div class="flex items-center justify-end gap-2">
           <button
