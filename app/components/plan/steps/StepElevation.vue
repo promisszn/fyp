@@ -216,7 +216,16 @@ async function onFile(ev: Event) {
       const reader = new FileReader();
       reader.onload = async () => {
         const arrayBuffer = reader.result as ArrayBuffer;
-        const rows = await parseTable(arrayBuffer);
+        let rows = await parseTable(arrayBuffer);
+
+        // Remove header row if detected
+        if (Array.isArray(rows[0])) {
+          const joined = String(rows[0].join(" ")).toLowerCase();
+          if (/point|elevation|chainage|elev/.test(joined)) {
+            rows = rows.slice(1);
+          }
+        }
+
         const parsed = rows
           .map((cols) => ({
             _key: crypto.randomUUID(),
@@ -233,7 +242,16 @@ async function onFile(ev: Event) {
       const reader = new FileReader();
       reader.onload = async () => {
         const text = String(reader.result || "");
-        const rows = await parseTable(text);
+        let rows = await parseTable(text);
+
+        // Remove header row if detected
+        if (Array.isArray(rows[0])) {
+          const joined = String(rows[0].join(" ")).toLowerCase();
+          if (/point|elevation|chainage|elev/.test(joined)) {
+            rows = rows.slice(1);
+          }
+        }
+
         const parsed = rows
           .map((cols) => ({
             _key: crypto.randomUUID(),
