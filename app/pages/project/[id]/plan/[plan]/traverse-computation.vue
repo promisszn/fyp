@@ -577,13 +577,101 @@ const handleSaveCoordinates = async (
   try {
     const { setTransferredCoordinates } = useCoordinateTransfer();
 
+    // Determine startId: prefer computation results, otherwise use first known coordinate
+    let startId: string | null = null;
+    if (computationResults.value?.data?.start?.id) {
+      startId = computationResults.value.data.start.id;
+    } else if (computationResults.value?.data?.traverse_legs && computationResults.value.data.traverse_legs.length) {
+      startId = computationResults.value.data.traverse_legs[0].from?.id || null;
+    } else if (coordinates && coordinates.length) {
+      // Fallback to first coordinate in the provided list (param is an array)
+      const first = coordinates[0];
+      startId = first ? (first.point || (first as any).id || null) : null;
+    } else if (Array.isArray((globalThis as any).coordinates) && (globalThis as any).coordinates.length) {
+      // Last-resort: try to read the page-level `coordinates` ref (unlikely needed)
+      // @ts-ignore
+      startId = (globalThis as any).coordinates[0]?.id || null;
+    }
+
+    // Try to obtain the start coordinate's numeric values from computationResults (preferred)
+    let startCoord: { point: string; easting: number; northing: number; elevation: null } | null = null;
+    if (computationResults.value?.data?.traverse_legs && startId) {
+      const fromLeg = computationResults.value.data.traverse_legs.find((leg: any) => leg.from?.id === startId);
+      if (fromLeg && fromLeg.from && fromLeg.from.easting !== undefined && fromLeg.from.northing !== undefined) {
+        startCoord = {
+          point: fromLeg.from.id,
+          easting: fromLeg.from.easting,
+          northing: fromLeg.from.northing,
+          elevation: null,
+        };
+      }
+    }
+
+    // If startCoord not found in results, try to find it from page-level coordinates
+    if (!startCoord && startId) {
+      // Try to find start in the page-level `coordinates` ref declared above
+      const pageCoord = coordinatesListFind(startId);
+      if (pageCoord) {
+        startCoord = {
+          point: pageCoord.id,
+          easting: pageCoord.easting,
+          northing: pageCoord.northing,
+          elevation: null,
+        };
+      }
+    }
+
+    // helper to search the page-level coordinates ref
+    function coordinatesListFind(pid: string) {
+      try {
+        // `coordinates` is the page-level ref declared at top of this file
+        // @ts-ignore
+        const list = Array.isArray((globalThis as any)._page_coordinates_cache)
+          ? (globalThis as any)._page_coordinates_cache
+          : null;
+        // Fallback: directly use the local `coordinates` ref variable
+        // @ts-ignore
+        const localList = typeof coordinates !== 'undefined' ? coordinates : null;
+        const searchList = localList && Array.isArray(localList) ? localList : (list || []);
+        return searchList.find((r: any) => r.id === pid || r.point === pid) || null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // Build combined list: start (if found) + provided coordinates (which are leg.to from modal)
+    const combined: { point: string; easting: number; northing: number; elevation: number | null }[] = [];
+    if (startCoord) combined.push(startCoord);
+    combined.push(...coordinates.map((c) => ({ point: c.point, easting: c.easting, northing: c.northing, elevation: c.elevation })));
+
+    // Deduplicate but allow closing duplicate when first == last (preserve the closing duplicate)
+    const ordered: { point: string; easting: number; northing: number; elevation: number | null }[] = [];
+    const seen = new Set<string>();
+    const lastIndexOfStart = startId ? combined.reduce((acc, r, idx) => (r.point === startId ? idx : acc), -1) : -1;
+    const firstIndexOfStart = startId ? combined.findIndex((r) => r.point === startId) : -1;
+
+    combined.forEach((r, idx) => {
+      const pid = r.point;
+      if (!seen.has(pid)) {
+        ordered.push(r);
+        seen.add(pid);
+      } else {
+        if (startId && pid === startId && idx === lastIndexOfStart && lastIndexOfStart !== firstIndexOfStart) {
+          ordered.push(r);
+        }
+      }
+    });
+
+    if (ordered.length === 0) {
+      toast.add({ title: 'No computed coordinates found to save', color: 'warning' });
+      return;
+    }
+
     // Store coordinates in the composable
-    setTransferredCoordinates(coordinates);
+    setTransferredCoordinates(ordered.map((r) => ({ point: r.point, easting: r.easting, northing: r.northing, elevation: r.elevation })));
 
     // Redirect to the edit page with coordinates step
-    await navigateTo(
-      `/project/${projectId}/plan/${planId}/edit?step=coordinates`
-    );
+    await navigateTo(`/project/${projectId}/plan/${planId}/edit?step=coordinates`);
   } catch (error: any) {
     console.error("Failed to prepare coordinate transfer:", error);
     toast.add({

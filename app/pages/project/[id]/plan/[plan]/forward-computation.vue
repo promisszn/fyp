@@ -1002,30 +1002,33 @@ const parseForwardCSV = async (input: string | ArrayBuffer | any) => {
   if (!rows || rows.length === 0) return [];
 
   // Detect header
-  const firstRow = Array.isArray(rows[0]) ? rows[0].map((c: any) => String(c ?? "").toLowerCase()).join(" ") : String(rows[0] ?? "").toLowerCase();
-  const hasHeader = /point|id|dist|deg|min|sec|departure|latitude|east|north/i.test(firstRow);
+  const firstRow = Array.isArray(rows[0])
+    ? rows[0].map((c: any) => String(c ?? "").toLowerCase()).join(" ")
+    : String(rows[0] ?? "").toLowerCase();
+  const hasHeader =
+    /point|id|dist|deg|min|sec|departure|latitude|east|north/i.test(firstRow);
   const dataRows = hasHeader ? rows.slice(1) : rows;
 
   const parsedRows: any[] = [];
   for (const colsRaw of dataRows) {
-  const cols = (colsRaw || []).map((c: any) => String(c ?? "").trim());
-  if (cols.length < 7) continue;
+    const cols = (colsRaw || []).map((c: any) => String(c ?? "").trim());
+    if (cols.length < 7) continue;
 
-  const c0 = cols[0] ?? "";
-  const c1 = cols[1] ?? "";
-  const c2 = cols[2] ?? "";
-  const c3 = cols[3] ?? "";
-  const c4 = cols[4] ?? "";
-  const c5 = cols[5] ?? "";
-  const c6 = cols[6] ?? "";
+    const c0 = cols[0] ?? "";
+    const c1 = cols[1] ?? "";
+    const c2 = cols[2] ?? "";
+    const c3 = cols[3] ?? "";
+    const c4 = cols[4] ?? "";
+    const c5 = cols[5] ?? "";
+    const c6 = cols[6] ?? "";
 
-  const distance = parseFloat(c0) || 0;
-  const degrees = Math.max(0, Math.min(359, parseInt(c1) || 0));
-  const minutes = Math.max(0, Math.min(59, parseInt(c2) || 0));
-  const seconds = Math.max(0, Math.min(59.999999, parseFloat(c3) || 0));
-  const easting = parseFloat(c4) || 0;
-  const northing = parseFloat(c5) || 0;
-  const pointId = String(c6).trim();
+    const distance = parseFloat(c0) || 0;
+    const degrees = Math.max(0, Math.min(359, parseInt(c1) || 0));
+    const minutes = Math.max(0, Math.min(59, parseInt(c2) || 0));
+    const seconds = Math.max(0, Math.min(59.999999, parseFloat(c3) || 0));
+    const easting = parseFloat(c4) || 0;
+    const northing = parseFloat(c5) || 0;
+    const pointId = String(c6).trim();
 
     if (pointId) {
       parsedRows.push({
@@ -1150,29 +1153,86 @@ const downloadComputationCSV = () => {
 
 const saveToCoordinates = async () => {
   try {
-    // Extract all computed coordinates and ensure unique points (last occurrence takes precedence)
-    const coordinatesMap = new Map();
-    
-    forwardRows.value
-      .filter(
-        (row) =>
-          row.pointId.trim() !== "" &&
-          row.easting !== null &&
-          row.northing !== null &&
-          !isNaN(row.easting) &&
-          !isNaN(row.northing)
-      )
-      .forEach((row) => {
-        coordinatesMap.set(row.pointId, {
-          point: row.pointId,
-          easting: row.easting!,
-          northing: row.northing!,
-          elevation: null,
-        });
-      });
+    const ordered: {
+      point: string;
+      easting: number;
+      northing: number;
+      elevation: null;
+    }[] = [];
+    const seen = new Set<string>();
 
-    const coordinates = Array.from(coordinatesMap.values());
+    let startId: string | null = null;
+    if (computationResults.value?.data?.start?.id) {
+      startId = computationResults.value.data.start.id;
+    } else {
+      const firstStartRow = forwardRows.value.find(
+        (r) =>
+          r.easting !== null &&
+          r.northing !== null &&
+          r.pointId &&
+          r.pointId.trim() !== ""
+      );
+      if (firstStartRow) startId = firstStartRow.pointId;
+    }
 
+    const lastIndexOfStart = startId
+      ? forwardRows.value.reduce(
+          (acc, r, idx) => (r.pointId === startId ? idx : acc),
+          -1
+        )
+      : -1;
+
+    const firstIndexOfStart = startId
+      ? forwardRows.value.findIndex((r) => r.pointId === startId)
+      : -1;
+
+    forwardRows.value.forEach((row, idx) => {
+      if (
+        row.pointId &&
+        row.pointId.trim() !== "" &&
+        row.easting !== null &&
+        row.northing !== null &&
+        !isNaN(row.easting) &&
+        !isNaN(row.northing)
+      ) {
+        const pid = row.pointId;
+
+        if (!seen.has(pid)) {
+          ordered.push({
+            point: pid,
+            easting: row.easting!,
+            northing: row.northing!,
+            elevation: null,
+          });
+          seen.add(pid);
+        } else {
+          if (
+            startId &&
+            pid === startId &&
+            idx === lastIndexOfStart &&
+            lastIndexOfStart !== firstIndexOfStart
+          ) {
+            ordered.push({
+              point: pid,
+              easting: row.easting!,
+              northing: row.northing!,
+              elevation: null,
+            });
+          }
+        }
+      }
+    });
+
+    const coordinates = ordered;
+
+    if (startId) {
+      const firstIdx = coordinates.findIndex((c) => c.point === startId);
+      if (firstIdx > 0) {
+        const spliced = coordinates.splice(firstIdx, 1);
+        const item = spliced && spliced.length ? spliced[0] : undefined;
+        if (item) coordinates.unshift(item);
+      }
+    }
     if (coordinates.length === 0) {
       toast.add({
         title: "No computed coordinates found to save",
