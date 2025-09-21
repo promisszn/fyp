@@ -20,7 +20,7 @@
 
       <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
         <StepBasicDetails
-          :model-value="{ basic: planData.basic }"
+          :model-value="basicModel"
           :plan-types="PLAN_TYPES"
           :loading="submitting"
           @update:model-value="
@@ -47,6 +47,7 @@ import StepBasicDetails from "~/components/plan/steps/StepBasicDetails.vue";
 definePageMeta({ middleware: ["auth"] });
 
 import { reactive, ref } from "vue";
+import { computed } from "vue";
 import { useRoute } from "vue-router";
 import { navigateTo } from "#imports";
 import { PLAN_TYPES } from "~/types/planTypes";
@@ -61,6 +62,8 @@ const submitting = ref(false);
 const planData = reactive({
   basic: { name: "", type: "" },
 });
+
+const basicModel = computed(() => ({ basic: planData.basic }));
 
 function cancel() {
   navigateTo(`/project/${projectId}`);

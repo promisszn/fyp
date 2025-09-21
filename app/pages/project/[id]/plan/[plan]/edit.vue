@@ -82,7 +82,7 @@
           <!-- Step 1: Topo Boundary Table -->
           <StepCoordinates
             v-if="currentStep === 1"
-            :model-value="{ coordinates: planData.boundary }"
+            :model-value="boundaryModel"
             :loading="submittingCoordinates"
             @update:modelValue="(v) => (planData.boundary = v.coordinates)"
             @complete="completeTopoBoundary"
@@ -90,7 +90,7 @@
           <!-- Step 2: Topo Points (like coordinates, but elevation required) -->
           <StepTopoPoints
             v-else-if="currentStep === 2"
-            :model-value="{ coordinates: planData.topoPoints }"
+            :model-value="topoPointsModel"
             :loading="submittingCoordinates"
             @update:modelValue="(v) => (planData.topoPoints = v.coordinates)"
             @complete="onTopoPointsSaved"
@@ -98,7 +98,7 @@
           <!-- Step 3: Topo Settings -->
           <StepTopoSettings
             v-else-if="currentStep === 3"
-            :model-value="{ settings: planData.topoSettings }"
+            :model-value="topoSettingsModel"
             :loading="submittingEmbellishment"
             @update:modelValue="(v) => (planData.topoSettings = v.settings)"
             @complete="onTopoSettingsSaved"
@@ -106,7 +106,7 @@
           <!-- Step 4: Embellishment -->
           <StepEmbellishment
             v-else-if="currentStep === 4"
-            :model-value="{ embellishment: planData.embellishment }"
+            :model-value="embellishmentModel"
             :loading="submittingEmbellishment"
             @update:model-value="onEmbellishmentUpdate"
             @complete="completeEmbellishment"
@@ -114,10 +114,7 @@
           <!-- Step 5: Report -->
           <StepReport
             v-else-if="currentStep === 5"
-            :model-value="{
-              report: planData.report,
-              embellishment: planData.embellishment,
-            }"
+            :model-value="reportModel"
             :basic="planData.basic"
             :coordinates-count="(planData.topoPoints || []).length"
             :parcels-count="0"
@@ -132,7 +129,7 @@
         <template v-else>
           <StepCoordinates
             v-if="currentStep === 1"
-            :model-value="{ coordinates: planData.coordinates }"
+            :model-value="coordinatesModel"
             :loading="submittingCoordinates"
             @update:model-value="onCoordinatesUpdate"
             @complete="completeCoordinates"
@@ -140,7 +137,7 @@
           <!-- Route Survey: Elevation Step -->
           <StepElevation
             v-else-if="currentStep === 2 && planData.basic.type === 'route'"
-            :model-value="{ elevations: planData.elevations }"
+            :model-value="elevationsModel"
             :coordinate-ids="
               planData.coordinates.map((c) => c.point).filter(Boolean)
             "
@@ -151,7 +148,7 @@
           <!-- Cadastral Survey: Parcels Step -->
           <StepParcels
             v-else-if="currentStep === 2 && planData.basic.type !== 'route'"
-            :model-value="{ parcels: planData.parcels }"
+            :model-value="parcelsModel"
             :coordinate-ids="
               planData.coordinates.map((c) => c.point).filter(Boolean)
             "
@@ -170,7 +167,7 @@
           <!-- Drawing Step (step 4 for both types) -->
           <StepDrawing
             v-else-if="currentStep === 4"
-            :model-value="{ drawing: planData.drawing }"
+            :model-value="drawingModel"
             :coordinates="planData.coordinates"
             :parcel-name="
               planData.basic.type === 'route'
@@ -186,7 +183,7 @@
           <!-- Embellishment Step (step 5 for both types) -->
           <StepEmbellishment
             v-else-if="currentStep === 5"
-            :model-value="{ embellishment: planData.embellishment }"
+            :model-value="embellishmentModel"
             :loading="submittingEmbellishment"
             @update:model-value="onEmbellishmentUpdate"
             @complete="completeEmbellishment"
@@ -194,10 +191,7 @@
           <!-- Report Step (step 6 for both types) -->
           <StepReport
             v-else-if="currentStep === 6"
-            :model-value="{
-              report: planData.report,
-              embellishment: planData.embellishment,
-            }"
+            :model-value="reportModel"
             :basic="planData.basic"
             :coordinates-count="planData.coordinates.length"
             :parcels-count="
@@ -227,7 +221,7 @@ import StepReport from "~/components/plan/steps/StepReport.vue";
 
 definePageMeta({ middleware: ["auth"] });
 
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
 import { navigateTo } from "#imports";
 import axios from "axios";
@@ -314,6 +308,25 @@ const planData = reactive({
 
 // Computation payload captured from StepComputation
 const computationResult = ref<{ legs?: any[]; traverse?: any } | null>(null);
+
+// Stable model-value wrappers to avoid recreating inline objects each render
+const boundaryModel = computed(() => ({ coordinates: planData.boundary }));
+const topoPointsModel = computed(() => ({ coordinates: planData.topoPoints }));
+const topoSettingsModel = computed(() => ({ settings: planData.topoSettings }));
+const embellishmentModel = computed(() => ({
+  embellishment: planData.embellishment,
+}));
+const reportModel = computed(() => ({
+  report: planData.report,
+  embellishment: planData.embellishment,
+}));
+
+const coordinatesModel = computed(() => ({
+  coordinates: planData.coordinates,
+}));
+const elevationsModel = computed(() => ({ elevations: planData.elevations }));
+const parcelsModel = computed(() => ({ parcels: planData.parcels }));
+const drawingModel = computed(() => ({ drawing: planData.drawing }));
 
 onMounted(async () => {
   try {

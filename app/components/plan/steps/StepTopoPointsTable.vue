@@ -151,21 +151,28 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch, ref } from "vue";
+import { reactive, watch, ref, nextTick } from "vue";
 const props = defineProps<{ modelValue: { coordinates: any[] } }>();
 const emit = defineEmits(["update:modelValue"]);
 const local = reactive<{ coordinates: any[] }>({ coordinates: [] });
+// Flag to avoid echoing updates back to parent when applying incoming prop changes
+const syncing = ref(false);
 
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
 watch(
   () => props.modelValue.coordinates,
   (arr) => {
+    syncing.value = true;
     if (Array.isArray(arr)) {
       local.coordinates = arr.map((r) => ({ ...r }));
     } else {
       local.coordinates = [];
     }
+    // Wait until next tick to re-enable emits so the local watcher doesn't echo this change
+    nextTick(() => {
+      syncing.value = false;
+    });
   },
   { immediate: true }
 );
@@ -174,6 +181,7 @@ watch(
 watch(
   () => local.coordinates,
   (arr) => {
+    if (syncing.value) return; // skip emits when we're applying incoming prop changes
     emit("update:modelValue", { coordinates: [...arr] });
   },
   { deep: true }
@@ -202,40 +210,7 @@ function triggerFile() {
   fileInputRef.value?.click();
 }
 
-function parseCSV(text: string): any[] {
-  const lines = text
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter((l) => l && !/^#/.test(l));
-  if (!lines.length) return [];
-
-  const header = (lines[0] ?? "").toLowerCase();
-  const hasHeader = /point|pt|east|north|northing|easting|elev/.test(header);
-  const dataLines = hasHeader ? lines.slice(1) : lines;
-
-  const rows: any[] = [];
-  for (const line of dataLines) {
-    const cols = line.includes(",") ? line.split(",") : line.split(/[\s;\t]+/);
-    if (cols.length < 3) continue;
-    const point = String(cols[0]).trim();
-    const eRaw = String(cols[1]).trim();
-    const nRaw = String(cols[2]).trim();
-    const elevRaw = cols[3] != null ? String(cols[3]).trim() : "";
-
-    const northing = nRaw ? Number(nRaw) : null;
-    const easting = eRaw ? Number(eRaw) : null;
-    const elevation = elevRaw ? Number(elevRaw) : null;
-
-    rows.push({
-      _key: crypto.randomUUID(),
-      point,
-      northing,
-      easting,
-      elevation,
-    });
-  }
-  return rows;
-}
+// parseCSV removed in favor of centralized parseTable
 
 import { parseTable } from "~/composables/useSheetParser";
 
@@ -251,7 +226,16 @@ async function onFile(ev: Event) {
       const reader = new FileReader();
       reader.onload = async () => {
         const arrayBuffer = reader.result as ArrayBuffer;
-        const rows = await parseTable(arrayBuffer);
+        let rows = await parseTable(arrayBuffer);
+
+        // Remove header row if detected
+        if (Array.isArray(rows[0])) {
+          const joined = String(rows[0].join(" ")).toLowerCase();
+          if (/point|pt|east|north|northing|easting|elev|elevation/.test(joined)) {
+            rows = rows.slice(1);
+          }
+        }
+
         const parsed = rows.map((cols) => ({
           _key: crypto.randomUUID(),
           point: String(cols[0] ?? "").trim(),
@@ -270,7 +254,16 @@ async function onFile(ev: Event) {
       const reader = new FileReader();
       reader.onload = async () => {
         const text = String(reader.result || "");
-        const rows = await parseTable(text);
+        let rows = await parseTable(text);
+
+        // Remove header row if detected
+        if (Array.isArray(rows[0])) {
+          const joined = String(rows[0].join(" ")).toLowerCase();
+          if (/point|pt|east|north|northing|easting|elev|elevation/.test(joined)) {
+            rows = rows.slice(1);
+          }
+        }
+
         const parsed = rows.map((cols) => ({
           _key: crypto.randomUUID(),
           point: String(cols[0] ?? "").trim(),

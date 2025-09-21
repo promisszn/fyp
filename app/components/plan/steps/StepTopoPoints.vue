@@ -10,7 +10,7 @@
   </div>
 
   <StepTopoPointsTable
-    :model-value="{ coordinates: modelValue.coordinates }"
+    :model-value="tableModel"
     @update:modelValue="onUpdate"
   />
   <div class="flex justify-end mt-6">
@@ -27,6 +27,7 @@
 <script lang="ts" setup>
 import StepTopoPointsTable from "./StepTopoPointsTable.vue";
 import { ref, watch } from "vue";
+import { computed } from "vue";
 import axios from "axios";
 import { useRoute } from "vue-router";
 
@@ -44,6 +45,9 @@ const emit = defineEmits(["update:modelValue", "complete"]);
 const route = useRoute();
 const planId = route.params.plan as string;
 const submitting = ref(false);
+
+// Stable wrapper for table model to avoid recreating object each render
+const tableModel = computed(() => ({ coordinates: props.modelValue.coordinates }));
 
 function onUpdate(v: { coordinates: any[] }) {
   emit("update:modelValue", v);
