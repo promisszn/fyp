@@ -83,6 +83,7 @@
           <StepCoordinates
             v-if="currentStep === 1"
             :model-value="boundaryModel"
+            :plan-type="planData.basic.type"
             :loading="submittingCoordinates"
             @update:modelValue="(v) => (planData.boundary = v.coordinates)"
             @complete="completeTopoBoundary"
@@ -576,7 +577,6 @@ async function completeElevation() {
 // Topo Boundary handling (for topographic plans)
 async function completeTopoBoundary() {
   if (submittingCoordinates.value) return;
-  if (!planData.boundary.length) return;
   try {
     submittingCoordinates.value = true;
     const payload = {

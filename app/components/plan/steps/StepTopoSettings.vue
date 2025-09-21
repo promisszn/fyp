@@ -127,17 +127,32 @@
           />
         </div>
 
-        <!-- <div class="flex items-center gap-4 mt-2">
-          <label class="flex items-center gap-3">
-            <input type="checkbox" v-model="local.tin" class="form-checkbox h-4 w-4" />
-            <span class="text-sm font-medium">TIN</span>
-          </label>
+        <div class="mt-2">
+          <label class="block text-xs text-gray-600 mb-1">Surface</label>
+          <div class="flex items-center gap-4">
+            <label class="flex items-center gap-2">
+              <input
+                type="radio"
+                name="surface"
+                value="tin"
+                v-model="local.selected_surface"
+                class="form-radio h-4 w-4"
+              />
+              <span class="text-sm font-medium">TIN</span>
+            </label>
 
-          <label class="flex items-center gap-3">
-            <input type="checkbox" v-model="local.grid" class="form-checkbox h-4 w-4" />
-            <span class="text-sm font-medium">Grid</span>
-          </label>
-        </div> -->
+            <label class="flex items-center gap-2">
+              <input
+                type="radio"
+                name="surface"
+                value="grid"
+                v-model="local.selected_surface"
+                class="form-radio h-4 w-4"
+              />
+              <span class="text-sm font-medium">Grid</span>
+            </label>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -175,8 +190,7 @@ const local = reactive<any>({
   contour_label_scale: 0.5,
   show_boundary: true,
   boundary_label_scale: 0.2,
-  tin: false,
-  grid: false,
+  selected_surface: "",
 });
 
 const submitting = ref(false);
@@ -187,7 +201,15 @@ watch(
   () => props.modelValue?.settings,
   (v) => {
     if (v && typeof v === "object") {
-      Object.assign(local, v);
+      // map incoming tin/grid booleans to selected_surface
+      const mapped = { ...v } as any;
+      if (v.tin) mapped.selected_surface = "tin";
+      else if (v.grid) mapped.selected_surface = "grid";
+      else mapped.selected_surface = "tin"; // default to tin when neither is set
+      // remove old tin/grid keys if present to avoid overwriting
+      delete mapped.tin;
+      delete mapped.grid;
+      Object.assign(local, mapped);
     }
   },
   { immediate: true, deep: true }
@@ -197,7 +219,11 @@ watch(
 watch(
   () => local,
   (v) => {
-    emit("update:modelValue", { settings: { ...v } });
+    // emit settings while preserving backward-compatible tin/grid booleans
+    const out = { ...v } as any;
+    out.tin = v.selected_surface === "tin";
+    out.grid = v.selected_surface === "grid";
+    emit("update:modelValue", { settings: { ...out } });
   },
   { deep: true }
 );
@@ -217,8 +243,9 @@ async function onSave() {
       contour_label_scale: Number(local.contour_label_scale || 0),
       show_boundary: !!local.show_boundary,
       boundary_label_scale: Number(local.boundary_label_scale || 0),
-      tin: !!local.tin,
-      grid: !!local.grid,
+      // map selected_surface back to the original tin/grid booleans
+      tin: local.selected_surface === "tin",
+      grid: local.selected_surface === "grid",
     };
 
     await axios.put(`/plan/topo/setting/edit/${planId}`, payload);

@@ -146,7 +146,7 @@
       </button>
       <button
         @click="onComplete"
-        :disabled="!local.coordinates.length || loading"
+        :disabled="(props.planType !== 'topographic' && !local.coordinates.length) || loading"
         class="px-4 py-2 ml-auto rounded bg-blue-600 text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700"
       >
         Save & Continue
@@ -186,8 +186,12 @@ interface CoordRow {
 }
 
 const props = withDefaults(
-  defineProps<{ modelValue: { coordinates: CoordRow[] }; loading?: boolean }>(),
-  { loading: false }
+  defineProps<{
+    modelValue: { coordinates: CoordRow[] };
+    loading?: boolean;
+    planType?: string;
+  }>(),
+  { loading: false, planType: "" }
 );
 const emit = defineEmits(["update:modelValue", "complete"]);
 
@@ -287,9 +291,21 @@ function confirmClear() {
   local.coordinates = [];
 }
 function onComplete() {
-  if (!local.coordinates.length) return;
-  emit("update:modelValue", { coordinates: [...local.coordinates] });
-  emit("complete");
+  if (local.coordinates.length) {
+    emit("update:modelValue", { coordinates: [...local.coordinates] });
+    emit("complete");
+    return;
+  }
+
+  // Allow saving with empty coordinates for topographic plans
+  if (props.planType === "topographic") {
+    emit("update:modelValue", { coordinates: [] });
+    emit("complete");
+    return;
+  }
+
+  // Otherwise, do nothing (button should be disabled)
+  return;
 }
 
 import { parseTable } from "~/composables/useSheetParser";
