@@ -10,7 +10,9 @@
           class="flex items-center gap-3 px-4 py-3 mb-4 bg-white dark:bg-slate-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer border border-gray-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-500"
           aria-label="Go to homepage"
         >
-          <div class="flex items-center justify-center w-10 h-10 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+          <div
+            class="flex items-center justify-center w-10 h-10 bg-blue-50 dark:bg-blue-900/30 rounded-lg"
+          >
             <img
               src="/logo.svg"
               alt="App Logo"
@@ -171,14 +173,13 @@ const user = useCookie("user");
 onMounted(() => {
   if (apiToken.value && user.value) {
     try {
-      const userObj = JSON.parse(user.value);
+      const userObj = user.value;
       if (userObj && userObj.profile_set === false) {
         navigateTo("/set-profile");
       } else {
         navigateTo("/dashboard");
       }
     } catch (e) {
-      // If there's an error parsing user data, clear the cookies and stay on login
       apiToken.value = null;
       refreshToken.value = null;
       token.value = null;
