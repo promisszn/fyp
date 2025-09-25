@@ -69,7 +69,6 @@ async function onComplete() {
       })),
     };
 
-    console.log("Submitting payload:", payload);
     await axios.put(`/plan/coordinates/edit/${planId}`, payload);
     emit("complete");
   } catch (error) {

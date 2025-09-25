@@ -136,8 +136,8 @@
       </table>
     </div>
     <div class="mt-2 text-[11px] text-gray-600 dark:text-gray-300">
-      <template v-if="totalCount > MAX_DISPLAY">
-        Showing first {{ MAX_DISPLAY }} of {{ totalCount }} rows
+      <template v-if="totalCount > displayCount">
+        Showing first {{ displayCount }} of {{ totalCount }} rows
       </template>
       <template v-else>
         Showing {{ totalCount }} rows
@@ -164,6 +164,16 @@
     <p class="text-[11px] text-gray-500 dark:text-gray-400">
       Add at least one topo point to proceed.
     </p>
+    <div class="mt-3">
+      <button
+        v-if="totalCount > displayCount"
+        @click="loadMore"
+        type="button"
+        class="px-3 py-1.5 text-xs rounded bg-blue-600 text-white hover:bg-blue-700"
+      >
+        Load next {{ MAX_DISPLAY }}
+      </button>
+    </div>
   </div>
 </template>
 
@@ -179,7 +189,8 @@ const fileInputRef = ref<HTMLInputElement | null>(null);
 const loading = ref(false);
 const MAX_DISPLAY = 100;
 
-const displayedCoordinates = computed(() => local.coordinates.slice(0, MAX_DISPLAY));
+const displayCount = ref(MAX_DISPLAY);
+const displayedCoordinates = computed(() => local.coordinates.slice(0, Math.min(displayCount.value, local.coordinates.length)));
 const totalCount = computed(() => local.coordinates.length);
 
 watch(
@@ -232,6 +243,23 @@ function clearAll() {
   local.coordinates = [];
   emit("update:modelValue", { coordinates: [] });
 }
+
+// Load next chunk of rows (next MAX_DISPLAY) until we reach the end
+function loadMore() {
+  displayCount.value = Math.min(displayCount.value + MAX_DISPLAY, local.coordinates.length);
+}
+
+// Keep displayCount in-range when the underlying data changes
+watch(
+  () => totalCount.value,
+  (n) => {
+    if (n === 0) {
+      displayCount.value = MAX_DISPLAY;
+    } else if (displayCount.value > n) {
+      displayCount.value = n;
+    }
+  }
+);
 
 function triggerFile() {
   fileInputRef.value?.click();
@@ -306,6 +334,8 @@ async function onFile(ev: Event) {
         }));
         if (parsed.length) {
           local.coordinates = parsed;
+          // reset displayed count to first page
+          displayCount.value = Math.min(MAX_DISPLAY, parsed.length);
           // emit full dataset even though UI will only show first MAX_DISPLAY rows
           emit("update:modelValue", { coordinates: [...local.coordinates] });
         }
@@ -329,6 +359,8 @@ async function onFile(ev: Event) {
         }));
         if (parsed.length) {
           local.coordinates = parsed;
+          // reset displayed count to first page
+          displayCount.value = Math.min(MAX_DISPLAY, parsed.length);
           emit("update:modelValue", { coordinates: [...local.coordinates] });
         }
         if (fileInputRef.value) fileInputRef.value.value = "";
