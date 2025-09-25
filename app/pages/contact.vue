@@ -32,7 +32,7 @@
         <p
           class="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto leading-relaxed"
         >
-          Have questions about AutoPlan? Need help with your surveying projects?
+          Have questions about AutoPlan? Need help with your geomatics projects?
           We're here to assist you with all your cadastral and engineering
           automation needs.
         </p>
@@ -342,7 +342,7 @@
                 </summary>
                 <div class="mt-3 p-4 text-gray-600 dark:text-gray-400">
                   Yes! We provide comprehensive technical support via email and
-                  phone during business hours. Our team of surveying experts is
+                  phone during business hours. Our team of geomatics experts is
                   ready to help you with any questions.
                 </div>
               </details>
@@ -417,7 +417,7 @@ useHead({
     {
       property: "og:description",
       content:
-        "Contact the AutoPlan team for assistance with your surveying and cadastral automation needs.",
+        "Contact the AutoPlan team for assistance with your cadastral and engineering automation needs.",
     },
   ],
 });

@@ -24,7 +24,7 @@
               <div
                 class="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 text-sm font-medium"
               >
-                ✨ Modern surveying platform
+                ✨ Modern geomatics platform
               </div>
 
               <h1
