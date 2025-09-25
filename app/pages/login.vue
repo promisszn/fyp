@@ -39,15 +39,15 @@
         class="w-full flex flex-col gap-1"
       >
         <!-- Google Sign-In Button -->
-        <!-- <div class="mb-4">
+        <div class="mb-4">
           <GoogleSignInButton
             @success="handleGoogleSuccess"
             @error="handleGoogleError"
           />
-        </div> -->
+        </div>
 
         <!-- Divider -->
-        <!-- <div class="relative my-4">
+        <div class="relative my-4">
           <div class="absolute inset-0 flex items-center">
             <div
               class="w-full border-t border-gray-300 dark:border-slate-600"
@@ -59,7 +59,7 @@
               >Or continue with email</span
             >
           </div>
-        </div> -->
+        </div>
 
         <label class="font-semibold text-gray-800 dark:text-gray-200"
           >Email<span class="text-red-600">*</span></label
@@ -148,7 +148,7 @@
 definePageMeta({
   middleware: ["auth"],
 });
-import { RiLock2Fill } from "@remixicon/vue";
+
 import { ref, onMounted } from "vue";
 import axios from "axios";
 import { navigateTo } from "nuxt/app";
@@ -173,7 +173,7 @@ const user = useCookie("user");
 onMounted(() => {
   if (apiToken.value && user.value) {
     try {
-      const userObj = user.value;
+      const userObj = user.value as any;
       if (userObj && userObj.profile_set === false) {
         navigateTo("/set-profile");
       } else {
@@ -197,9 +197,12 @@ const handleGoogleSuccess = async (credential: string) => {
   error.value = "";
 
   try {
-    const response = await axios.post(`${config.public.BASE_URL}/auth/google`, {
-      credential: credential,
-    });
+    const response = await axios.post(
+      `${config.public.BASE_URL}/auth/login/google`,
+      {
+        token: credential,
+      }
+    );
 
     apiToken.value = response.data.data.api_token;
     refreshToken.value = response.data.data.refresh_token;
