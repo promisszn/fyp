@@ -56,7 +56,15 @@
       </div>
     </div>
     <div class="overflow-x-auto">
+      <div v-if="loading" class="p-6 flex items-center justify-center">
+        <svg class="animate-spin h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+        </svg>
+        <span class="ml-3 text-sm text-gray-600 dark:text-gray-300">Parsing file, showing first {{ MAX_DISPLAY }} rows...</span>
+      </div>
       <table
+        v-else
         class="min-w-full text-sm border border-gray-200 dark:border-slate-600 rounded-md overflow-hidden"
       >
         <thead
@@ -72,7 +80,7 @@
         </thead>
         <tbody>
           <tr
-            v-for="(row, idx) in local.coordinates"
+            v-for="(row, idx) in displayedCoordinates"
             :key="row._key"
             class="border-t border-gray-200 dark:border-slate-700"
           >
@@ -127,6 +135,15 @@
         </tbody>
       </table>
     </div>
+    <div class="mt-2 text-[11px] text-gray-600 dark:text-gray-300">
+      <template v-if="totalCount > displayCount">
+        Showing first {{ displayCount }} of {{ totalCount }} rows
+      </template>
+      <template v-else>
+        Showing {{ totalCount }} rows
+      </template>
+    </div>
+
     <div class="flex gap-3">
       <button
         @click="addRow"
@@ -147,11 +164,21 @@
     <p class="text-[11px] text-gray-500 dark:text-gray-400">
       Add at least one topo point to proceed.
     </p>
+    <div class="mt-3">
+      <button
+        v-if="totalCount > displayCount"
+        @click="loadMore"
+        type="button"
+        class="px-3 py-1.5 text-xs rounded bg-blue-600 text-white hover:bg-blue-700"
+      >
+        Load next {{ MAX_DISPLAY }}
+      </button>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, watch, ref, nextTick } from "vue";
+import { reactive, watch, ref, nextTick, computed } from "vue";
 const props = defineProps<{ modelValue: { coordinates: any[] } }>();
 const emit = defineEmits(["update:modelValue"]);
 const local = reactive<{ coordinates: any[] }>({ coordinates: [] });
@@ -159,12 +186,19 @@ const local = reactive<{ coordinates: any[] }>({ coordinates: [] });
 const syncing = ref(false);
 
 const fileInputRef = ref<HTMLInputElement | null>(null);
+const loading = ref(false);
+const MAX_DISPLAY = 100;
+
+const displayCount = ref(MAX_DISPLAY);
+const displayedCoordinates = computed(() => local.coordinates.slice(0, Math.min(displayCount.value, local.coordinates.length)));
+const totalCount = computed(() => local.coordinates.length);
 
 watch(
   () => props.modelValue.coordinates,
   (arr) => {
     syncing.value = true;
     if (Array.isArray(arr)) {
+      // keep objects as shallow copies so we can edit displayed rows and update the full array
       local.coordinates = arr.map((r) => ({ ...r }));
     } else {
       local.coordinates = [];
@@ -198,13 +232,34 @@ function addRow() {
   emit("update:modelValue", { coordinates: [...local.coordinates] });
 }
 function removeRow(idx: number) {
-  local.coordinates.splice(idx, 1);
+  // idx may be index within displayed slice; find the real index by _key for safety
+  const row = displayedCoordinates.value[idx];
+  if (!row) return;
+  const realIdx = local.coordinates.findIndex((r) => r._key === row._key);
+  if (realIdx !== -1) local.coordinates.splice(realIdx, 1);
   emit("update:modelValue", { coordinates: [...local.coordinates] });
 }
 function clearAll() {
   local.coordinates = [];
   emit("update:modelValue", { coordinates: [] });
 }
+
+// Load next chunk of rows (next MAX_DISPLAY) until we reach the end
+function loadMore() {
+  displayCount.value = Math.min(displayCount.value + MAX_DISPLAY, local.coordinates.length);
+}
+
+// Keep displayCount in-range when the underlying data changes
+watch(
+  () => totalCount.value,
+  (n) => {
+    if (n === 0) {
+      displayCount.value = MAX_DISPLAY;
+    } else if (displayCount.value > n) {
+      displayCount.value = n;
+    }
+  }
+);
 
 function triggerFile() {
   fileInputRef.value?.click();
@@ -214,6 +269,46 @@ function triggerFile() {
 
 import { parseTable } from "~/composables/useSheetParser";
 
+function isHeaderRow(row: any): boolean {
+  // row can be array or object
+  try {
+    if (!row) return false;
+    if (Array.isArray(row)) {
+      const joined = String(row.join(" ")).toLowerCase();
+      // keyword detection
+      if (/point|\bpt\b|east|north|northing|easting|elev|elevation/.test(joined)) return true;
+
+      // numeric heuristic: check how many of the next 3 columns look numeric
+      const numericCount = [1, 2, 3].reduce((c, i) => {
+        const v = row[i];
+        if (v === undefined || v === null || v === "") return c;
+        return c + (isFinite(Number(String(v).trim())) ? 1 : 0);
+      }, 0);
+      // if fewer than 2 numeric columns and there's at least one alphabetic token, treat as header
+      if (numericCount < 2 && /[a-zA-Z]/.test(joined)) return true;
+      return false;
+    } else if (typeof row === "object") {
+      const keys = Object.keys(row).join(" ").toLowerCase();
+      if (/point|\bpt\b|east|north|northing|easting|elev|elevation/.test(keys)) return true;
+      return false;
+    }
+  } catch (e) {
+    return false;
+  }
+  return false;
+}
+
+function stripLeadingHeaderRows(rows: any[]): any[] {
+  // remove header rows at start (could be 0 or 1)
+  let out = Array.isArray(rows) ? [...rows] : [];
+  // check first row
+  if (!out.length) return out;
+  if (isHeaderRow(out[0])) out = out.slice(1);
+  // also check new first row in case file had two header-ish rows
+  if (out.length && isHeaderRow(out[0])) out = out.slice(1);
+  return out;
+}
+
 async function onFile(ev: Event) {
   const input = ev.target as HTMLInputElement;
   const file = input.files?.[0];
@@ -222,32 +317,30 @@ async function onFile(ev: Event) {
   const ext = "." + (file.name.split(".").pop() || "").toLowerCase();
 
   try {
+    loading.value = true;
     if (ext === ".xls" || ext === ".xlsx") {
       const reader = new FileReader();
       reader.onload = async () => {
         const arrayBuffer = reader.result as ArrayBuffer;
         let rows = await parseTable(arrayBuffer);
-
-        // Remove header row if detected
-        if (Array.isArray(rows[0])) {
-          const joined = String(rows[0].join(" ")).toLowerCase();
-          if (/point|pt|east|north|northing|easting|elev|elevation/.test(joined)) {
-            rows = rows.slice(1);
-          }
-        }
+        rows = stripLeadingHeaderRows(rows);
 
         const parsed = rows.map((cols) => ({
           _key: crypto.randomUUID(),
-          point: String(cols[0] ?? "").trim(),
-          easting: cols[1] ? Number(cols[1]) : null,
-          northing: cols[2] ? Number(cols[2]) : null,
-          elevation: cols[3] ? Number(cols[3]) : null,
+          point: String((Array.isArray(cols) ? cols[0] : cols["Point"] ?? cols["point"]) ?? "").trim(),
+          easting: Array.isArray(cols) ? (cols[1] ? Number(cols[1]) : null) : (cols["Easting"] !== undefined ? Number(cols["Easting"]) : cols["easting"] !== undefined ? Number(cols["easting"]) : null),
+          northing: Array.isArray(cols) ? (cols[2] ? Number(cols[2]) : null) : (cols["Northing"] !== undefined ? Number(cols["Northing"]) : cols["northing"] !== undefined ? Number(cols["northing"]) : null),
+          elevation: Array.isArray(cols) ? (cols[3] ? Number(cols[3]) : null) : (cols["Elevation"] !== undefined ? Number(cols["Elevation"]) : cols["elevation"] !== undefined ? Number(cols["elevation"]) : null),
         }));
         if (parsed.length) {
           local.coordinates = parsed;
+          // reset displayed count to first page
+          displayCount.value = Math.min(MAX_DISPLAY, parsed.length);
+          // emit full dataset even though UI will only show first MAX_DISPLAY rows
           emit("update:modelValue", { coordinates: [...local.coordinates] });
         }
         if (fileInputRef.value) fileInputRef.value.value = "";
+        loading.value = false;
       };
       reader.readAsArrayBuffer(file);
     } else {
@@ -255,33 +348,30 @@ async function onFile(ev: Event) {
       reader.onload = async () => {
         const text = String(reader.result || "");
         let rows = await parseTable(text);
-
-        // Remove header row if detected
-        if (Array.isArray(rows[0])) {
-          const joined = String(rows[0].join(" ")).toLowerCase();
-          if (/point|pt|east|north|northing|easting|elev|elevation/.test(joined)) {
-            rows = rows.slice(1);
-          }
-        }
+        rows = stripLeadingHeaderRows(rows);
 
         const parsed = rows.map((cols) => ({
           _key: crypto.randomUUID(),
-          point: String(cols[0] ?? "").trim(),
-          easting: cols[1] ? Number(cols[1]) : null,
-          northing: cols[2] ? Number(cols[2]) : null,
-          elevation: cols[3] ? Number(cols[3]) : null,
+          point: String((Array.isArray(cols) ? cols[0] : cols["Point"] ?? cols["point"]) ?? "").trim(),
+          easting: Array.isArray(cols) ? (cols[1] ? Number(cols[1]) : null) : (cols["Easting"] !== undefined ? Number(cols["Easting"]) : cols["easting"] !== undefined ? Number(cols["easting"]) : null),
+          northing: Array.isArray(cols) ? (cols[2] ? Number(cols[2]) : null) : (cols["Northing"] !== undefined ? Number(cols["Northing"]) : cols["northing"] !== undefined ? Number(cols["northing"]) : null),
+          elevation: Array.isArray(cols) ? (cols[3] ? Number(cols[3]) : null) : (cols["Elevation"] !== undefined ? Number(cols["Elevation"]) : cols["elevation"] !== undefined ? Number(cols["elevation"]) : null),
         }));
         if (parsed.length) {
           local.coordinates = parsed;
+          // reset displayed count to first page
+          displayCount.value = Math.min(MAX_DISPLAY, parsed.length);
           emit("update:modelValue", { coordinates: [...local.coordinates] });
         }
         if (fileInputRef.value) fileInputRef.value.value = "";
+        loading.value = false;
       };
       reader.readAsText(file);
     }
   } catch (err) {
     console.error("File import error:", err);
     if (fileInputRef.value) fileInputRef.value.value = "";
+    loading.value = false;
   }
 }
 

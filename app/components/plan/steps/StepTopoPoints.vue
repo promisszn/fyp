@@ -47,7 +47,9 @@ const planId = route.params.plan as string;
 const submitting = ref(false);
 
 // Stable wrapper for table model to avoid recreating object each render
-const tableModel = computed(() => ({ coordinates: props.modelValue.coordinates }));
+const tableModel = computed(() => ({
+  coordinates: props.modelValue.coordinates,
+}));
 
 function onUpdate(v: { coordinates: any[] }) {
   emit("update:modelValue", v);
@@ -66,6 +68,7 @@ async function onComplete() {
         elevation: r.elevation != null ? Number(r.elevation) : 0,
       })),
     };
+
     await axios.put(`/plan/coordinates/edit/${planId}`, payload);
     emit("complete");
   } catch (error) {
