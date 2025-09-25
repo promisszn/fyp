@@ -78,7 +78,7 @@
                 >
                   AutoPlan is a comprehensive web-based geospatial platform
                   designed to streamline cadastral and engineering surveys. This
-                  application automates complex surveying calculations, provides
+                  application automates complex geomatics calculations, provides
                   coordinate system transformations, and generates
                   submission-ready plans and reports.
                 </p>
@@ -141,7 +141,7 @@
                       2. Dashboard Overview
                     </h3>
                     <p class="text-gray-600 dark:text-gray-300 mb-3">
-                      The dashboard is your central hub for managing all surveying projects:
+                      The dashboard is your central hub for managing all geomatics projects:
                     </p>
                     <ul
                       class="list-disc list-inside space-y-1 text-gray-600 dark:text-gray-300 ml-4"
@@ -175,7 +175,7 @@
                       Creating Projects
                     </h3>
                     <p class="text-gray-600 dark:text-gray-300 mb-3">
-                      Projects serve as containers for all related surveying work:
+                      Projects serve as containers for all related geomatics work:
                     </p>
                     <ol
                       class="list-decimal list-inside space-y-2 text-gray-600 dark:text-gray-300 ml-4"
@@ -251,7 +251,7 @@
                 <div class="space-y-6">
                   <div>
                     <p class="text-gray-600 dark:text-gray-300 mb-4">
-                      Plans are created through a step-by-step wizard that guides you through the entire surveying process:
+                      Plans are created through a step-by-step wizard that guides you through the entire geomatics process:
                     </p>
                   </div>
 
@@ -339,7 +339,7 @@
                       Step 4: Automated Computations
                     </h3>
                     <p class="text-gray-600 dark:text-gray-300 mb-3">
-                      The system automatically calculates essential surveying data:
+                      The system automatically calculates essential geomatics data:
                     </p>
                     <div class="grid md:grid-cols-2 gap-4">
                       <div>
@@ -451,7 +451,7 @@
                       Traverse Computations
                     </h3>
                     <p class="text-gray-600 dark:text-gray-300 mb-3">
-                      Advanced computational capabilities for professional surveying:
+                      Advanced computational capabilities for professional geomatics:
                     </p>
                     <div class="bg-gray-50 dark:bg-slate-700 rounded-lg p-6">
                       <div class="grid md:grid-cols-2 gap-6">
@@ -655,7 +655,7 @@
                       What coordinate systems does AutoPlan support?
                     </h3>
                     <p class="text-gray-600 dark:text-gray-300">
-                      AutoPlan supports standard surveying coordinate formats including
+                      AutoPlan supports standard geomatics coordinate formats including
                       Easting/Northing pairs with optional elevation data. The system
                       is designed to work with local coordinate systems commonly used
                       in cadastral and engineering surveys.
@@ -670,7 +670,7 @@
                     </h3>
                     <p class="text-gray-600 dark:text-gray-300">
                       AutoPlan performs calculations using double-precision floating
-                      point arithmetic, suitable for professional surveying
+                      point arithmetic, suitable for professional geomatics
                       applications. The system maintains precision to at least 0.01
                       meter accuracy for distance and area calculations.
                     </p>
@@ -680,11 +680,11 @@
                     <h3
                       class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2"
                     >
-                      Can I import data from other surveying software?
+                      Can I import data from other geomatics software?
                     </h3>
                     <p class="text-gray-600 dark:text-gray-300">
                       Yes, AutoPlan accepts coordinate data in CSV and TXT formats.
-                      Most surveying software can export coordinate data in these
+                      Most geomatics software can export coordinate data in these
                       standard formats. We provide templates to ensure proper data
                       formatting.
                     </p>
@@ -700,7 +700,7 @@
                       AutoPlan supports four main plan types: Cadastral (boundary
                       surveys), Topographic (elevation mapping), Layout (construction
                       layout), and Route (linear infrastructure). Each type is
-                      optimized for specific surveying workflows.
+                      optimized for specific geomatics workflows.
                     </p>
                   </div>
 
@@ -802,7 +802,7 @@
                       Ready to Start?
                     </h3>
                     <p class="text-gray-600 dark:text-gray-300 mb-4">
-                      Begin your surveying project with AutoPlan today.
+                      Begin your geomatics project with AutoPlan today.
                     </p>
                     <NuxtLink
                       to="/dashboard"
