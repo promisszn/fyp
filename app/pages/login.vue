@@ -47,7 +47,7 @@
         </div>
 
         <!-- Divider -->
-        <div class="relative my-4">
+        <div class="relative my-1">
           <div class="absolute inset-0 flex items-center">
             <div
               class="w-full border-t border-gray-300 dark:border-slate-600"
@@ -56,7 +56,7 @@
           <div class="relative flex justify-center text-sm">
             <span
               class="px-2 bg-white dark:bg-slate-800 text-gray-500 dark:text-gray-400"
-              >Or continue with email</span
+              >or continue with email</span
             >
           </div>
         </div>
@@ -82,8 +82,35 @@
           type="submit"
           :disabled="loading"
           class="bg-blue-600 text-white rounded-md p-3 font-semibold mt-8 disabled:bg-blue-300"
+          :aria-busy="loading"
         >
-          Send OTP
+          <template v-if="loading">
+            <span class="flex items-center justify-center gap-2">
+              <svg
+                class="w-4 h-4 text-white animate-spin"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                ></path>
+              </svg>
+              <span>Sending...</span>
+            </span>
+          </template>
+          <template v-else>Send OTP</template>
         </button>
       </form>
       <form
@@ -112,8 +139,35 @@
           type="submit"
           :disabled="loading"
           class="bg-blue-600 text-white rounded-md p-3 font-semibold mt-8 disabled:bg-blue-300"
+          :aria-busy="loading"
         >
-          Continue
+          <template v-if="loading">
+            <span class="flex items-center justify-center gap-2">
+              <svg
+                class="w-4 h-4 text-white animate-spin"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                ></path>
+              </svg>
+              <span>Continuing...</span>
+            </span>
+          </template>
+          <template v-else>Continue</template>
         </button>
         <div class="flex justify-between items-center mt-1">
           <p
