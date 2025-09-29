@@ -115,6 +115,19 @@
                   </p>
                 </div>
               </div>
+
+              <div class="mt-6 text-sm text-gray-700 dark:text-gray-300">
+                <h4 class="font-semibold text-gray-800 dark:text-gray-100 mb-2">
+                  Supported survey types
+                </h4>
+                <p>
+                  AutoPlan is configured for four common survey workflows:
+                  <span class="font-medium">Perimeter</span> and
+                  <span class="font-medium">Layout</span> (cadastral), and
+                  <span class="font-medium">Topographic</span> and
+                  <span class="font-medium">Route</span> (engineering).
+                </p>
+              </div>
             </div>
 
             <div class="lg:col-span-5">
@@ -233,10 +246,29 @@
                 Traverse & Computation Engines
               </h4>
               <p class="text-sm text-gray-600 dark:text-gray-300">
-                Traverse calculations, bearing/distance computations,
-                latitude/departure, closure checks and misclosure corrections
-                are provided with batch processing and exportable results for
-                verification.
+                Core traverse routines for bearing/distance computations,
+                latitude/departure, closure checks and misclosure corrections.
+                Batch processing and exportable results make verification and
+                bookkeeping straightforward for cadastral traverse work.
+              </p>
+            </div>
+
+            <div
+              class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700"
+            >
+              <div
+                class="inline-flex items-center justify-center w-10 h-10 mb-4 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-lg"
+              >
+                <Icon name="heroicons:map-pin-20-solid" class="w-5 h-5" />
+              </div>
+              <h4 class="font-semibold text-gray-900 dark:text-white mb-2">
+                Route & Alignment Support
+              </h4>
+              <p class="text-sm text-gray-600 dark:text-gray-300">
+                Features for engineering route workflows: chainage and
+                stationing computations, offset and stakeout helpers, and
+                simple longitudinal profile checks to support preliminary
+                corridor and road alignment tasks.
               </p>
             </div>
 
@@ -353,7 +385,10 @@
                 href="https://wa.me/08090969171"
                 class="inline-flex items-center px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700"
               >
-                <Icon name="heroicons:chat-bubble-left-20-solid" class="w-4 h-4 mr-2" />
+                <Icon
+                  name="heroicons:chat-bubble-left-20-solid"
+                  class="w-4 h-4 mr-2"
+                />
                 08090969171
               </a>
             </div>
@@ -361,53 +396,119 @@
 
           <!-- Additional Team Members (stacked) -->
           <div class="max-w-3xl mx-auto mt-6 space-y-4">
-            <div class="max-w-3xl mx-auto bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-8 text-center">
-              <div class="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 mx-auto flex items-center justify-center text-white text-2xl font-semibold mb-4">OP</div>
-              <h3 class="text-lg font-bold text-gray-900 dark:text-white">Olayinka Promise</h3>
+            <div
+              class="max-w-3xl mx-auto bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-8 text-center"
+            >
+              <div
+                class="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 mx-auto flex items-center justify-center text-white text-2xl font-semibold mb-4"
+              >
+                OP
+              </div>
+              <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                Olayinka Promise
+              </h3>
               <div class="text-sm text-blue-500 mb-4">Student Developer</div>
               <div class="mt-3 flex flex-wrap justify-center gap-3">
-                <a href="mailto:olayinkapromise80@gmail.com" class="inline-flex items-center px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700">
-                  <Icon name="heroicons:envelope-20-solid" class="w-4 h-4 mr-2" />
+                <a
+                  href="mailto:olayinkapromise80@gmail.com"
+                  class="inline-flex items-center px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700"
+                >
+                  <Icon
+                    name="heroicons:envelope-20-solid"
+                    class="w-4 h-4 mr-2"
+                  />
                   olayinkapromise80@gmail.com
                 </a>
-                <a href="tel:+2348079529279" class="inline-flex items-center px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700">
+                <a
+                  href="tel:+2348079529279"
+                  class="inline-flex items-center px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700"
+                >
                   <Icon name="heroicons:phone-20-solid" class="w-4 h-4 mr-2" />
                   08079529279
                 </a>
-                <a href="https://github.com/promisszn" target="_blank" rel="noopener" class="inline-flex items-center px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700">
-                  <Icon name="heroicons:globe-alt-20-solid" class="w-4 h-4 mr-2" />
+                <a
+                  href="https://github.com/promisszn"
+                  target="_blank"
+                  rel="noopener"
+                  class="inline-flex items-center px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700"
+                >
+                  <Icon
+                    name="heroicons:globe-alt-20-solid"
+                    class="w-4 h-4 mr-2"
+                  />
                   github.com/promisszn
                 </a>
               </div>
             </div>
 
-            <div class="max-w-3xl mx-auto bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-8 text-center">
-              <div class="w-20 h-20 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 mx-auto flex items-center justify-center text-white text-2xl font-semibold mb-4">RA</div>
-              <h3 class="text-lg font-bold text-gray-900 dark:text-white">Raji Al-Ameen</h3>
+            <div
+              class="max-w-3xl mx-auto bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-8 text-center"
+            >
+              <div
+                class="w-20 h-20 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 mx-auto flex items-center justify-center text-white text-2xl font-semibold mb-4"
+              >
+                RA
+              </div>
+              <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                Raji Al-Ameen
+              </h3>
               <div class="text-sm text-blue-500 mb-4">Student Developer</div>
               <div class="mt-3 flex flex-wrap justify-center gap-3">
-                <a href="mailto:alameenraji31@gmail.com" class="inline-flex items-center px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700">
-                  <Icon name="heroicons:envelope-20-solid" class="w-4 h-4 mr-2" />
+                <a
+                  href="mailto:alameenraji31@gmail.com"
+                  class="inline-flex items-center px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700"
+                >
+                  <Icon
+                    name="heroicons:envelope-20-solid"
+                    class="w-4 h-4 mr-2"
+                  />
                   alameenraji31@gmail.com
                 </a>
-                <a href="tel:+2348181093644" class="inline-flex items-center px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700">
+                <a
+                  href="tel:+2348181093644"
+                  class="inline-flex items-center px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700"
+                >
                   <Icon name="heroicons:phone-20-solid" class="w-4 h-4 mr-2" />
                   08181093644
                 </a>
-                <a href="https://github.com/rajman01" target="_blank" rel="noopener" class="inline-flex items-center px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700">
-                  <Icon name="heroicons:globe-alt-20-solid" class="w-4 h-4 mr-2" />
+                <a
+                  href="https://github.com/rajman01"
+                  target="_blank"
+                  rel="noopener"
+                  class="inline-flex items-center px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700"
+                >
+                  <Icon
+                    name="heroicons:globe-alt-20-solid"
+                    class="w-4 h-4 mr-2"
+                  />
                   github.com/rajman01
                 </a>
               </div>
             </div>
 
-            <div class="max-w-3xl mx-auto bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-8 text-center">
-              <div class="w-20 h-20 rounded-full bg-gradient-to-br from-orange-500 to-red-500 mx-auto flex items-center justify-center text-white text-2xl font-semibold mb-4">RT</div>
-              <h3 class="text-lg font-bold text-gray-900 dark:text-white">Robert Tobechukwu</h3>
-              <div class="text-sm text-blue-500 mb-4">Technical Contributor</div>
+            <div
+              class="max-w-3xl mx-auto bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-8 text-center"
+            >
+              <div
+                class="w-20 h-20 rounded-full bg-gradient-to-br from-orange-500 to-red-500 mx-auto flex items-center justify-center text-white text-2xl font-semibold mb-4"
+              >
+                RT
+              </div>
+              <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                Robert Tobechukwu
+              </h3>
+              <div class="text-sm text-blue-500 mb-4">
+                Technical Contributor
+              </div>
               <div class="mt-3 flex flex-wrap justify-center gap-3">
-                <a href="mailto:robert999@gmail.com" class="inline-flex items-center px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700">
-                  <Icon name="heroicons:envelope-20-solid" class="w-4 h-4 mr-2" />
+                <a
+                  href="mailto:robert999@gmail.com"
+                  class="inline-flex items-center px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700"
+                >
+                  <Icon
+                    name="heroicons:envelope-20-solid"
+                    class="w-4 h-4 mr-2"
+                  />
                   robert999@gmail.com
                 </a>
               </div>
