@@ -57,9 +57,9 @@
                 the practical problems of modern cadastral and engineering
                 surveys: fragmented records, manual workflows, costly desktop
                 tools, and a shortage of automated validation. The platform
-                centralises survey data, automates geodetic computations, and
-                produces export-ready outputs to speed up planning and reduce
-                human error.
+                centralises survey data, automates computations, and produces
+                export-ready outputs to speed up planning and reduce human
+                error.
               </p>
 
               <div class="grid sm:grid-cols-2 gap-3 mt-6">
@@ -97,7 +97,7 @@
                   </h4>
                   <p class="text-sm text-gray-600 dark:text-gray-300">
                     Acquire and validate legacy tabular data, implement
-                    high-precision geodetic transforms, and provide a guided
+                    high-precision coordinate transforms, and provide a guided
                     multi-step plan workflow.
                   </p>
                 </div>
@@ -227,9 +227,9 @@
               Technical Architecture & Surveying Computations
             </h2>
             <p class="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              AutoPlan combines a modern web stack with tested geodetic
-              algorithms and traverse routines so users get both a polished UI
-              and rigorous numerical results.
+              AutoPlan combines a modern web stack with tested traverse
+              routines so users get both a polished UI and rigorous numerical
+              results.
             </p>
           </div>
 
