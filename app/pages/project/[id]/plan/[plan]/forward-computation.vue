@@ -117,7 +117,7 @@
                 >
                   Seconds
                 </th>
-                <th
+                <!-- <th
                   class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[150px]"
                 >
                   Departure
@@ -126,24 +126,24 @@
                   class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[150px]"
                 >
                   Latitude
-                </th>
+                </th> -->
                 <th
-                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[200px]"
+                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[180px]"
                 >
                   Easting(mE)
                 </th>
                 <th
-                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[200px]"
+                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[180px]"
                 >
                   Northing(mN)
                 </th>
                 <th
-                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[200px]"
+                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[150px]"
                 >
                   Easting Misclosure
                 </th>
                 <th
-                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[200px]"
+                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[150px]"
                 >
                   Northing Misclosure
                 </th>
@@ -204,7 +204,7 @@
                     placeholder="0"
                   />
                 </td>
-                <td class="py-3 px-4">
+                <!-- <td class="py-3 px-4">
                   <input
                     type="text"
                     readonly
@@ -227,7 +227,7 @@
                         : row.latitude
                     "
                   />
-                </td>
+                </td> -->
                 <td class="py-3 px-4">
                   <input
                     v-model.number="row.easting"

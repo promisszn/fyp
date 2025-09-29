@@ -162,7 +162,6 @@ const emit = defineEmits(["update:modelValue", "complete"]);
 const local = reactive<{ parcels: ParcelRow[] }>({ parcels: [] });
 const showClearConfirm = ref(false);
 
-// shallow watch parcels list reference
 watch(
   () => props.modelValue.parcels,
   (arr) => {
@@ -200,25 +199,25 @@ function addIdSlot(parcel: ParcelRow) {
 function addAllPoints() {
   if (!props.coordinateIds.length) return;
 
-  // Create a new parcel
   const newParcel: ParcelRow = {
     _key: crypto.randomUUID(),
     name: `Parcel ${local.parcels.length + 1}`,
     ids: [],
   };
 
-  // Add all coordinates from first to last
+  const seen = new Set<string>();
   props.coordinateIds.forEach((id) => {
-    newParcel.ids.push(id);
+    if (!seen.has(id)) {
+      newParcel.ids.push(id);
+      seen.add(id);
+    }
   });
 
-  // Add first coordinate again at the end to close the polygon
-  const firstId = props.coordinateIds[0];
-  if (firstId) {
+  const firstId = newParcel.ids[0];
+  if (firstId && newParcel.ids[newParcel.ids.length - 1] !== firstId) {
     newParcel.ids.push(firstId);
   }
 
-  // Add the new parcel to the list
   local.parcels.push(newParcel);
 }
 
@@ -231,6 +230,27 @@ function confirmClear() {
   local.parcels = [];
 }
 
+function dedupeAndEnsureClosure(ids: string[]) {
+  const filtered = ids.filter((id) => !!id);
+  const unique: string[] = [];
+  const seen = new Set<string>();
+  for (const id of filtered) {
+    if (!seen.has(id)) {
+      unique.push(id);
+      seen.add(id);
+    }
+  }
+
+  if (unique.length > 0) {
+    const first = unique[0] as string;
+    if (unique[unique.length - 1] !== first) {
+      unique.push(first);
+    }
+  }
+
+  return unique;
+}
+
 const canSave = computed(() => {
   if (!local.parcels.length) return false;
   return local.parcels.every(
@@ -240,11 +260,10 @@ const canSave = computed(() => {
 
 function onComplete() {
   if (!canSave.value) return;
-  // Clean empty ids; duplicates are allowed by design
   const cleaned = local.parcels.map((p) => ({
     _key: p._key,
     name: p.name.trim(),
-    ids: p.ids.filter((id) => !!id),
+    ids: dedupeAndEnsureClosure(p.ids),
   }));
   emit("update:modelValue", { parcels: cleaned });
   emit("complete");

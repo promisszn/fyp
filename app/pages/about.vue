@@ -38,7 +38,7 @@
           >
             A modern web application for creating and managing cadastral and
             engineering surveys. AutoPlan helps surveyors and engineers handle
-            coordinate systems, elevation data, and generate professional survey
+            coordinates, elevation data, and generate professional survey
             plans through an intuitive multi-step workflow.
           </p>
         </div>
@@ -97,7 +97,7 @@
                   </h4>
                   <p class="text-sm text-gray-600 dark:text-gray-300">
                     Acquire and validate legacy tabular data, implement
-                    high-precision coordinate transforms, and provide a guided
+                    high-precision geospatial computations, and provide a guided
                     multi-step plan workflow.
                   </p>
                 </div>
@@ -548,7 +548,7 @@
             Ready to Get Started?
           </h3>
           <p class="text-gray-600 dark:text-gray-400 mb-6">
-            Experience professional-grade coordinate conversion and plan
+            Experience professional-grade plan
             automation with AutoPlan.
           </p>
 
@@ -582,7 +582,7 @@ useHead({
     {
       name: "description",
       content:
-        "About AutoPlan - a research project and web platform for high-precision coordinate conversions and cadastral plan automation.",
+        "About AutoPlan - a research project and web platform for cadastral and engineering plan automation.",
     },
     { property: "og:title", content: "About AutoPlan" },
     {
