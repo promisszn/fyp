@@ -70,6 +70,14 @@
               </NuxtLink>
             </li>
             <li>
+              <NuxtLink
+                to="/about"
+                class="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transform inline-block"
+              >
+                About
+              </NuxtLink>
+            </li>
+            <li>
               <a
                 href="#"
                 class="text-gray-400 hover:text-white transition-colors duration-300 hover:translate-x-1 transform inline-block"
