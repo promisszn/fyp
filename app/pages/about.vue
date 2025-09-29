@@ -266,9 +266,9 @@
               </h4>
               <p class="text-sm text-gray-600 dark:text-gray-300">
                 Features for engineering route workflows: chainage and
-                stationing computations, offset and stakeout helpers, and
-                simple longitudinal profile checks to support preliminary
-                corridor and road alignment tasks.
+                stationing computations, offset and stakeout helpers, and simple
+                longitudinal profile checks to support preliminary corridor and
+                road alignment tasks.
               </p>
             </div>
 
@@ -502,14 +502,14 @@
               </div>
               <div class="mt-3 flex flex-wrap justify-center gap-3">
                 <a
-                  href="mailto:robert999@gmail.com"
+                  href="mailto:robertkyrie100@gmail.com"
                   class="inline-flex items-center px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700"
                 >
                   <Icon
                     name="heroicons:envelope-20-solid"
                     class="w-4 h-4 mr-2"
                   />
-                  robert999@gmail.com
+                  robertkyrie100@gmail.com
                 </a>
               </div>
             </div>
