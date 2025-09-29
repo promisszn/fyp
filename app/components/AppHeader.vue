@@ -24,6 +24,25 @@
         </NuxtLink>
 
         <div class="flex items-center space-x-4">
+          <NuxtLink
+            to="/"
+            :class="[navBase, route.path === '/' ? navActive : navDefault]"
+          >
+            Home
+          </NuxtLink>
+          <NuxtLink
+            to="/about"
+            :class="[navBase, route.path.startsWith('/about') ? navActive : navDefault]"
+          >
+            About
+          </NuxtLink>
+
+          <NuxtLink
+            to="/login"
+            class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-slate-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
+          >
+            Sign In
+          </NuxtLink>
           <ClientOnly>
             <button
               @click="toggleColorMode"
@@ -46,13 +65,6 @@
               ></div>
             </template>
           </ClientOnly>
-
-          <NuxtLink
-            to="/login"
-            class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-slate-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
-          >
-            Sign In
-          </NuxtLink>
         </div>
       </div>
     </div>
@@ -61,8 +73,14 @@
 
 <script lang="ts" setup>
 import { RiSunFill, RiMoonFill } from "@remixicon/vue";
+import { useRoute } from "vue-router";
 
 const colorMode = useColorMode();
+const route = useRoute();
+
+const navBase = "hidden md:inline-flex items-center px-3 py-2 text-sm font-medium transition-all duration-200";
+const navDefault = "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white";
+const navActive = "text-gray-900 dark:text-white font-semibold border-b-2 border-blue-500";
 
 const toggleColorMode = () => {
   colorMode.preference = colorMode.value === "dark" ? "light" : "dark";

@@ -1,17 +1,53 @@
 <template>
   <div class="space-y-6">
+    <!-- Computation method chooser: shown before the table when there are no prefilled/transferred coordinates -->
+    <div
+      class="p-6 rounded-md border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm"
+    >
+      <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
+        Choose computation method
+      </h2>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        Select how you'd like to compute or supply coordinates.
+      </p>
+      <div class="flex items-center gap-3">
+        <button
+          @click="goToForwardComputation"
+          class="px-4 py-2 text-sm rounded bg-green-600 text-white hover:bg-green-700 transition-colors"
+        >
+          Forward Computation
+        </button>
+        <button
+          @click="goToTraverseComputation"
+          class="px-4 py-2 text-sm rounded bg-amber-600 text-white hover:bg-amber-700 transition-colors"
+        >
+          Traverse Computation
+        </button>
+        <!-- <button
+          @click="handleBackChoice"
+          class="px-4 py-2 text-sm rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600 transition-colors"
+        >
+          Enter coordinates manually (Back)
+        </button> -->
+      </div>
+    </div>
+
+    <div class="flex items-center justify-center my-4">
+      <span
+        class="flex-grow border-t border-gray-300 dark:border-slate-600"
+      ></span>
+      <span class="mx-3 text-black dark:text-white"
+        >or enter coordinates manually</span
+      >
+      <span
+        class="flex-grow border-t border-gray-300 dark:border-slate-600"
+      ></span>
+    </div>
+
     <div class="flex justify-between items-center">
       <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
         Coordinate Table
       </h2>
-      <div>
-        <button
-          @click="showComputationModal = true"
-          class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
-        >
-          Compute Coordinates
-        </button>
-      </div>
     </div>
 
     <div
@@ -65,7 +101,7 @@
       </div>
     </div>
 
-    <div class="overflow-x-auto">
+    <div ref="tableRef" class="overflow-x-auto">
       <table
         class="min-w-full text-sm border border-gray-200 dark:border-slate-600 rounded-md overflow-hidden"
       >
@@ -146,7 +182,10 @@
       </button>
       <button
         @click="onComplete"
-        :disabled="(props.planType !== 'topographic' && !local.coordinates.length) || loading"
+        :disabled="
+          (props.planType !== 'topographic' && !local.coordinates.length) ||
+          loading
+        "
         class="px-4 py-2 ml-auto rounded bg-blue-600 text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700"
       >
         Save & Continue
@@ -163,12 +202,6 @@
     title="Clear all coordinates?"
     message="This will remove all coordinate rows from the table. This action cannot be undone."
     @confirmed="confirmClear"
-  />
-
-  <!-- Computation Type Selection Modal -->
-  <ComputationTypeModal
-    v-model="showComputationModal"
-    @select="onComputationTypeSelected"
   />
 </template>
 
@@ -198,11 +231,11 @@ const emit = defineEmits(["update:modelValue", "complete"]);
 const local = reactive<{ coordinates: CoordRow[] }>({ coordinates: [] });
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const showClearConfirm = ref(false);
-const showComputationModal = ref(false);
+const tableRef = ref<HTMLElement | null>(null);
+const showChooser = ref(true);
 const route = useRoute();
 const toast = useToast();
 
-// Initialize coordinate transfer composable
 const {
   getTransferredCoordinates,
   clearTransferredCoordinates,
@@ -233,8 +266,17 @@ onMounted(() => {
       title: `Successfully loaded ${convertedCoords.length} coordinates from forward computation!`,
       color: "success",
     });
+    showChooser.value = false;
   }
 });
+
+// If props already contains coordinates (editing existing plan), bypass the chooser
+if (
+  Array.isArray(props.modelValue?.coordinates) &&
+  props.modelValue.coordinates.length
+) {
+  showChooser.value = false;
+}
 
 function goToForwardComputation() {
   const projectId = route.params.id as string;
@@ -248,12 +290,24 @@ function goToTraverseComputation() {
   navigateTo(`/project/${projectId}/plan/${planId}/traverse-computation`);
 }
 
-function onComputationTypeSelected(type: "forward" | "traverse") {
-  if (type === "forward") {
-    goToForwardComputation();
-  } else if (type === "traverse") {
-    goToTraverseComputation();
+function onBackComputation() {
+  // Back computation means manually enter northings/eastings in the table.
+  // Scroll the table into view to focus the user on manual entry.
+  if (tableRef.value) {
+    tableRef.value.scrollIntoView({ behavior: "smooth", block: "center" });
   }
+  // Provide a small hint so users know they can manually enter values.
+  toast.add({
+    title: "Enter northings and eastings manually",
+    description: "Use the table to input coordinates for back computation.",
+    color: "info",
+  });
+}
+
+function handleBackChoice() {
+  // reveal the table and focus it
+  showChooser.value = false;
+  onBackComputation();
 }
 
 function triggerFile() {
@@ -327,7 +381,11 @@ async function onFile(ev: Event) {
         // Remove header row if detected
         if (Array.isArray(rows[0])) {
           const joined = String(rows[0].join(" ")).toLowerCase();
-          if (/gcp_name|gcp|gcp_name|point|name|east|north|easting|northing/.test(joined)) {
+          if (
+            /gcp_name|gcp|gcp_name|point|name|east|north|easting|northing/.test(
+              joined
+            )
+          ) {
             rows = rows.slice(1);
           }
         }
@@ -353,7 +411,11 @@ async function onFile(ev: Event) {
         // Remove header row if detected
         if (Array.isArray(rows[0])) {
           const joined = String(rows[0].join(" ")).toLowerCase();
-          if (/gcp_name|gcp|gcp_name|point|name|east|north|easting|northing/.test(joined)) {
+          if (
+            /gcp_name|gcp|gcp_name|point|name|east|north|easting|northing/.test(
+              joined
+            )
+          ) {
             rows = rows.slice(1);
           }
         }
