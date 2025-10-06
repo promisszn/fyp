@@ -288,7 +288,7 @@
       <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">
         Page Settings
       </h3>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div>
           <label
             class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1"
@@ -314,6 +314,24 @@
           >
             <option value="portrait">Portrait</option>
             <option value="landscape">Landscape</option>
+          </select>
+        </div>
+        <div>
+          <label
+            class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >DXF Version</label
+          >
+          <select
+            v-model="local.embellishment.dxf_version"
+            class="w-full text-sm rounded-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="R12">AutoCAD R12 (1992)</option>
+            <option value="R2000">AutoCAD 2000/2000i/2002</option>
+            <option value="R2004">AutoCAD 2004/2005/2006</option>
+            <option value="R2007">AutoCAD 2007/2008/2009</option>
+            <option value="R2010">AutoCAD 2010/2011/2012</option>
+            <option value="R2013">AutoCAD 2013-2017</option>
+            <option value="R2018">AutoCAD 2018-2023</option>
           </select>
         </div>
       </div>
@@ -421,6 +439,7 @@ interface EmbellishmentState {
   surveyor_name: string;
   page_size: string;
   page_orientation: string;
+  dxf_version: string;
   footers: string[];
   footer_size: number;
 }
@@ -450,6 +469,7 @@ const local = reactive<{ embellishment: EmbellishmentState }>({
     surveyor_name: "",
     page_size: "A4",
     page_orientation: "portrait",
+    dxf_version: "R2018",
     footers: [""],
     footer_size: 1,
   },
