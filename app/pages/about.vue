@@ -47,7 +47,7 @@
         <div
           class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-8 md:p-10 mb-12"
         >
-          <div class="grid lg:grid-cols-12 gap-6 items-center">
+          <div class="grid lg:grid-cols-12 gap-6 items-start">
             <div class="lg:col-span-7">
               <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">
                 Project Overview
@@ -150,11 +150,12 @@
                     />
                     <div class="text-left">
                       <div class="font-medium text-white">
-                        Multi-step plan workflow
+                        Traverse Computations
                       </div>
                       <div class="text-sm text-white/80">
-                        Guided steps for details, coordinates, drawing,
-                        elevation, computation, parcels, and report.
+                        Forward & back (inverse) computation, bearing/distance
+                        calculations, latitude & departure, closure analysis,
+                        misclosure corrections, and bounding box generation.
                       </div>
                     </div>
                   </div>
@@ -168,11 +169,12 @@
                     />
                     <div class="text-left">
                       <div class="font-medium text-white">
-                        Robust coordinate handling
+                        Differential Leveling
                       </div>
                       <div class="text-sm text-white/80">
-                        Import/validate CSV & XLSX, support datum/projection
-                        transforms, and programmatic coordinate transfer.
+                        Height of Instrument and Rise & Fall methods, reduced
+                        level computation, automatic misclosure correction, and
+                        elevation transfer.
                       </div>
                     </div>
                   </div>
@@ -186,11 +188,13 @@
                     />
                     <div class="text-left">
                       <div class="font-medium text-white">
-                        Interactive mapping & exports
+                        Route Engineering Features
                       </div>
                       <div class="text-sm text-white/80">
-                        Leaflet-based plotting plus export to PDF, DXF, and
-                        coordinate tables (CSV/XLSX).
+                        Chainage and stationing computations, longitudinal
+                        profile parameters (horizontal/vertical scales, station
+                        intervals, starting chainage), offset and stakeout
+                        support.
                       </div>
                     </div>
                   </div>
@@ -204,11 +208,31 @@
                     />
                     <div class="text-left">
                       <div class="font-medium text-white">
-                        Security & integrations
+                        Topographic Processing
                       </div>
                       <div class="text-sm text-white/80">
-                        Email/OTP and Google OAuth flows with Axios interceptors
-                        for secure API access.
+                        Spot height display, contour generation from TIN,
+                        contour intervals and labels, grid/TIN rendering, and
+                        elevation data validation.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    class="flex items-start space-x-3 p-3 rounded-lg bg-white/10"
+                  >
+                    <Icon
+                      name="heroicons:check-20-solid"
+                      class="w-5 h-5 text-white mt-1"
+                    />
+                    <div class="text-left">
+                      <div class="font-medium text-white">
+                        Data Import/Export & Mapping
+                      </div>
+                      <div class="text-sm text-white/80">
+                        CSV/XLSX import with validation, Leaflet-based
+                        interactive plotting, coordinate transfer between steps,
+                        PDF/DXF exports, and OAuth/email authentication.
                       </div>
                     </div>
                   </div>
