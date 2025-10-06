@@ -282,7 +282,7 @@ const planData = reactive({
   embellishment: {
     name: "",
     font: "Arial",
-    font_size: 12,
+    font_size: 2,
     title: "",
     address: "",
     local_govt: "",

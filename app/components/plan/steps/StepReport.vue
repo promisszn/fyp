@@ -260,7 +260,7 @@
 
         <div v-if="generationState.url" class="mb-4">
           <div
-            class="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm mb-2"
+            class="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm"
           >
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path
@@ -269,28 +269,8 @@
                 clip-rule="evenodd"
               />
             </svg>
-            Plan generated successfully!
+            Plan generated and downloaded successfully!
           </div>
-          <a
-            :href="generationState.url"
-            download
-            class="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-          >
-            <svg
-              class="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-            Download Plan
-          </a>
         </div>
 
         <div v-else>
@@ -435,9 +415,18 @@ async function generatePlan() {
 
     if (response.data?.error === false && response.data?.data?.url) {
       generationState.url = response.data.data.url;
+      
+      // Automatically trigger download
+      const link = document.createElement('a');
+      link.href = response.data.data.url;
+      link.download = ''; // Browser will use filename from URL
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
       toast?.add?.({
         title: "Plan generated successfully!",
-        description: "Your plan is ready for download.",
+        description: "Your plan download has started.",
         color: "success",
       });
     } else {
