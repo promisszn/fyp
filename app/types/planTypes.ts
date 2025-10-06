@@ -8,5 +8,5 @@ export const PLAN_TYPES: PlanTypeOption[] = [
   { value: "cadastral", label: "Cadastral" },
   { value: "topographic", label: "Topographic" },
   { value: "layout", label: "Layout" },
-  { value: "route", label: "Route (coming soon)", disabled: true },
+  { value: "route", label: "Route" },
 ];

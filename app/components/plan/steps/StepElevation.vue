@@ -1,5 +1,37 @@
 <template>
   <div>
+    <!-- Leveling method chooser -->
+    <div
+      class="p-6 rounded-md border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm mb-6"
+    >
+      <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
+        Choose leveling method
+      </h2>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        Select how you'd like to compute elevation data for your route survey.
+      </p>
+      <div class="flex items-center gap-3">
+        <button
+          @click="goToDifferentialLeveling"
+          class="px-4 py-2 text-sm rounded bg-green-600 text-white hover:bg-green-700 transition-colors"
+        >
+          Differential Leveling
+        </button>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-center my-4">
+      <span
+        class="flex-grow border-t border-gray-300 dark:border-slate-600"
+      ></span>
+      <span class="mx-3 text-black dark:text-white"
+        >or enter elevation data manually</span
+      >
+      <span
+        class="flex-grow border-t border-gray-300 dark:border-slate-600"
+      ></span>
+    </div>
+
     <div class="flex items-center justify-between mb-4">
       <div>
         <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
@@ -56,19 +88,12 @@
               class="border-t border-gray-200 dark:border-slate-700"
             >
               <td class="px-3 py-1">
-                <select
+                <input
+                  type="text"
                   v-model="row.point"
                   class="w-full px-2 py-1 text-xs rounded border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 focus:outline-none"
-                >
-                  <option value="">Select Point</option>
-                  <option
-                    v-for="pointId in availablePoints"
-                    :key="pointId"
-                    :value="pointId"
-                  >
-                    {{ pointId }}
-                  </option>
-                </select>
+                  placeholder="Select point"
+                />
               </td>
               <td class="px-3 py-1">
                 <input
@@ -128,7 +153,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from "vue";
+import { ref, reactive, computed, watch, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { navigateTo } from "#imports";
+import { useElevationTransfer } from "~/composables/useElevationTransfer";
 
 interface ElevationRow {
   _key: string;
@@ -144,7 +172,6 @@ interface ElevationData {
 const props = defineProps<{
   modelValue: ElevationData;
   coordinateIds: string[];
-  loading?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -152,10 +179,81 @@ const emit = defineEmits<{
   complete: [];
 }>();
 
+const route = useRoute();
 const fileInputRef = ref<HTMLInputElement>();
+const loading = ref(false);
 
 const local = reactive<ElevationData>({
   elevations: [...props.modelValue.elevations],
+});
+
+function goToDifferentialLeveling() {
+  const projectId = route.params.id as string;
+  const planId = route.params.plan as string;
+  navigateTo(`/project/${projectId}/plan/${planId}/differential-leveling`);
+}
+
+// Check for transferred elevation data on mount
+onMounted(async () => {
+  const {
+    getTransferredElevations,
+    clearTransferredElevations,
+    hasTransferredElevations,
+  } = useElevationTransfer();
+
+  // Priority 1: Check for transferred elevation data (from differential leveling)
+  if (hasTransferredElevations.value) {
+    const transferred = getTransferredElevations();
+
+    // Convert transferred elevations to elevation rows
+    const newElevations = transferred.map((el) => ({
+      _key: crypto.randomUUID(),
+      point: el.point,
+      elevation: el.elevation,
+      chainage: el.chainage,
+    }));
+
+    if (newElevations.length > 0) {
+      local.elevations = newElevations;
+
+      // Clear the transferred data after using it
+      clearTransferredElevations();
+      return; // Don't fetch from API if we have transferred data
+    }
+  }
+
+  // Priority 2: Fetch existing elevation data from API (if editing existing plan)
+  try {
+    const planId = route.params.plan as string;
+    if (planId) {
+      const { $axios } = useNuxtApp();
+      const response = await $axios.get(`/plan/fetch/${planId}`);
+
+      if (
+        response.data?.data?.elevations &&
+        response.data.data.elevations.length > 0
+      ) {
+        const apiElevations = response.data.data.elevations.map((el: any) => ({
+          _key: crypto.randomUUID(),
+          point: el.id || "",
+          elevation: el.elevation || null,
+          chainage: el.chainage || "",
+        }));
+
+        // Only update if we don't already have data in local.elevations
+        if (
+          local.elevations.length === 1 &&
+          local.elevations[0] &&
+          !local.elevations[0].point
+        ) {
+          local.elevations = apiElevations;
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Failed to fetch elevation data:", error);
+    // Don't show error toast here as this is optional background loading
+  }
 });
 
 // Available coordinate points that don't have elevation data yet
@@ -288,8 +386,51 @@ function downloadTemplate() {
   URL.revokeObjectURL(url);
 }
 
+const toast = useToast();
+
 async function saveAndContinue() {
-  if (!hasValidElevations.value) return;
-  emit("complete");
+  if (!hasValidElevations.value || loading.value) return;
+
+  try {
+    loading.value = true;
+    const planId = route.params.plan as string;
+    const { $axios } = useNuxtApp();
+
+    // Prepare elevation data for API
+    const elevations = local.elevations
+      .filter(
+        (row) => row.point && row.point.trim() !== "" && row.elevation !== null
+      )
+      .map((row) => ({
+        id: row.point,
+        elevation: row.elevation!,
+        chainage: row.chainage || "",
+      }));
+
+    if (elevations.length === 0) {
+      toast.add({
+        title: "Please add at least one elevation point",
+        color: "warning",
+      });
+      return;
+    }
+
+    // Save elevation data to API
+    await $axios.put(`/plan/elevations/edit/${planId}`, {
+      elevations,
+    });
+
+    emit("complete");
+  } catch (error: any) {
+    console.error("Failed to save elevation data:", error);
+    toast.add({
+      title: "Failed to save elevation data",
+      description:
+        error.response?.data?.message || error.message || "Please try again",
+      color: "error",
+    });
+  } finally {
+    loading.value = false;
+  }
 }
 </script>
