@@ -297,6 +297,7 @@ const planData = reactive({
     label_size: 1,
     page_size: "A4",
     page_orientation: "portrait",
+    dxf_version: "R2018",
     footers: [],
     footer_size: 0.5,
   },
@@ -393,6 +394,7 @@ onMounted(async () => {
           page_size: emb.page_size ?? planData.embellishment.page_size,
           page_orientation:
             emb.page_orientation ?? planData.embellishment.page_orientation,
+          dxf_version: emb.dxf_version ?? planData.embellishment.dxf_version,
           footers: Array.isArray(emb.footers)
             ? emb.footers
             : planData.embellishment.footers,
@@ -683,6 +685,7 @@ async function completeEmbellishment() {
       surveyor_name: e.surveyor_name,
       page_size: e.page_size ?? "A4",
       page_orientation: e.page_orientation ?? "portrait",
+      dxf_version: e.dxf_version ?? "R2018",
       footers: Array.isArray(e.footers) ? e.footers : [],
       footer_size: Number(e.footer_size ?? 1),
     };
@@ -728,6 +731,7 @@ type EmbellishmentUpdate = {
     beacon_type: string;
     personel_name: string;
     surveyor_name: string;
+    dxf_version: string;
     footers: string[];
     footer_size: number;
   };
@@ -748,6 +752,7 @@ type ReportUpdate = {
     beacon_type: string;
     personel_name: string;
     surveyor_name: string;
+    dxf_version: string;
     footers: string[];
     footer_size: number;
   };
