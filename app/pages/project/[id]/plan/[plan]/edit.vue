@@ -375,7 +375,7 @@ const planData = reactive({
     page_orientation: "portrait",
     dxf_version: "R2018",
     footers: [],
-    footer_size: 0.5,
+    footer_size: 1,
   },
   report: { generate: true },
   // Topographic plan fields
