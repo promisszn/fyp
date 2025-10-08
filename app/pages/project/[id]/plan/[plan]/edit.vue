@@ -282,8 +282,8 @@ const initialLoading = ref(true);
 const steps = computed(() => {
   if (planData.basic.type === "topographic") {
     return [
-      { key: "topo-boundary", title: "Topo Boundary" },
-      { key: "topo-points", title: "Topo Points" },
+      { key: "topo-boundary", title: "Perimeter Survey" },
+      { key: "topo-points", title: "Spot Height" },
       { key: "topo-settings", title: "Topo Settings" },
       { key: "embellishment", title: "Plan Embellishment" },
       { key: "report", title: "Report" },
@@ -537,30 +537,25 @@ onMounted(async () => {
           planData.topoSettings = { ...data.topographic_setting };
         }
 
-        // Auto-progress for topographic flow: boundary is always completed (optional)
-        // Only check for topo points and settings to determine current step
+        // Auto-progress for topographic flow: boundary is now compulsory
         const hasBoundary = planData.boundary.length > 0;
         const hasTopoPoints = planData.topoPoints.length > 0;
         const hasTopoSettings = Object.keys(planData.topoSettings).length > 0;
 
-        // Boundary step is always considered completed since it's optional
-        completed.value.add(1);
-
+        // Mark steps as completed based on existing data
+        if (hasBoundary) completed.value.add(1);
         if (hasTopoPoints) completed.value.add(2);
         if (hasTopoSettings) completed.value.add(3);
 
-        if (!hasTopoPoints) {
-          currentStep.value = 2;
-          return;
-        }
-
         // Determine current step based on what's been completed
-        if (hasTopoSettings) {
-          currentStep.value = 4; // embellishment
-        } else if (hasTopoPoints) {
-          currentStep.value = 3; // topo settings
+        if (!hasBoundary) {
+          currentStep.value = 1; // start at boundary (compulsory)
+        } else if (!hasTopoPoints) {
+          currentStep.value = 2; // move to topo points
+        } else if (!hasTopoSettings) {
+          currentStep.value = 3; // move to topo settings
         } else {
-          currentStep.value = 2; // topo points (since boundary is optional)
+          currentStep.value = 4; // move to embellishment
         }
 
         // Skip the rest of auto-progress logic for other plan types
