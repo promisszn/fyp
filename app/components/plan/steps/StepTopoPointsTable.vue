@@ -2,7 +2,7 @@
   <div class="space-y-6">
     <div class="flex justify-between items-center">
       <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
-        Topo Points Table
+        Spot Height Table
       </h2>
     </div>
     <div
@@ -57,11 +57,29 @@
     </div>
     <div class="overflow-x-auto">
       <div v-if="loading" class="p-6 flex items-center justify-center">
-        <svg class="animate-spin h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+        <svg
+          class="animate-spin h-6 w-6 text-blue-600"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          ></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+          ></path>
         </svg>
-        <span class="ml-3 text-sm text-gray-600 dark:text-gray-300">Parsing file, showing first {{ MAX_DISPLAY }} rows...</span>
+        <span class="ml-3 text-sm text-gray-600 dark:text-gray-300"
+          >Parsing file, showing first {{ MAX_DISPLAY }} rows...</span
+        >
       </div>
       <table
         v-else
@@ -139,9 +157,7 @@
       <template v-if="totalCount > displayCount">
         Showing first {{ displayCount }} of {{ totalCount }} rows
       </template>
-      <template v-else>
-        Showing {{ totalCount }} rows
-      </template>
+      <template v-else> Showing {{ totalCount }} rows </template>
     </div>
 
     <div class="flex gap-3">
@@ -190,7 +206,12 @@ const loading = ref(false);
 const MAX_DISPLAY = 100;
 
 const displayCount = ref(MAX_DISPLAY);
-const displayedCoordinates = computed(() => local.coordinates.slice(0, Math.min(displayCount.value, local.coordinates.length)));
+const displayedCoordinates = computed(() =>
+  local.coordinates.slice(
+    0,
+    Math.min(displayCount.value, local.coordinates.length)
+  )
+);
 const totalCount = computed(() => local.coordinates.length);
 
 watch(
@@ -246,7 +267,10 @@ function clearAll() {
 
 // Load next chunk of rows (next MAX_DISPLAY) until we reach the end
 function loadMore() {
-  displayCount.value = Math.min(displayCount.value + MAX_DISPLAY, local.coordinates.length);
+  displayCount.value = Math.min(
+    displayCount.value + MAX_DISPLAY,
+    local.coordinates.length
+  );
 }
 
 // Keep displayCount in-range when the underlying data changes
@@ -276,7 +300,10 @@ function isHeaderRow(row: any): boolean {
     if (Array.isArray(row)) {
       const joined = String(row.join(" ")).toLowerCase();
       // keyword detection
-      if (/point|\bpt\b|east|north|northing|easting|elev|elevation/.test(joined)) return true;
+      if (
+        /point|\bpt\b|east|north|northing|easting|elev|elevation/.test(joined)
+      )
+        return true;
 
       // numeric heuristic: check how many of the next 3 columns look numeric
       const numericCount = [1, 2, 3].reduce((c, i) => {
@@ -289,7 +316,8 @@ function isHeaderRow(row: any): boolean {
       return false;
     } else if (typeof row === "object") {
       const keys = Object.keys(row).join(" ").toLowerCase();
-      if (/point|\bpt\b|east|north|northing|easting|elev|elevation/.test(keys)) return true;
+      if (/point|\bpt\b|east|north|northing|easting|elev|elevation/.test(keys))
+        return true;
       return false;
     }
   } catch (e) {
@@ -327,10 +355,37 @@ async function onFile(ev: Event) {
 
         const parsed = rows.map((cols) => ({
           _key: crypto.randomUUID(),
-          point: String((Array.isArray(cols) ? cols[0] : cols["Point"] ?? cols["point"]) ?? "").trim(),
-          easting: Array.isArray(cols) ? (cols[1] ? Number(cols[1]) : null) : (cols["Easting"] !== undefined ? Number(cols["Easting"]) : cols["easting"] !== undefined ? Number(cols["easting"]) : null),
-          northing: Array.isArray(cols) ? (cols[2] ? Number(cols[2]) : null) : (cols["Northing"] !== undefined ? Number(cols["Northing"]) : cols["northing"] !== undefined ? Number(cols["northing"]) : null),
-          elevation: Array.isArray(cols) ? (cols[3] ? Number(cols[3]) : null) : (cols["Elevation"] !== undefined ? Number(cols["Elevation"]) : cols["elevation"] !== undefined ? Number(cols["elevation"]) : null),
+          point: String(
+            (Array.isArray(cols) ? cols[0] : cols["Point"] ?? cols["point"]) ??
+              ""
+          ).trim(),
+          easting: Array.isArray(cols)
+            ? cols[1]
+              ? Number(cols[1])
+              : null
+            : cols["Easting"] !== undefined
+            ? Number(cols["Easting"])
+            : cols["easting"] !== undefined
+            ? Number(cols["easting"])
+            : null,
+          northing: Array.isArray(cols)
+            ? cols[2]
+              ? Number(cols[2])
+              : null
+            : cols["Northing"] !== undefined
+            ? Number(cols["Northing"])
+            : cols["northing"] !== undefined
+            ? Number(cols["northing"])
+            : null,
+          elevation: Array.isArray(cols)
+            ? cols[3]
+              ? Number(cols[3])
+              : null
+            : cols["Elevation"] !== undefined
+            ? Number(cols["Elevation"])
+            : cols["elevation"] !== undefined
+            ? Number(cols["elevation"])
+            : null,
         }));
         if (parsed.length) {
           local.coordinates = parsed;
@@ -352,10 +407,37 @@ async function onFile(ev: Event) {
 
         const parsed = rows.map((cols) => ({
           _key: crypto.randomUUID(),
-          point: String((Array.isArray(cols) ? cols[0] : cols["Point"] ?? cols["point"]) ?? "").trim(),
-          easting: Array.isArray(cols) ? (cols[1] ? Number(cols[1]) : null) : (cols["Easting"] !== undefined ? Number(cols["Easting"]) : cols["easting"] !== undefined ? Number(cols["easting"]) : null),
-          northing: Array.isArray(cols) ? (cols[2] ? Number(cols[2]) : null) : (cols["Northing"] !== undefined ? Number(cols["Northing"]) : cols["northing"] !== undefined ? Number(cols["northing"]) : null),
-          elevation: Array.isArray(cols) ? (cols[3] ? Number(cols[3]) : null) : (cols["Elevation"] !== undefined ? Number(cols["Elevation"]) : cols["elevation"] !== undefined ? Number(cols["elevation"]) : null),
+          point: String(
+            (Array.isArray(cols) ? cols[0] : cols["Point"] ?? cols["point"]) ??
+              ""
+          ).trim(),
+          easting: Array.isArray(cols)
+            ? cols[1]
+              ? Number(cols[1])
+              : null
+            : cols["Easting"] !== undefined
+            ? Number(cols["Easting"])
+            : cols["easting"] !== undefined
+            ? Number(cols["easting"])
+            : null,
+          northing: Array.isArray(cols)
+            ? cols[2]
+              ? Number(cols[2])
+              : null
+            : cols["Northing"] !== undefined
+            ? Number(cols["Northing"])
+            : cols["northing"] !== undefined
+            ? Number(cols["northing"])
+            : null,
+          elevation: Array.isArray(cols)
+            ? cols[3]
+              ? Number(cols[3])
+              : null
+            : cols["Elevation"] !== undefined
+            ? Number(cols["Elevation"])
+            : cols["elevation"] !== undefined
+            ? Number(cols["elevation"])
+            : null,
         }));
         if (parsed.length) {
           local.coordinates = parsed;

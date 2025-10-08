@@ -15,7 +15,7 @@
           @click="goToDifferentialLeveling"
           class="px-4 py-2 text-sm rounded bg-green-600 text-white hover:bg-green-700 transition-colors"
         >
-          Differential Leveling
+          Level Reduction
         </button>
       </div>
     </div>

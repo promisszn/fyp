@@ -21,7 +21,7 @@
 
         <div>
           <label class="block text-xs text-gray-600 mb-1"
-            >Point label scale</label
+            >Spot height label font size</label
           >
           <input
             v-model.number="local.point_label_scale"
@@ -73,7 +73,7 @@
 
       <!-- Right column -->
       <div class="space-y-4">
-        <div>
+        <!-- <div>
           <label class="block text-xs text-gray-600 mb-1"
             >Minimum distance</label
           >
@@ -83,7 +83,7 @@
             step="0.01"
             class="w-full px-3 py-2 rounded border bg-white dark:bg-slate-800"
           />
-        </div>
+        </div> -->
 
         <div class="flex items-center gap-3">
           <input
@@ -96,31 +96,10 @@
 
         <div>
           <label class="block text-xs text-gray-600 mb-1"
-            >Contour label scale</label
+            >Contour label font size</label
           >
           <input
             v-model.number="local.contour_label_scale"
-            type="number"
-            step="0.01"
-            class="w-full px-3 py-2 rounded border bg-white dark:bg-slate-800"
-          />
-        </div>
-
-        <div class="flex items-center gap-3">
-          <input
-            type="checkbox"
-            v-model="local.show_boundary"
-            class="form-checkbox h-4 w-4"
-          />
-          <label class="text-sm font-medium">Show boundary</label>
-        </div>
-
-        <div>
-          <label class="block text-xs text-gray-600 mb-1"
-            >Boundary label scale</label
-          >
-          <input
-            v-model.number="local.boundary_label_scale"
             type="number"
             step="0.01"
             class="w-full px-3 py-2 rounded border bg-white dark:bg-slate-800"
@@ -153,6 +132,41 @@
             </label>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Perimeter Survey Settings -->
+    <div class="border-t pt-6 mt-6">
+      <h3 class="text-base font-semibold mb-2">Perimeter Survey Settings</h3>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        Configure display settings for the perimeter survey boundary
+      </p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="space-y-4">
+          <div class="flex items-center gap-3">
+            <input
+              type="checkbox"
+              v-model="local.show_boundary"
+              class="form-checkbox h-4 w-4"
+            />
+            <label class="text-sm font-medium">Show perimeter</label>
+          </div>
+        </div>
+
+        <!-- <div class="space-y-4">
+          <div>
+            <label class="block text-xs text-gray-600 mb-1"
+              >Perimeter font size</label
+            >
+            <input
+              v-model.number="local.boundary_label_scale"
+              type="number"
+              step="0.01"
+              class="w-full px-3 py-2 rounded border bg-white dark:bg-slate-800"
+            />
+          </div>
+        </div> -->
       </div>
     </div>
 

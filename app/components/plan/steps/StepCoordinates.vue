@@ -351,13 +351,7 @@ function onComplete() {
     return;
   }
 
-  // Allow saving with empty coordinates for topographic plans
-  if (props.planType === "topographic") {
-    emit("update:modelValue", { coordinates: [] });
-    emit("complete");
-    return;
-  }
-
+  // Coordinates are now required for all plan types including topographic
   // Otherwise, do nothing (button should be disabled)
   return;
 }

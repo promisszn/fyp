@@ -15,7 +15,7 @@
       </div>
 
       <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">
-        Differential Leveling
+        Level Reduction
       </h1>
 
       <!-- Differential Leveling Table -->
@@ -412,7 +412,7 @@
             Computation Completed
           </h3>
           <p class="text-sm text-green-700 dark:text-green-300 mb-4">
-            Differential leveling computation completed successfully using the
+            Level reduction completed successfully using the
             <strong>{{
               levelingMethod === "height-of-instrument"
                 ? "Height of Instrument"
