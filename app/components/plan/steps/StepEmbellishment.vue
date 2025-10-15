@@ -174,7 +174,7 @@
         <div>
           <label
             class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >Font Size</label
+            >Title Size</label
           >
           <input
             v-model.number="local.embellishment.font_size"
@@ -419,7 +419,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch, computed } from "vue";
+import { reactive, watch, computed, onMounted } from "vue";
 
 interface EmbellishmentState {
   name: string;
@@ -448,7 +448,7 @@ const props = defineProps<{
   modelValue: { embellishment: EmbellishmentState };
   loading?: boolean;
 }>();
-const emit = defineEmits(["update:modelValue", "complete"]);
+const emit = defineEmits(["update:modelValue", "complete", "refresh"]);
 
 const local = reactive<{ embellishment: EmbellishmentState }>({
   embellishment: {
@@ -492,6 +492,10 @@ watch(
 );
 
 const loading = computed(() => !!props.loading);
+
+onMounted(() => {
+  emit("refresh");
+});
 
 // Ensure footers are always properly initialized
 const safeFooters = computed(() => {

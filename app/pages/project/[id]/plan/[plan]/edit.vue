@@ -111,6 +111,7 @@
             :loading="submittingEmbellishment"
             @update:model-value="onEmbellishmentUpdate"
             @complete="completeEmbellishment"
+            @refresh="() => fetchPlan(true)"
           />
           <!-- Step 5: Report -->
           <StepReport
@@ -154,6 +155,7 @@
               :loading="submittingEmbellishment"
               @update:model-value="onEmbellishmentUpdate"
               @complete="completeEmbellishment"
+              @refresh="() => fetchPlan(true)"
             />
             <!-- Route Step 4: Report -->
             <StepReport
@@ -210,9 +212,7 @@
               v-else-if="currentStep === 4 && planData.basic.type !== 'layout'"
               :model-value="drawingModel"
               :coordinates="planData.coordinates"
-              :parcel-name="
-                planData.parcels[0]?.name || planData.basic.name
-              "
+              :parcel-name="planData.parcels[0]?.name || planData.basic.name"
               :parcels="planData.parcels"
               :plan-type="planData.basic.type"
               :legs="computationResult?.legs || []"
@@ -226,6 +226,7 @@
               :loading="submittingEmbellishment"
               @update:model-value="onEmbellishmentUpdate"
               @complete="completeEmbellishment"
+              @refresh="() => fetchPlan(true)"
             />
             <!-- Step 6: Report -->
             <StepReport
@@ -234,7 +235,9 @@
               :basic="planData.basic"
               :coordinates-count="planData.coordinates.length"
               :parcels-count="planData.parcels.length"
-              :layout-params="planData.basic.type === 'layout' ? planData.layout : null"
+              :layout-params="
+                planData.basic.type === 'layout' ? planData.layout : null
+              "
               @update:model-value="onReportUpdate"
               @cancel="navigateTo(`/project/${projectId}`)"
               @finish="finishPlan"
@@ -408,8 +411,12 @@ const parcelsModel = computed(() => ({ parcels: planData.parcels }));
 const drawingModel = computed(() => ({ drawing: planData.drawing }));
 const layoutModel = computed(() => ({ layout: planData.layout }));
 
-onMounted(async () => {
+// Fetch plan data function (can be called anytime)
+const fetchPlan = async (skipNavigation = false) => {
   try {
+    if (!skipNavigation) {
+      initialLoading.value = true;
+    }
     const res = await axios.get(`/plan/fetch/${planId}`);
     const data = res?.data?.data;
     if (data) {
@@ -547,15 +554,17 @@ onMounted(async () => {
         if (hasTopoPoints) completed.value.add(2);
         if (hasTopoSettings) completed.value.add(3);
 
-        // Determine current step based on what's been completed
-        if (!hasBoundary) {
-          currentStep.value = 1; // start at boundary (compulsory)
-        } else if (!hasTopoPoints) {
-          currentStep.value = 2; // move to topo points
-        } else if (!hasTopoSettings) {
-          currentStep.value = 3; // move to topo settings
-        } else {
-          currentStep.value = 4; // move to embellishment
+        // Determine current step based on what's been completed (only on initial load)
+        if (!skipNavigation) {
+          if (!hasBoundary) {
+            currentStep.value = 1; // start at boundary (compulsory)
+          } else if (!hasTopoPoints) {
+            currentStep.value = 2; // move to topo points
+          } else if (!hasTopoSettings) {
+            currentStep.value = 3; // move to topo settings
+          } else {
+            currentStep.value = 4; // move to embellishment
+          }
         }
 
         // Skip the rest of auto-progress logic for other plan types
@@ -567,21 +576,24 @@ onMounted(async () => {
 
         if (planData.basic.type === "route") {
           // Route survey flow: elevation -> longitudinal -> embellishment -> report
-          const hasLongitudinal = Object.keys(data.longitudinal_profile_parameters || {}).length > 0;
-          
+          const hasLongitudinal =
+            Object.keys(data.longitudinal_profile_parameters || {}).length > 0;
+
           if (hasElevations) {
             completed.value.add(1); // elevation is step 1
           }
           if (hasLongitudinal) {
             completed.value.add(2); // longitudinal is step 2
           }
-          
-          if (hasLongitudinal) {
-            currentStep.value = 3; // embellishment
-          } else if (hasElevations) {
-            currentStep.value = 2; // longitudinal
-          } else {
-            currentStep.value = 1; // start at elevation
+
+          if (!skipNavigation) {
+            if (hasLongitudinal) {
+              currentStep.value = 3; // embellishment
+            } else if (hasElevations) {
+              currentStep.value = 2; // longitudinal
+            } else {
+              currentStep.value = 1; // start at elevation
+            }
           }
         } else if (planData.basic.type === "layout") {
           // Layout survey flow: coordinates -> parcels -> computation -> layout
@@ -590,22 +602,24 @@ onMounted(async () => {
           }
           // Layout survey flow: coordinates -> parcels -> computation -> layout
           const hasLayout = Object.keys(data.layout_params || {}).length > 0;
-          
+
           if (hasParcels) {
             completed.value.add(2);
           }
           if (hasLayout) {
             completed.value.add(4);
           }
-          
-          if (hasLayout) {
-            currentStep.value = 5; // embellishment
-          } else if (hasCoords && hasParcels) {
-            currentStep.value = 3; // computation
-          } else if (hasCoords) {
-            currentStep.value = 2; // parcels
-          } else {
-            currentStep.value = 1; // coordinates
+
+          if (!skipNavigation) {
+            if (hasLayout) {
+              currentStep.value = 5; // embellishment
+            } else if (hasCoords && hasParcels) {
+              currentStep.value = 3; // computation
+            } else if (hasCoords) {
+              currentStep.value = 2; // parcels
+            } else {
+              currentStep.value = 1; // coordinates
+            }
           }
         } else {
           // Cadastral survey flow: coordinates -> parcels -> computation -> drawing
@@ -615,12 +629,14 @@ onMounted(async () => {
           if (hasParcels) {
             completed.value.add(2);
           }
-          if (hasCoords && hasParcels) {
-            currentStep.value = 3; // computation
-          } else if (hasCoords) {
-            currentStep.value = 2; // parcels
-          } else {
-            currentStep.value = 1; // coordinates
+          if (!skipNavigation) {
+            if (hasCoords && hasParcels) {
+              currentStep.value = 3; // computation
+            } else if (hasCoords) {
+              currentStep.value = 2; // parcels
+            } else {
+              currentStep.value = 1; // coordinates
+            }
           }
         }
       }
@@ -628,8 +644,14 @@ onMounted(async () => {
   } catch (error) {
     toast.add({ title: "Failed to load plan", color: "error" });
   } finally {
-    initialLoading.value = false;
+    if (!skipNavigation) {
+      initialLoading.value = false;
+    }
   }
+};
+
+onMounted(async () => {
+  await fetchPlan(false); // Initial load with navigation
 });
 
 // Helpers
@@ -827,12 +849,18 @@ async function completeEmbellishment() {
     };
     await axios.put(`/plan/edit/${planId}`, payload);
     // embellishment step index: topographic=4, route=3, layout/cadastral=5
-    const embellishmentStep = 
-      planData.basic.type === "topographic" ? 4 : 
-      planData.basic.type === "route" ? 3 : 5;
-    const nextStep = 
-      planData.basic.type === "topographic" ? 5 : 
-      planData.basic.type === "route" ? 4 : 6;
+    const embellishmentStep =
+      planData.basic.type === "topographic"
+        ? 4
+        : planData.basic.type === "route"
+        ? 3
+        : 5;
+    const nextStep =
+      planData.basic.type === "topographic"
+        ? 5
+        : planData.basic.type === "route"
+        ? 4
+        : 6;
     markCompleted(embellishmentStep);
     currentStep.value = nextStep;
     toast.add({ title: "Embellishment saved", color: "success" });
@@ -846,9 +874,12 @@ async function completeEmbellishment() {
 // Final Step
 function finishPlan() {
   // final step index: topographic=5, route=4, others=6
-  const finalStep = 
-    planData.basic.type === "topographic" ? 5 : 
-    planData.basic.type === "route" ? 4 : 6;
+  const finalStep =
+    planData.basic.type === "topographic"
+      ? 5
+      : planData.basic.type === "route"
+      ? 4
+      : 6;
   markCompleted(finalStep);
   navigateTo(`/project/${projectId}/plan/${planId}`);
 }
