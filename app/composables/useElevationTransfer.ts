@@ -1,7 +1,7 @@
 export interface TransferElevation {
   point: string;
   elevation: number;
-  chainage: string;
+  chainage?: string;
 }
 
 export const useElevationTransfer = () => {

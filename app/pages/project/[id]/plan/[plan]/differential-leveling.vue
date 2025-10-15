@@ -61,12 +61,7 @@
                 Import leveling data (CSV or TXT or XLS/XLSX)
               </div>
               <div class="text-[11px] text-gray-600 dark:text-gray-400">
-                Columns: Station, Back Sight, Fore Sight, Intermediate Sight,
-                Reduced Level, Chainage
-              </div>
-              <div class="text-[10px] text-gray-500 dark:text-gray-500 mt-0.5">
-                Supports comma, tab, or space separated files with optional
-                headers
+                Format: Station, BS, IS, FS, HI, Rise, Fall, RL
               </div>
             </div>
           </div>
@@ -124,25 +119,20 @@
                   Back Sight(m)
                 </th>
                 <th
-                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[120px]"
-                >
-                  Fore Sight(m)
-                </th>
-                <th
                   class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[150px]"
                 >
                   Intermediate Sight(m)
                 </th>
                 <th
-                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[150px]"
+                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[120px]"
                 >
-                  Reduced Level(m)
+                  Fore Sight(m)
                 </th>
                 <th
                   v-if="levelingMethod === 'height-of-instrument'"
                   class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[150px]"
                 >
-                  Height of Instrument
+                  Height of Instrument(m)
                 </th>
                 <th
                   v-if="levelingMethod === 'rise-and-fall'"
@@ -157,14 +147,14 @@
                   Fall(m)
                 </th>
                 <th
-                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[120px]"
+                  class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[150px]"
                 >
-                  Correction
+                  Reduced Level(m)
                 </th>
                 <th
                   class="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300 min-w-[120px]"
                 >
-                  Chainage
+                  Correction
                 </th>
                 <th
                   class="text-center py-3 px-4 font-medium text-gray-700 dark:text-gray-300"
@@ -192,16 +182,7 @@
                     v-model.number="row.back_sight"
                     type="number"
                     step="0.001"
-                    class="w-full px-2 py-1 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-green-500"
-                    placeholder="0.000"
-                  />
-                </td>
-                <td class="py-3 px-4">
-                  <input
-                    v-model.number="row.fore_sight"
-                    type="number"
-                    step="0.001"
-                    class="w-full px-2 py-1 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-green-500"
+                    class="w-full px-3 py-1.5 border border-gray-300 dark:border-slate-600 rounded focus:ring-1 focus:ring-purple-500 dark:bg-slate-700 dark:text-gray-100"
                     placeholder="0.000"
                   />
                 </td>
@@ -210,16 +191,16 @@
                     v-model.number="row.intermediate_sight"
                     type="number"
                     step="0.001"
-                    class="w-full px-2 py-1 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-green-500"
+                    class="w-full px-3 py-1.5 border border-gray-300 dark:border-slate-600 rounded focus:ring-1 focus:ring-purple-500 dark:bg-slate-700 dark:text-gray-100"
                     placeholder="0.000"
                   />
                 </td>
                 <td class="py-3 px-4">
                   <input
-                    v-model.number="row.reduced_level"
+                    v-model.number="row.fore_sight"
                     type="number"
                     step="0.001"
-                    class="w-full px-2 py-1 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-green-500"
+                    class="w-full px-3 py-1.5 border border-gray-300 dark:border-slate-600 rounded focus:ring-1 focus:ring-purple-500 dark:bg-slate-700 dark:text-gray-100"
                     placeholder="0.000"
                   />
                 </td>
@@ -268,6 +249,15 @@
                 </td>
                 <td class="py-3 px-4">
                   <input
+                    v-model.number="row.reduced_level"
+                    type="number"
+                    step="0.001"
+                    class="w-full px-3 py-1.5 border border-gray-300 dark:border-slate-600 rounded focus:ring-1 focus:ring-purple-500 dark:bg-slate-700 dark:text-gray-100"
+                    placeholder="0.000"
+                  />
+                </td>
+                <td class="py-3 px-4">
+                  <input
                     type="text"
                     readonly
                     class="w-full px-2 py-1 border border-gray-300 dark:border-slate-600 rounded bg-gray-50 dark:bg-slate-600 text-gray-900 dark:text-gray-100"
@@ -277,14 +267,6 @@
                         : ''
                     "
                     placeholder="--"
-                  />
-                </td>
-                <td class="py-3 px-4">
-                  <input
-                    v-model="row.chainage"
-                    type="text"
-                    class="w-full px-2 py-1 border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-green-500"
-                    placeholder="0+000"
                   />
                 </td>
                 <td class="py-3 px-4 text-center">
@@ -299,7 +281,7 @@
               </tr>
               <tr v-if="levelingRows.length === 0">
                 <td
-                  :colspan="levelingMethod === 'height-of-instrument' ? 10 : 11"
+                  :colspan="levelingMethod === 'height-of-instrument' ? 9 : 10"
                   class="py-8 text-center text-gray-500 dark:text-gray-400"
                 >
                   No leveling data added yet. Upload a file or add data
@@ -530,14 +512,13 @@ import { useElevationTransfer } from "~/composables/useElevationTransfer";
 interface LevelingRow {
   stn: string;
   back_sight: number | null;
-  fore_sight: number | null;
   intermediate_sight: number | null;
+  fore_sight: number | null;
   reduced_level: number | null;
   height_of_instrument: number | null;
   rise: number | null;
   fall: number | null;
   correction: number | null;
-  chainage: string;
 }
 
 definePageMeta({ middleware: ["auth"] });
@@ -555,14 +536,13 @@ const levelingRows = ref<LevelingRow[]>([
   {
     stn: "",
     back_sight: null,
-    fore_sight: null,
     intermediate_sight: null,
+    fore_sight: null,
     reduced_level: null,
     height_of_instrument: null,
     rise: null,
     fall: null,
     correction: null,
-    chainage: "",
   },
 ]);
 
@@ -619,15 +599,14 @@ const fetchPlanData = async () => {
         levelingRows.value = levelingData.stations.map((station: any) => ({
           stn: station.stn || "",
           back_sight: station.back_sight ?? null,
-          fore_sight: station.fore_sight ?? null,
           intermediate_sight: station.intermediate_sight ?? null,
+          fore_sight: station.fore_sight ?? null,
           reduced_level: station.reduced_level ?? null,
           // Computed fields - initialize as null, will be filled after computation
           height_of_instrument: null,
           rise: null,
           fall: null,
           correction: null,
-          chainage: station.chainage || "",
         }));
       }
 
@@ -652,14 +631,13 @@ const addTableRow = () => {
   levelingRows.value.push({
     stn: "",
     back_sight: null,
-    fore_sight: null,
     intermediate_sight: null,
+    fore_sight: null,
     reduced_level: null,
     height_of_instrument: null,
     rise: null,
     fall: null,
     correction: null,
-    chainage: "",
   });
 };
 
@@ -671,14 +649,13 @@ const removeTableRow = (index: number) => {
     levelingRows.value[0] = {
       stn: "",
       back_sight: null,
-      fore_sight: null,
       intermediate_sight: null,
+      fore_sight: null,
       reduced_level: null,
       height_of_instrument: null,
       rise: null,
       fall: null,
       correction: null,
-      chainage: "",
     };
   }
 };
@@ -695,18 +672,17 @@ const performComputation = async () => {
       .map((row) => {
         const station: any = {
           stn: row.stn,
-          chainage: row.chainage || "",
         };
 
         // Only include non-null values
         if (row.back_sight !== null && !isNaN(row.back_sight)) {
           station.back_sight = row.back_sight;
         }
-        if (row.fore_sight !== null && !isNaN(row.fore_sight)) {
-          station.fore_sight = row.fore_sight;
-        }
         if (row.intermediate_sight !== null && !isNaN(row.intermediate_sight)) {
           station.intermediate_sight = row.intermediate_sight;
+        }
+        if (row.fore_sight !== null && !isNaN(row.fore_sight)) {
+          station.fore_sight = row.fore_sight;
         }
         if (row.reduced_level !== null && !isNaN(row.reduced_level)) {
           station.reduced_level = row.reduced_level;
@@ -775,21 +751,20 @@ const performComputation = async () => {
           .map((row) => {
             const station: any = {
               stn: row.stn,
-              chainage: row.chainage || "",
             };
 
             // Only include input fields, not computed fields
             if (row.back_sight !== null && !isNaN(row.back_sight)) {
               station.back_sight = row.back_sight;
             }
-            if (row.fore_sight !== null && !isNaN(row.fore_sight)) {
-              station.fore_sight = row.fore_sight;
-            }
             if (
               row.intermediate_sight !== null &&
               !isNaN(row.intermediate_sight)
             ) {
               station.intermediate_sight = row.intermediate_sight;
+            }
+            if (row.fore_sight !== null && !isNaN(row.fore_sight)) {
+              station.fore_sight = row.fore_sight;
             }
             if (row.reduced_level !== null && !isNaN(row.reduced_level)) {
               station.reduced_level = row.reduced_level;
@@ -840,34 +815,61 @@ const parseLevelingCSV = async (input: string | ArrayBuffer | any) => {
     ? rows[0].map((c: any) => String(c ?? "").toLowerCase()).join(" ")
     : String(rows[0] ?? "").toLowerCase();
   const hasHeader =
-    /station|stn|back|fore|intermediate|sight|reduced|level|chainage/i.test(
-      firstRow
-    );
+    /station|stn|back|fore|intermediate|sight|reduced|level/i.test(firstRow);
   const dataRows = hasHeader ? rows.slice(1) : rows;
 
   const parsedRows: any[] = [];
   for (const colsRaw of dataRows) {
     const cols = (colsRaw || []).map((c: any) => String(c ?? "").trim());
-    if (cols.length < 6) continue;
+    if (cols.length < 5) continue;
 
     const stn = String(cols[0] ?? "").trim();
     const back_sight = cols[1] ? parseFloat(cols[1]) : null;
-    const fore_sight = cols[2] ? parseFloat(cols[2]) : null;
-    const intermediate_sight = cols[3] ? parseFloat(cols[3]) : null;
-    const reduced_level = cols[4] ? parseFloat(cols[4]) : null;
-    const chainage = String(cols[5] ?? "").trim();
+    const intermediate_sight = cols[2] ? parseFloat(cols[2]) : null;
+    const fore_sight = cols[3] ? parseFloat(cols[3]) : null;
+
+    let reduced_level = null;
+    if (cols.length === 5) {
+      // Simple 5-column format: Station, BS, IS, FS, RL
+      reduced_level = cols[4] ? parseFloat(cols[4]) : null;
+    } else if (cols.length === 8) {
+      // Standard 8-column format: Station, BS, IS, FS, HI, Rise, Fall, RL
+      // RL is at index 7
+      reduced_level = cols[7] ? parseFloat(cols[7]) : null;
+    } else if (cols.length >= 7) {
+      // Variable length format - search for RL from the end
+      // Skip empty computed columns and find the last non-empty numeric value
+      for (let i = cols.length - 1; i >= 4; i--) {
+        const col = cols[i];
+        if (col && col.trim() !== "") {
+          const val = parseFloat(col);
+          if (!isNaN(val)) {
+            reduced_level = val;
+            break;
+          }
+        }
+      }
+
+      // If not found in later columns, check column 4
+      if (reduced_level === null && cols[4]) {
+        const val = parseFloat(cols[4]);
+        if (!isNaN(val)) {
+          reduced_level = val;
+        }
+      }
+    }
 
     if (stn) {
       parsedRows.push({
         stn,
         back_sight:
           back_sight !== null && !isNaN(back_sight) ? back_sight : null,
-        fore_sight:
-          fore_sight !== null && !isNaN(fore_sight) ? fore_sight : null,
         intermediate_sight:
           intermediate_sight !== null && !isNaN(intermediate_sight)
             ? intermediate_sight
             : null,
+        fore_sight:
+          fore_sight !== null && !isNaN(fore_sight) ? fore_sight : null,
         reduced_level:
           reduced_level !== null && !isNaN(reduced_level)
             ? reduced_level
@@ -876,7 +878,6 @@ const parseLevelingCSV = async (input: string | ArrayBuffer | any) => {
         rise: null,
         fall: null,
         correction: null,
-        chainage: chainage || "",
       });
     }
   }
@@ -918,15 +919,27 @@ const onLevelingFile = async (event: Event) => {
 
 const downloadLevelingTemplate = () => {
   const csv = [
-    "Station,Back Sight,Fore Sight,Intermediate Sight,Reduced Level,Chainage",
-    "BM,0.875,,,132.135,0+000",
-    "1,2.310,1.235,,,0+025",
-    "2,2.930,1.385,,,0+050",
-    "3,,,3.125,,0+075",
-    "4,,,4.125,,0+100",
-    "5,1.825,0.120,,,0+125",
-    "6,,,2.050,,0+150",
-    "7,,3.745,,133.634,0+175",
+    "Station,Back Sight,Intermediate Sight,Fore Sight,HI,Rise,Fall,Reduced Level",
+    "UNILAG 01,0.93,,,,,,1.429",
+    "UNILAG 02,,1.78,,,,,",
+    "PT 01,1.27,,0.892,,,,",
+    "PT 02,1.64,,1.379,,,,",
+    "PT 03,1.31,,1.86,,,,",
+    "PT 04,3.33,,0.95,,,,",
+    "PT 05,2.758,,0.169,,,,",
+    "GME 06,0.616,,0.32,,,,",
+    "PT 06,2.288,,0.5,,,,",
+    "GME 05,,1.345,,,,,",
+    "GME 04,0.95,,1.146,,,,",
+    "GME 05,0.893,,1.155,,,,",
+    "GME 06,,1.955,,,,,",
+    "PT 07,0.246,,3.143,,,,",
+    "PT 08,0.838,,3.871,,,,",
+    "PT 09,1.831,,1.602,,,,",
+    "PT 10,1.83,,2.015,,,,",
+    "PT 11,1.069,,1.5,,,,",
+    "UNILAG 02,,1.21,,,,,",
+    "UNILAG 01,,,1.198,,,,1.429",
   ].join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
@@ -947,23 +960,22 @@ const downloadComputationCSV = () => {
   }
 
   // Create CSV header based on method
-  let header =
-    "Station,Back Sight(m),Fore Sight(m),Intermediate Sight(m),Reduced Level(m),";
+  let header = "Station,Back Sight(m),Intermediate Sight(m),Fore Sight(m),";
   if (levelingMethod.value === "height-of-instrument") {
     header += "Height of Instrument(m),";
   } else {
     header += "Rise(m),Fall(m),";
   }
-  header += "Correction,Chainage";
+  header += "Reduced Level(m),Correction";
 
   // Convert rows to CSV format
   const csvRows = levelingRows.value
     .filter((row) => row.stn && row.stn.trim() !== "")
     .map((row) => {
       const back_sight = row.back_sight !== null ? row.back_sight : "";
-      const fore_sight = row.fore_sight !== null ? row.fore_sight : "";
       const intermediate_sight =
         row.intermediate_sight !== null ? row.intermediate_sight : "";
+      const fore_sight = row.fore_sight !== null ? row.fore_sight : "";
       const reduced_level =
         row.reduced_level !== null ? row.reduced_level.toFixed(3) : "";
       const correction =
@@ -982,7 +994,7 @@ const downloadComputationCSV = () => {
         methodSpecific = `${rise},${fall}`;
       }
 
-      return `${row.stn},${back_sight},${fore_sight},${intermediate_sight},${reduced_level},${methodSpecific},${correction},${row.chainage}`;
+      return `${row.stn},${back_sight},${intermediate_sight},${fore_sight},${methodSpecific},${reduced_level},${correction}`;
     });
 
   // Combine header and data
@@ -1011,7 +1023,6 @@ const saveToElevationData = async () => {
     const elevations: {
       point: string;
       elevation: number;
-      chainage: string;
     }[] = [];
 
     levelingRows.value.forEach((row) => {
@@ -1024,7 +1035,6 @@ const saveToElevationData = async () => {
         elevations.push({
           point: row.stn,
           elevation: row.reduced_level,
-          chainage: row.chainage || "",
         });
       }
     });

@@ -21,7 +21,7 @@
 
         <div>
           <label class="block text-xs text-gray-600 mb-1"
-            >Spot height label font size</label
+            >Spot height label size</label
           >
           <input
             v-model.number="local.point_label_scale"
@@ -96,7 +96,7 @@
 
         <div>
           <label class="block text-xs text-gray-600 mb-1"
-            >Contour label font size</label
+            >Contour label size</label
           >
           <input
             v-model.number="local.contour_label_scale"
@@ -157,7 +157,7 @@
         <!-- <div class="space-y-4">
           <div>
             <label class="block text-xs text-gray-600 mb-1"
-              >Perimeter font size</label
+              >Perimeter label size</label
             >
             <input
               v-model.number="local.boundary_label_scale"
