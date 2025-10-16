@@ -91,6 +91,15 @@ type CoordInput = {
   elevation?: number | null;
 };
 
+type DimensionDatum = {
+  from: { lat: number; lng: number };
+  to: { lat: number; lng: number };
+  distanceText: string;
+  degreeText?: string;
+  minuteText?: string;
+  centroid?: [number, number] | null;
+};
+
 // Keep modelValue in props to avoid extraneous-attrs warnings from parent, but unused here.
 const props = defineProps<{
   modelValue?: any;
@@ -189,7 +198,9 @@ const mapRef = shallowRef<any>(null);
 let polygonLayers: any[] = [];
 let pointLayers: any[] = [];
 let centroidMarkers: any[] = [];
-let dimensionLayers: any[] = [];
+let dimensionLayerGroup: any = null;
+let dimensionData: DimensionDatum[] = [];
+let dimensionEventsAttached = false;
 const baseLayers = shallowRef<Record<string, any>>({});
 const activeBaseKey = ref<string>("OpenStreetMap");
 const crsMode = ref<"geo" | "simple" | null>(null);
@@ -425,20 +436,26 @@ function renderLayers() {
 
     let geometryLayer;
     if ((parcel as any).isRoute) {
-      // For route surveys, draw a polyline with different styling
+      // For route surveys, draw a polyline with stylized appearance
       geometryLayer = L.polyline(parcel.points, {
-        color: "#0066cc",
-        weight: 3,
-        opacity: 0.8,
-        fill: false,
+        color: "#ff1f1f",
+        weight: 2.5,
+        opacity: 0.95,
+        lineCap: "round",
+        lineJoin: "round",
+        interactive: false,
       }).addTo(map);
     } else {
       // For cadastral surveys, draw a polygon (only if we have at least 3 points)
       if (parcel.points.length < 3) continue;
       geometryLayer = L.polygon(parcel.points, {
-        color: "#000000",
-        weight: 1,
+        color: "#ff1f1f",
+        weight: 2.5,
         fill: false,
+        opacity: 0.95,
+        lineCap: "round",
+        lineJoin: "round",
+        interactive: false,
       }).addTo(map);
     }
 
@@ -446,23 +463,26 @@ function renderLayers() {
   }
 
   // Points + labels (respect orientation)
+  const pointIcon = L.divIcon({
+    className: "point-node-icon",
+    html: '<div class="point-node"></div>',
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
+  });
+
   for (const p of pointsLatLng.value) {
-    const cm = L.circleMarker([p.lat, p.lng], {
-      radius: 2,
-      color: "#000000",
-      weight: 1,
-      fill: true,
-      fillColor: "#000000",
-      fillOpacity: 1,
+    const marker = L.marker([p.lat, p.lng], {
+      icon: pointIcon,
+      interactive: false,
     })
       .addTo(map)
       .bindTooltip(p.label, {
         permanent: true,
         direction: "top",
         className: "leaflet-tooltip point-label",
-        offset: [-6, -10], // Position point labels directly above points
+        offset: [0, -16],
       });
-    pointLayers.push(cm);
+    pointLayers.push(marker);
   }
 
   // Add parcel labels at centroids
@@ -482,13 +502,14 @@ function renderLayers() {
     centroidMarkers.push(marker);
   }
 
-  // Dimension labels from legs (distance + bearing)
-  // Remove old dimension layers
-  for (const dl of dimensionLayers) map.removeLayer(dl);
-  dimensionLayers = [];
+  if (dimensionLayerGroup) dimensionLayerGroup.clearLayers();
+  dimensionData = [];
   if (Array.isArray(props.legs) && props.legs.length) {
+    const centroidPool = parcelCentroids.value
+      .map((parcel) => parcel.position)
+      .filter((pos): pos is [number, number] => Array.isArray(pos));
+
     for (const leg of props.legs) {
-      // find latlng for from and to by matching point ids with pointsLatLng labels
       const from = pointsLatLng.value.find(
         (pp) => pp.label === leg.from.id || pp.key === leg.from.id
       );
@@ -497,145 +518,206 @@ function renderLayers() {
       );
       if (!from || !to) continue;
 
+      const distanceValue = Number(leg.distance);
+      const distanceText = Number.isFinite(distanceValue)
+        ? `${distanceValue.toFixed(2)}m`
+        : "";
+      const { degreeText, minuteText } = splitBearingLabels(leg.bearing);
+
+      if (!distanceText && !degreeText && !minuteText) continue;
+
       const midLat = (from.lat + to.lat) / 2;
       const midLng = (from.lng + to.lng) / 2;
-
-      // compute bearing label (degrees + minutes) and distance label separately
-      const distTxt = `${Number(leg.distance).toFixed(2)}m`;
-
-      // format bearing as degrees and minutes with unit - exactly matching screenshot format
-      const bd = leg.bearing;
-      let bearingTxt = "";
-      if (bd && typeof bd.decimal === "number") {
-        const deg = Math.floor(bd.decimal);
-        const minutes = Math.floor((bd.decimal - deg) * 60);
-        bearingTxt = `${deg}°${minutes}'`;
-      } else if (bd && typeof bd.degrees === "number") {
-        const deg = bd.degrees;
-        const minutes = bd.minutes ?? 0;
-        bearingTxt = `${deg}°${minutes}'`;
-      }
-
-      // Get the map's pixel coordinates for the line endpoints
-      const fromPt = map.latLngToLayerPoint(L.latLng(from.lat, from.lng));
-      const toPt = map.latLngToLayerPoint(L.latLng(to.lat, to.lng));
-
-      // Calculate the line's angle in degrees
-      const dx = toPt.x - fromPt.x;
-      const dy = toPt.y - fromPt.y;
-      const angleRad = Math.atan2(dy, dx);
-      const angleDeg = (angleRad * 180) / Math.PI;
-
-      // Calculate perpendicular offset direction
-      const perpX = -dy;
-      const perpY = dx;
-      const perpLength = Math.sqrt(perpX * perpX + perpY * perpY);
-      const normalizedPerpX = perpX / perpLength;
-      const normalizedPerpY = perpY / perpLength;
-
-      // Calculate the midpoint in pixel coordinates
-      const midPoint = L.latLng(midLat, midLng);
-      const midLayerPoint = map.latLngToLayerPoint(midPoint);
-
-      // Calculate offset distance based on line length
-      const lineLength = Math.sqrt(dx * dx + dy * dy);
-      const offsetDistance = Math.max(15, Math.min(30, lineLength * 0.1));
-
-      // Determine which side is inside (toward centroid) and which is outside
-      let insideDirection = 1;
-      let outsideDirection = -1;
-
-      // Find the closest parcel centroid for this line segment
       let closestCentroid: [number, number] | null = null;
-      let minDistance = Infinity;
-
-      for (const parcel of parcelCentroids.value) {
-        if (parcel.position) {
-          const [centLat, centLng] = parcel.position;
-          const midPointDist = Math.hypot(centLat - midLat, centLng - midLng);
-          if (midPointDist < minDistance) {
-            minDistance = midPointDist;
-            closestCentroid = parcel.position;
-          }
+      let minDist = Infinity;
+      for (const centroid of centroidPool) {
+        const dist = Math.hypot(centroid[0] - midLat, centroid[1] - midLng);
+        if (dist < minDist) {
+          minDist = dist;
+          closestCentroid = centroid;
         }
       }
 
-      if (closestCentroid) {
-        const centroidLL = L.latLng(closestCentroid[0], closestCentroid[1]);
-        const centroidLayer = map.latLngToLayerPoint(centroidLL);
-
-        // Vector from midpoint to centroid
-        const toCentroidX = centroidLayer.x - midLayerPoint.x;
-        const toCentroidY = centroidLayer.y - midLayerPoint.y;
-
-        // Dot product with perpendicular vector
-        const dotProduct =
-          toCentroidX * normalizedPerpX + toCentroidY * normalizedPerpY;
-
-        // If dot product is positive, the centroid is in the direction of the perpendicular vector
-        if (dotProduct > 0) {
-          insideDirection = 1;
-          outsideDirection = -1;
-        } else {
-          insideDirection = -1;
-          outsideDirection = 1;
-        }
-      }
-
-      // Position distance label on the inside of the line
-      const distanceOffsetX =
-        midLayerPoint.x + normalizedPerpX * offsetDistance * insideDirection;
-      const distanceOffsetY =
-        midLayerPoint.y + normalizedPerpY * offsetDistance * insideDirection;
-      const distanceLatLng = map.layerPointToLatLng(
-        L.point(distanceOffsetX, distanceOffsetY)
-      );
-
-      // Position bearing label on the outside of the line
-      const bearingOffsetX =
-        midLayerPoint.x + normalizedPerpX * offsetDistance * outsideDirection;
-      const bearingOffsetY =
-        midLayerPoint.y + normalizedPerpY * offsetDistance * outsideDirection;
-      const bearingLatLng = map.layerPointToLatLng(
-        L.point(bearingOffsetX, bearingOffsetY)
-      );
-
-      // Ensure label is always upright (not upside down)
-      let uprightAngle = ((angleDeg % 360) + 360) % 360; // normalize to [0,360)
-      if (uprightAngle > 90 && uprightAngle < 270) {
-        uprightAngle = (uprightAngle + 180) % 360;
-      }
-      // Create HTML for labels with proper rotation
-      const distanceHtml = `<div class="dim-box" style="transform: translate(-50%,-50%) rotate(${uprightAngle}deg); transform-origin: center; text-align: center;">${distTxt}</div>`;
-      const bearingHtml = `<div class="dim-box" style="transform: translate(-50%,-50%) rotate(${uprightAngle}deg); transform-origin: center; text-align: center;">${bearingTxt}</div>`;
-
-      // Create icons for labels
-      const distanceIcon = L.divIcon({
-        className: "dimension-label distance-label",
-        html: distanceHtml,
-        iconAnchor: [0, 0],
+      dimensionData.push({
+        from: { lat: from.lat, lng: from.lng },
+        to: { lat: to.lat, lng: to.lng },
+        distanceText,
+        degreeText,
+        minuteText,
+        centroid: closestCentroid,
       });
-
-      const bearingIcon = L.divIcon({
-        className: "dimension-label bearing-label",
-        html: bearingHtml,
-        iconAnchor: [0, 0],
-      });
-
-      // Add markers for labels
-      const distanceMarker = L.marker(distanceLatLng, {
-        icon: distanceIcon,
-        interactive: false,
-      }).addTo(map);
-
-      const bearingMarker = L.marker(bearingLatLng, {
-        icon: bearingIcon,
-        interactive: false,
-      }).addTo(map);
-
-      dimensionLayers.push(distanceMarker, bearingMarker);
     }
   }
+
+  drawDimensionLayers();
+}
+
+const updateDimensionPositions = () => drawDimensionLayers();
+
+function drawDimensionLayers() {
+  const L = LRef.value;
+  const map = mapRef.value;
+  if (!L || !map || !dimensionLayerGroup) return;
+
+  dimensionLayerGroup.clearLayers();
+  if (!dimensionData.length) return;
+
+  for (const dim of dimensionData) {
+    const fromLL = L.latLng(dim.from.lat, dim.from.lng);
+    const toLL = L.latLng(dim.to.lat, dim.to.lng);
+    const fromPt = map.latLngToLayerPoint(fromLL);
+    const toPt = map.latLngToLayerPoint(toLL);
+
+    const dx = toPt.x - fromPt.x;
+    const dy = toPt.y - fromPt.y;
+    const lengthPx = Math.sqrt(dx * dx + dy * dy);
+    if (!lengthPx || !Number.isFinite(lengthPx)) continue;
+
+    const midPt = L.point(fromPt.x + dx / 2, fromPt.y + dy / 2);
+    const angleRad = Math.atan2(dy, dx);
+    let angleDeg = (angleRad * 180) / Math.PI;
+    if (!Number.isFinite(angleDeg)) angleDeg = 0;
+    let uprightAngle = ((angleDeg % 360) + 360) % 360;
+    if (uprightAngle > 90 && uprightAngle < 270) {
+      uprightAngle = (uprightAngle + 180) % 360;
+    }
+
+    const perpX = -dy / lengthPx;
+    const perpY = dx / lengthPx;
+
+    let insideDir = 1;
+    let outsideDir = -1;
+
+    if (dim.centroid) {
+      const centroidPt = map.latLngToLayerPoint(
+        L.latLng(dim.centroid[0], dim.centroid[1])
+      );
+      const dot =
+        (centroidPt.x - midPt.x) * perpX + (centroidPt.y - midPt.y) * perpY;
+      if (dot < 0) {
+        insideDir = -1;
+        outsideDir = 1;
+      }
+    }
+
+  const offsetBase = Math.min(Math.max(lengthPx * 0.12, 18), 44);
+
+    if (dim.distanceText) {
+      const labelPoint = L.point(
+        midPt.x + perpX * offsetBase * insideDir,
+        midPt.y + perpY * offsetBase * insideDir
+      );
+      const labelLatLng = map.layerPointToLatLng(labelPoint);
+      const distanceIcon = L.divIcon({
+        className: "dimension-label distance-label",
+        html: `<div class="dim-box" style="transform: translate(-50%,-50%) rotate(${uprightAngle}deg);">${dim.distanceText}</div>`,
+        iconAnchor: [0, 0],
+      });
+      const marker = L.marker(labelLatLng, {
+        icon: distanceIcon,
+        interactive: false,
+      });
+
+      dimensionLayerGroup.addLayer(marker);
+    }
+
+    const placeBearingLabel = (text: string, factor: number) => {
+      const basePt = L.point(
+        fromPt.x + dx * factor,
+        fromPt.y + dy * factor
+      );
+      const labelPoint = L.point(
+        basePt.x + perpX * offsetBase * outsideDir,
+        basePt.y + perpY * offsetBase * outsideDir
+      );
+      const marker = L.marker(map.layerPointToLatLng(labelPoint), {
+        icon: L.divIcon({
+          className: "dimension-label bearing-label",
+          html: `<div class="dim-box" style="transform: translate(-50%,-50%) rotate(${uprightAngle}deg);">${text}</div>`,
+          iconAnchor: [0, 0],
+        }),
+        interactive: false,
+      });
+
+      dimensionLayerGroup.addLayer(marker);
+    };
+
+    if (dim.degreeText) placeBearingLabel(dim.degreeText, 0.2);
+    if (dim.minuteText) placeBearingLabel(dim.minuteText, 0.8);
+  }
+
+  dimensionLayerGroup.bringToFront();
+}
+
+function splitBearingLabels(
+  bearing?: {
+    decimal?: number;
+    degrees?: number;
+    minutes?: number;
+    seconds?: number;
+  }
+): { degreeText?: string; minuteText?: string } {
+  if (!bearing) return {};
+
+  let deg: number | undefined;
+  let minutes: number | undefined;
+
+  if (typeof bearing.decimal === "number" && Number.isFinite(bearing.decimal)) {
+    const normalized = ((bearing.decimal % 360) + 360) % 360;
+    deg = Math.trunc(normalized);
+    minutes = Math.round(Math.abs(normalized - deg) * 60);
+  } else if (
+    typeof bearing.degrees === "number" &&
+    Number.isFinite(bearing.degrees)
+  ) {
+    const normalized = ((bearing.degrees % 360) + 360) % 360;
+    deg = Math.trunc(normalized);
+    const baseMinutes =
+      typeof bearing.minutes === "number" &&
+      Number.isFinite(bearing.minutes)
+        ? Math.round(Math.abs(bearing.minutes))
+        : 0;
+    const secondsContribution =
+      typeof bearing.seconds === "number" &&
+      Number.isFinite(bearing.seconds)
+        ? Math.round(Math.abs(bearing.seconds) / 60)
+        : 0;
+    minutes = baseMinutes + secondsContribution;
+  } else {
+    return {};
+  }
+
+  if (typeof minutes === "number" && minutes >= 60) {
+    const extraDegrees = Math.floor(minutes / 60);
+    minutes -= extraDegrees * 60;
+    deg = ((deg || 0) + extraDegrees) % 360;
+  }
+
+  const degreeValue = ((deg || 0) % 360 + 360) % 360;
+  const degreeText = `${degreeValue < 10 ? `0${degreeValue}` : String(degreeValue)}°`;
+
+  const minuteValue = Math.max(0, minutes ?? 0);
+  const minuteText = `${String(Math.abs(minuteValue)).padStart(2, "0")}'`;
+
+  return { degreeText, minuteText };
+}
+
+function attachDimensionEvents(map: any) {
+  if (!map || dimensionEventsAttached) return;
+  map.on("zoom", updateDimensionPositions);
+  map.on("move", updateDimensionPositions);
+  map.on("zoomend", updateDimensionPositions);
+  map.on("resize", updateDimensionPositions);
+  dimensionEventsAttached = true;
+}
+
+function detachDimensionEvents(map: any) {
+  if (!map || !dimensionEventsAttached) return;
+  map.off("zoom", updateDimensionPositions);
+  map.off("move", updateDimensionPositions);
+  map.off("zoomend", updateDimensionPositions);
+  map.off("resize", updateDimensionPositions);
+  dimensionEventsAttached = false;
 }
 
 onMounted(async () => {
@@ -651,6 +733,8 @@ onMounted(async () => {
     minZoom: crsMode.value === "geo" ? 1 : -5,
     worldCopyJump: crsMode.value === "geo",
   });
+  dimensionLayerGroup = L.featureGroup().addTo(mapRef.value);
+  attachDimensionEvents(mapRef.value);
   await nextTick();
   mapRef.value.invalidateSize();
   setupBaseLayers();
@@ -660,13 +744,20 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   const map = mapRef.value;
   teardownBaseLayers();
-  if (map) map.remove();
+  if (map) {
+    detachDimensionEvents(map);
+    if (dimensionLayerGroup) {
+      map.removeLayer(dimensionLayerGroup);
+    }
+    map.remove();
+  }
   mapRef.value = null;
   LRef.value = null;
   polygonLayers = [];
   pointLayers = [];
   centroidMarkers = [];
-  dimensionLayers = [];
+  dimensionLayerGroup = null;
+  dimensionData = [];
 });
 
 watch(
@@ -674,6 +765,14 @@ watch(
   () => {
     renderLayers();
   }
+);
+
+watch(
+  () => props.legs,
+  () => {
+    renderLayers();
+  },
+  { deep: true }
 );
 
 // Switch base layer when toggled
@@ -689,6 +788,11 @@ watch(isGeographic, async (geo) => {
   // Teardown current
   if (mapRef.value) {
     teardownBaseLayers();
+    detachDimensionEvents(mapRef.value);
+    if (dimensionLayerGroup) {
+      mapRef.value.removeLayer(dimensionLayerGroup);
+      dimensionLayerGroup = null;
+    }
     mapRef.value.remove();
   }
   // Recreate map
@@ -700,6 +804,8 @@ watch(isGeographic, async (geo) => {
     minZoom: crsMode.value === "geo" ? 1 : -5,
     worldCopyJump: crsMode.value === "geo",
   });
+  dimensionLayerGroup = L.featureGroup().addTo(mapRef.value);
+  attachDimensionEvents(mapRef.value);
   await nextTick();
   mapRef.value.invalidateSize();
   setupBaseLayers();
@@ -712,6 +818,33 @@ function onComplete() {
 </script>
 
 <style scoped>
+:deep(.point-node-icon) {
+  background: transparent;
+  border: none;
+}
+
+:deep(.point-node) {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #000;
+  background: #fff;
+  border-radius: 2px;
+  position: relative;
+  box-sizing: border-box;
+}
+
+:deep(.point-node::after) {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  background: #000;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
 :deep(.leaflet-tooltip.point-label) {
   background: transparent;
   border: none;
@@ -750,10 +883,8 @@ function onComplete() {
   white-space: nowrap;
   display: inline-block;
   line-height: 1;
-}
-
-:deep(.leaflet-interactive.leader-line) {
-  stroke: #000;
+  text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff,
+    -1px 1px 0 #fff;
 }
 
 :deep(.bearing-label .dim-box) {
