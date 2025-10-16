@@ -480,7 +480,7 @@ function renderLayers() {
         permanent: true,
         direction: "top",
         className: "leaflet-tooltip point-label",
-        offset: [0, -16],
+        offset: [0, -8],
       });
     pointLayers.push(marker);
   }
@@ -600,7 +600,7 @@ function drawDimensionLayers() {
       }
     }
 
-  const offsetBase = Math.min(Math.max(lengthPx * 0.12, 18), 44);
+    const offsetBase = Math.min(Math.max(lengthPx * 0.05, 10), 24);
 
     if (dim.distanceText) {
       const labelPoint = L.point(
@@ -622,10 +622,7 @@ function drawDimensionLayers() {
     }
 
     const placeBearingLabel = (text: string, factor: number) => {
-      const basePt = L.point(
-        fromPt.x + dx * factor,
-        fromPt.y + dy * factor
-      );
+      const basePt = L.point(fromPt.x + dx * factor, fromPt.y + dy * factor);
       const labelPoint = L.point(
         basePt.x + perpX * offsetBase * outsideDir,
         basePt.y + perpY * offsetBase * outsideDir
@@ -649,14 +646,12 @@ function drawDimensionLayers() {
   dimensionLayerGroup.bringToFront();
 }
 
-function splitBearingLabels(
-  bearing?: {
-    decimal?: number;
-    degrees?: number;
-    minutes?: number;
-    seconds?: number;
-  }
-): { degreeText?: string; minuteText?: string } {
+function splitBearingLabels(bearing?: {
+  decimal?: number;
+  degrees?: number;
+  minutes?: number;
+  seconds?: number;
+}): { degreeText?: string; minuteText?: string } {
   if (!bearing) return {};
 
   let deg: number | undefined;
@@ -673,13 +668,11 @@ function splitBearingLabels(
     const normalized = ((bearing.degrees % 360) + 360) % 360;
     deg = Math.trunc(normalized);
     const baseMinutes =
-      typeof bearing.minutes === "number" &&
-      Number.isFinite(bearing.minutes)
+      typeof bearing.minutes === "number" && Number.isFinite(bearing.minutes)
         ? Math.round(Math.abs(bearing.minutes))
         : 0;
     const secondsContribution =
-      typeof bearing.seconds === "number" &&
-      Number.isFinite(bearing.seconds)
+      typeof bearing.seconds === "number" && Number.isFinite(bearing.seconds)
         ? Math.round(Math.abs(bearing.seconds) / 60)
         : 0;
     minutes = baseMinutes + secondsContribution;
@@ -693,8 +686,10 @@ function splitBearingLabels(
     deg = ((deg || 0) + extraDegrees) % 360;
   }
 
-  const degreeValue = ((deg || 0) % 360 + 360) % 360;
-  const degreeText = `${degreeValue < 10 ? `0${degreeValue}` : String(degreeValue)}°`;
+  const degreeValue = (((deg || 0) % 360) + 360) % 360;
+  const degreeText = `${
+    degreeValue < 10 ? `0${degreeValue}` : String(degreeValue)
+  }°`;
 
   const minuteValue = Math.max(0, minutes ?? 0);
   const minuteText = `${String(Math.abs(minuteValue)).padStart(2, "0")}'`;
@@ -851,7 +846,7 @@ function onComplete() {
   box-shadow: none;
   color: #000;
   padding: 0;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 400;
 }
 :deep(.leaflet-tooltip.parcel-label) {
@@ -865,8 +860,8 @@ function onComplete() {
     -1px 1px 0 white;
 }
 
-:deep(.leaflet-tooltip-top:before) {
-  border-top-color: #000 !important;
+:deep(.leaflet-tooltip.point-label.leaflet-tooltip-top:before) {
+  display: none;
 }
 
 :deep(.dimension-label) {
